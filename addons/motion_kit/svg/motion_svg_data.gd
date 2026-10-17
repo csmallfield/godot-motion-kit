@@ -91,3 +91,21 @@ func outline(i: int, tolerance := 0.02) -> Array[PackedVector2Array]:
 		out.append(pts)
 		k += 1
 	return out
+
+
+## The whole document as one SVG string, every part in its own colours
+## (for rasterizing it in one piece, as MotionPixelGrid does).
+func to_svg_string(width := 0, height := 0) -> String:
+	var body := PackedStringArray()
+	for p in parts:
+		var s: String = p.svg
+		if not p.gradient:
+			var f: Color = p.fill
+			var st: Color = p.stroke
+			s = s.replace("/>", " fill=\"#%s\" fill-opacity=\"%s\" stroke=\"#%s\" stroke-opacity=\"%s\" stroke-width=\"%s\"/>" % [
+				f.to_html(false), str(f.a), st.to_html(false), str(st.a), str(p.stroke_width)])
+		body.append(s)
+	var vb := view_box
+	var size_attr := (" width=\"%d\" height=\"%d\"" % [width, height]) if width > 0 else ""
+	return "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"%s %s %s %s\"%s preserveAspectRatio=\"none\"><defs>%s</defs>%s</svg>" % [
+		str(vb.position.x), str(vb.position.y), str(vb.size.x), str(vb.size.y), size_attr, defs, "".join(body)]

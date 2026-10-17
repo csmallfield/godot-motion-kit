@@ -35,6 +35,9 @@ const SHADER := preload("res://addons/motion_kit/shaders/motion_shape.gdshader")
 	set(v): dashes = v; _sync()
 @export_range(0.0, 1.0) var dash_fill := 0.9:
 	set(v): dash_fill = v; _sync()
+## Soft edge: CSS blur radius in pixels (box-shadow blur, filter: blur). 0 = sharp.
+@export var blur := 0.0:
+	set(v): blur = v; _sync()
 ## Where the node origin sits on the shape: (0.5, 0.5) centre, (0, 0) top-left.
 @export var anchor := Vector2(0.5, 0.5):
 	set(v): anchor = v; queue_redraw()
@@ -78,6 +81,7 @@ func _sync() -> void:
 	_mat.set_shader_parameter("dash_count", dashes)
 	_mat.set_shader_parameter("dash_fill", dash_fill)
 	_mat.set_shader_parameter("fill_color", color)
+	_mat.set_shader_parameter("blur", blur)
 	queue_redraw()
 
 
@@ -87,7 +91,7 @@ func _draw() -> void:
 	# Pad by a few screen pixels so the soft edge is never clipped.
 	var sc := get_global_transform_with_canvas().get_scale()
 	var k := maxf(absf(sc.x), absf(sc.y))
-	var pad := 3.0 / maxf(k, 1e-4)
+	var pad := 3.0 / maxf(k, 1e-4) + blur * 1.6
 	var h := size * 0.5 + Vector2(pad, pad)
 	var c := (Vector2(0.5, 0.5) - anchor) * size
 	_mat.set_shader_parameter("center", c)

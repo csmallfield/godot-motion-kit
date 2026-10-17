@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 ## Loads font files (ttf, otf, woff, woff2) at runtime, cached, set up for
-## motion work: multichannel SDF so glyphs stay sharp while they scale, no
+## motion work: optional multichannel SDF (sharp while scaling up, but small
+## sizes can show corner artifacts, so it is off by default), no
 ## hinting and sub-pixel positioning so spacing matches browser rendering.
 class_name MotionFonts
 extends RefCounted
@@ -8,7 +9,7 @@ extends RefCounted
 static var _cache := {}
 
 
-static func load(path: String, msdf := true) -> FontFile:
+static func load(path: String, msdf := false) -> FontFile:
 	var key := "%s|%s" % [path, msdf]
 	if _cache.has(key):
 		return _cache[key]

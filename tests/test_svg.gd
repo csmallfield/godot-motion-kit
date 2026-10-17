@@ -88,3 +88,30 @@ func test_outline_length_of_circle() -> String:
 		length += line[i].distance_to(line[i + 1])
 	var want := TAU * 40.0
 	return "" if absf(length - want) < 0.1 else "length %s, want %s" % [length, want]
+
+func test_pixel_grid_matches_remotion_cells() -> String:
+	# The Remotion project made these grids from a Chromium screenshot; ours come
+	# from ThorVG. Edge cells can differ by anti-aliasing; require 95% agreement.
+	var ref_cells: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://tests/fixtures/mark_pixels.json"))
+	var data := MotionSvgData.from_file(DIR + "scf_logoBig_noCloud.svg")
+	var pal: Array[Color] = [Color("#1b6393"), Color("#f4af3f"), Color("#ef393b"), Color("#ece5da"), Color("#010101")]
+	for key in ["16", "32", "64"]:
+		var g := MotionPixelGrid.cells_from_svg(data, int(key), pal)
+		var want := {}
+		for c in ref_cells[key].cells:
+			want[Vector2i(c[0], c[1])] = Color(c[2])
+		var got := {}
+		for c in g.cells:
+			got[Vector2i(c.x, c.y)] = c.color
+		var agree := 0
+		for k in want:
+			if got.has(k) and (got[k] as Color).is_equal_approx(want[k]):
+				agree += 1
+		var union := want.size() + got.size() - agree
+		var score := float(agree) / union
+		print("        grid %s: %d cells (Remotion %d), agreement %.1f%%" % [key, got.size(), want.size(), score * 100.0])
+		if g.rows != int(ref_cells[key].h):
+			return "grid %s has %d rows, want %s" % [key, g.rows, ref_cells[key].h]
+		if score < 0.9:
+			return "grid %s agreement %.2f" % [key, score]
+	return ""

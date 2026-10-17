@@ -127,7 +127,7 @@ func render(f: float) -> void:
 	frame = f
 	if has_method(&"_frame"):
 		call(&"_frame", f)
-	for c in get_children():
+	for c in get_children(true):
 		_dispatch(c, f)
 
 
@@ -137,7 +137,8 @@ func _dispatch(node: Node, f: float) -> void:
 		return
 	if node.has_method(&"_frame"):
 		node.call(&"_frame", f)
-	for c in node.get_children():
+	# Internal children too: MotionFX keeps its content inside an internal SubViewport.
+	for c in node.get_children(true):
 		_dispatch(c, f)
 
 
