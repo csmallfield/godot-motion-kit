@@ -7,6 +7,7 @@ const SUITES := [
 	"res://tests/test_svg.gd",
 	"res://tests/test_game.gd",
 	"res://tests/test_composition.gd",
+	"res://tests/test_kit.gd",
 ]
 
 func _init() -> void:

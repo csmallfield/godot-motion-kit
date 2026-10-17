@@ -15,7 +15,7 @@ uniform float dash_fill = 0.9;   // fraction of each dash period that is drawn
 uniform float rotation_turns = 0.0;
 uniform vec4 fill_color : source_color = vec4(1.0);
 uniform vec2 center = vec2(0.0); // shape centre in the node's local space
-uniform float blur = 0.0;        // CSS blur radius (box-shadow / filter: blur); sigma = blur / 2
+uniform float blur = 0.0;        // CSS box-shadow blur radius; sigma = blur / 2
 uniform float border_width = 0.0; // CSS border, drawn inside the shape's edge
 uniform vec4 border_color : source_color = vec4(0.0);
 

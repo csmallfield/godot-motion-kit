@@ -35,7 +35,8 @@ const SHADER := preload("res://addons/motion_kit/shaders/motion_shape.gdshader")
 	set(v): dashes = v; _sync()
 @export_range(0.0, 1.0) var dash_fill := 0.9:
 	set(v): dash_fill = v; _sync()
-## Soft edge: CSS blur radius in pixels (box-shadow blur, filter: blur). 0 = sharp.
+## Soft edge: a CSS box-shadow blur radius in pixels (sigma = blur / 2). For a
+## CSS filter: blur(x), whose value is sigma itself, pass 2 * x. 0 = sharp.
 @export var blur := 0.0:
 	set(v): blur = v; _sync()
 ## CSS border inside the edge (RECT and CIRCLE): width in pixels and colour.
