@@ -1,0 +1,8 @@
+{
+  "name": "motion-kit-parity",
+  "private": true,
+  "description": "Development-time only: generates reference values from Remotion for the Motion Kit parity tests. Never shipped.",
+  "type": "module",
+  "scripts": { "fixture": "node make_fixture.mjs" },
+  "devDependencies": { "remotion": "4.0.534" }
+}

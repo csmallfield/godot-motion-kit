@@ -1,0 +1,5 @@
+.godot/
+/out/
+/compare/
+node_modules/
+*.tmp
