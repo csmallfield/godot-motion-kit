@@ -20,9 +20,17 @@ know the handful of places where the browser behaves in ways that aren't obvious
 | `<Logo part={(i) => ...}>` | `MotionSvg.apply(func(i): ...)`, with the same keys (`fillO` → `fill_o`, `drawWidth` → `draw_width`) |
 | CSS text, `letterSpacing: "0.3em"` | `MotionText.tracking = 0.3` |
 | `lineHeight: 0.9` | `MotionText.line_height = 0.9` |
-| `opacity` | `modulate.a` |
+| `opacity` | `modulate.a`; on a wrapper whose children overlap, a `CanvasGroup` (`self_modulate.a`) or `MotionFX` so it fades as one layer |
 | `filter: brightness(k)` | `modulate = Color(k, k, k)` |
 | `box-shadow: 0 0 30px c` | a `MotionShape` the element's size, `blur = 30` |
+| `filter: blur(8px)` on a group | `MotionFX` with `blur = 8` |
+| `text-shadow: 0 0 24px c` | the text inside a `MotionFX` with `shadow_color = c`, `shadow_blur = 24` |
+| SVG `filter` with `feGaussianBlur` + `feMerge` (glow) | `MotionFX.glow` = the stdDeviation |
+| `linear-gradient`, `radial-gradient`, `repeating-linear-gradient` | `MotionGradient` (`shift` for `background-position`) |
+| `mix-blend-mode` | `MotionGradient.blend`; isolate the group in a `MotionFX` as the browser's stacking context does |
+| `clip-path: inset(...)` | a `Control` with `clip_contents`, sized to the visible part |
+| inline `<svg>` built in loops (`<line>`, `<polygon>`, `<circle>`) | `MotionCanvas` and its `draw_fn` |
+| hand-rolled 3D (`rotX`, `rotY`, `proj`) | `MK.rot_x`, `MK.rot_y`, `MK.project` |
 | `{cond && <X/>}` | `x.visible = cond` (build nodes once in `_ready`, toggle per frame) |
 | `<Sequence from={n} durationInFrames={d}>` | a nested `MotionComposition` with `start = n`, `duration = d` (hidden outside its range) |
 | `<Audio src=...>` | `audio` on the composition |
@@ -48,3 +56,22 @@ know the handful of places where the browser behaves in ways that aren't obvious
    `var s: float = fn.call(...)` rather than `:=`.
 7. **Noise.** SVG `feTurbulence` can't be matched pixel for pixel. `MotionOverlay` STATIC is
    tuned to the same mean and spread, and comparisons should exclude those frames.
+8. **Group opacity.** CSS `opacity` on a wrapper composites the wrapper as one layer, so
+   a logo's face hides the shadow layers beneath it while it fades. `modulate.a` on a
+   `MotionSvg` fades each part on its own, and the layers show through. Wrap it in a
+   `CanvasGroup` and fade `self_modulate.a`, or put it in a `MotionFX`. SVG `<g opacity>`
+   around overlapping shapes in a `MotionCanvas` is the same problem; where the overlap
+   is a thin stroke over a fill, the C port pre-mixes the stroke colour instead.
+9. **Three different blur numbers.** `filter: blur(x)` and `feGaussianBlur
+   stdDeviation` are the standard deviation. `box-shadow` and `text-shadow` blur values
+   are twice it. `MotionFX.blur` and `glow` take the former; `MotionShape.blur` and
+   `MotionFX.shadow_blur` take the latter, so the CSS numbers copy across unchanged.
+   A blur on a scaled element scales with it.
+10. **Text sits where Chromium puts it** once the metrics match: a line box with
+   `line-height: normal` is round(ascent) + round(descent) of the faces actually used.
+   FreeType rounds both up, which put every baseline a pixel low until `MotionText`
+   rounded them itself.
+11. **Filter regions clip.** An SVG filter's default region is the element's bounding box
+   plus 10% (or what the code sets, often -50%/200%). A glow on a nearly horizontal line
+   can be clipped vertically in the browser. `MotionSvg`'s `blur_region` reproduces a
+   region on parts; `MotionFX` clips only at its `size`, so give it room.
