@@ -20,6 +20,11 @@
 ##   draw_width  width of that line in screen pixels (default 3)
 ##   fill_o      fill opacity while drawing (default 0)
 ##   hide        true to skip the part
+##   blur        Vector2 Gaussian blur in logo units (SVG feGaussianBlur
+##               stdDeviation "x y"), e.g. Vector2(26, 0) for a motion smear
+##   blur_region Rect2 filter region as fractions of the part's bounds
+##               (SVG filter x/y/width/height, e.g. Rect2(-0.5, -0.1, 2, 1.2));
+##               the blur is cut off outside it, as in a browser
 @tool
 @icon("res://addons/motion_kit/icons/svg.svg")
 class_name MotionSvg
@@ -64,6 +69,7 @@ extends Node2D
 var part_fn: Callable
 
 var _overrides := {}
+var _blur_region := Rect2()   # fractions of the part bbox; zero size = unlimited
 
 # Raster cache shared by every MotionSvg: "rid:part:bucket" -> ImageTexture
 static var _cache := {}
@@ -219,9 +225,11 @@ func _draw() -> void:
 			if own_colour and o.has("fill"):
 				col = o.fill
 			col.a *= fill_alpha
-			var tex := _texture(i, bucket)
+			var pblur: Vector2 = o.get("blur", Vector2.ZERO)
+			_blur_region = o.get("blur_region", Rect2())
+			var tex := _texture(i, bucket, pblur)
 			if tex:
-				draw_texture_rect(tex, _raster_rect(p, bucket), false, col)
+				draw_texture_rect(tex, _raster_rect(p, bucket, pblur), false, col)
 
 		# Outline: self-drawing line, or a full stroke override
 		var unit_px := px_per_unit * part_scale   # screen pixels per logo unit for this part
@@ -319,8 +327,10 @@ static func _bucket_density(b: int) -> float:
 	return pow(sqrt(2.0), b)
 
 
-func _key(i: int, bucket: int) -> String:
-	return "%d:%d:%d" % [data.get_instance_id(), i, bucket]
+func _key(i: int, bucket: int, blur := Vector2.ZERO) -> String:
+	if blur == Vector2.ZERO:
+		return "%d:%d:%d" % [data.get_instance_id(), i, bucket]
+	return "%d:%d:%d:%s:%s:%s" % [data.get_instance_id(), i, bucket, blur.x, blur.y, _blur_region]
 
 
 func _outline(i: int, bucket: int) -> Array:
@@ -341,16 +351,17 @@ func _outline(i: int, bucket: int) -> Array:
 
 ## The rectangle a part's raster covers, in logo units: its bounds plus two
 ## pixels of padding, widened to a whole number of pixels so texels stay square.
-static func _raster_rect(p: Dictionary, bucket: int) -> Rect2:
+static func _raster_rect(p: Dictionary, bucket: int, blur := Vector2.ZERO) -> Rect2:
 	var dens := _bucket_density(bucket)
 	var r: Rect2 = (p.bbox as Rect2).grow(2.0 / dens + float(p.stroke_width) * 0.5)
+	r = r.grow_individual(blur.x * 3.0, blur.y * 3.0, blur.x * 3.0, blur.y * 3.0)   # room for the blur
 	var w := minf(ceilf(r.size.x * dens), MAX_TEX)
 	var h := minf(ceilf(r.size.y * dens), MAX_TEX)
 	return Rect2(r.position, Vector2(w, h) / dens)
 
 
-func _texture(i: int, bucket: int) -> Texture2D:
-	var key := _key(i, bucket)
+func _texture(i: int, bucket: int, blur := Vector2.ZERO) -> Texture2D:
+	var key := _key(i, bucket, blur)
 	if _cache.has(key):
 		# Refresh its place in the LRU order (Dictionaries keep insertion order).
 		var hit: Texture2D = _cache[key]
@@ -358,7 +369,7 @@ func _texture(i: int, bucket: int) -> Texture2D:
 		_cache[key] = hit
 		return hit
 	var p: Dictionary = data.parts[i]
-	var r := _raster_rect(p, bucket)
+	var r := _raster_rect(p, bucket, blur)
 	var dens := _bucket_density(bucket)
 	var w := clampi(int(round(r.size.x * dens)), 1, MAX_TEX)
 	var h := clampi(int(round(r.size.y * dens)), 1, MAX_TEX)
@@ -375,8 +386,17 @@ func _texture(i: int, bucket: int) -> Texture2D:
 		if not p.gradient:
 			body = body.replace("/>", " fill=\"#%s\" fill-opacity=\"%s\" stroke=\"#%s\" stroke-opacity=\"%s\" stroke-width=\"%s\"/>" % [
 				f.to_html(false), str(f.a), s.to_html(false), str(s.a), str(p.stroke_width)])
+	var defs := data.defs
+	if blur != Vector2.ZERO:
+		var fr := r
+		if _blur_region.size != Vector2.ZERO:
+			var bb: Rect2 = p.bbox
+			fr = Rect2(bb.position + bb.size * _blur_region.position, bb.size * _blur_region.size).intersection(r)
+		defs += "<filter id=\"mkblur\" filterUnits=\"userSpaceOnUse\" x=\"%s\" y=\"%s\" width=\"%s\" height=\"%s\"><feGaussianBlur stdDeviation=\"%s %s\"/></filter>" % [
+			str(fr.position.x), str(fr.position.y), str(fr.size.x), str(fr.size.y), str(blur.x), str(blur.y)]
+		body = "<g filter=\"url(#mkblur)\">%s</g>" % body
 	var svg := "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"%s %s %s %s\" width=\"%d\" height=\"%d\" preserveAspectRatio=\"none\"><defs>%s</defs>%s</svg>" % [
-		str(r.position.x), str(r.position.y), str(r.size.x), str(r.size.y), w, h, data.defs, body]
+		str(r.position.x), str(r.position.y), str(r.size.x), str(r.size.y), w, h, defs, body]
 	var img := Image.new()
 	if img.load_svg_from_string(svg, 1.0) != OK:
 		push_warning("MotionSvg: could not rasterize part %d of %s" % [i, data.source])

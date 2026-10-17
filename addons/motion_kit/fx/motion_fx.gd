@@ -15,6 +15,7 @@ class_name MotionFX
 extends Node2D
 
 const SHADER := preload("res://addons/motion_kit/shaders/motion_fx.gdshader")
+const BLUR_H := preload("res://addons/motion_kit/shaders/motion_blur_h.gdshader")
 const MAX_SLICES := 64
 
 ## Size of the content area in pixels (the composition size, usually).
@@ -26,6 +27,20 @@ const MAX_SLICES := 64
 @export var slice_split := 0.0
 @export_range(1, 64) var slice_count := 18
 @export var slice_seed := 1.0
+@export_group("Blur, glow, shadow")
+## CSS filter: blur(), standard deviation in pixels.
+@export var blur := 0.0
+## A blurred copy of the content in its own colours under it (SVG feMerge glow);
+## the value is its standard deviation in pixels.
+@export var glow := 0.0
+@export var glow_strength := 1.0
+## A blurred, tinted copy under the content (CSS text-shadow / box-shadow).
+## shadow_blur is the CSS blur radius (standard deviation = radius / 2).
+@export var shadow_color := Color(0, 0, 0, 0)
+@export var shadow_blur := 0.0
+@export var shadow_offset := Vector2.ZERO
+## One separable Gaussian pass is shared by blur, glow and shadow, so they use
+## a single radius: blur if set, else glow, else shadow_blur.
 @export_group("Other")
 @export var brightness := 1.0
 @export var pixel_size := 0.0
@@ -39,6 +54,9 @@ const MAX_SLICES := 64
 var content: Node2D
 
 var _vp: SubViewport
+var _vp_h: SubViewport      # horizontal blur pass
+var _h_sprite: Sprite2D
+var _h_mat: ShaderMaterial
 var _view: Sprite2D
 var _mat: ShaderMaterial
 var _frame_f := 0.0
@@ -55,6 +73,18 @@ func _init() -> void:
 	content.name = "Content"
 	_vp.add_child(content)
 	add_child(_vp, false, Node.INTERNAL_MODE_FRONT)
+	_vp_h = SubViewport.new()
+	_vp_h.transparent_bg = true
+	_vp_h.disable_3d = true
+	_vp_h.render_target_update_mode = SubViewport.UPDATE_DISABLED
+	_h_sprite = Sprite2D.new()
+	_h_sprite.centered = false
+	_h_sprite.texture = _vp.get_texture()
+	_h_mat = ShaderMaterial.new()
+	_h_mat.shader = BLUR_H
+	_h_sprite.material = _h_mat
+	_vp_h.add_child(_h_sprite)
+	add_child(_vp_h, false, Node.INTERNAL_MODE_FRONT)
 	_view = Sprite2D.new()
 	_view.centered = false
 	_view.texture = _vp.get_texture()
@@ -81,6 +111,7 @@ func _resize() -> void:
 		return
 	var px := (size * render_scale).round()
 	_vp.size = Vector2i(maxi(1, int(px.x)), maxi(1, int(px.y)))
+	_vp_h.size = _vp.size
 	# A viewport's canvas transform can only be set once it is in the tree.
 	if _vp.is_inside_tree():
 		_vp.canvas_transform = Transform2D.IDENTITY.scaled(Vector2(render_scale, render_scale))
@@ -125,3 +156,15 @@ func _apply() -> void:
 	_mat.set_shader_parameter("pixel_size", pixel_size)
 	_mat.set_shader_parameter("goo_blur", goo_blur)
 	_mat.set_shader_parameter("goo_sharp", goo_sharp)
+	var sigma := blur if blur > 0.01 else (glow if glow > 0.01 else shadow_blur * 0.5)
+	var need := sigma > 0.01
+	_vp_h.render_target_update_mode = SubViewport.UPDATE_ALWAYS if need else SubViewport.UPDATE_DISABLED
+	_h_mat.set_shader_parameter("sigma", sigma * render_scale)
+	_mat.set_shader_parameter("blur_tex", _vp_h.get_texture())
+	_mat.set_shader_parameter("blur_sigma", sigma * render_scale if need else 0.0)
+	_mat.set_shader_parameter("blur_main", blur > 0.01)
+	_mat.set_shader_parameter("glow", glow)
+	_mat.set_shader_parameter("glow_strength", glow_strength)
+	_mat.set_shader_parameter("shadow_color", shadow_color)
+	_mat.set_shader_parameter("shadow_blur", shadow_blur)
+	_mat.set_shader_parameter("shadow_offset", shadow_offset)

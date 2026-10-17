@@ -16,6 +16,8 @@ uniform float rotation_turns = 0.0;
 uniform vec4 fill_color : source_color = vec4(1.0);
 uniform vec2 center = vec2(0.0); // shape centre in the node's local space
 uniform float blur = 0.0;        // CSS blur radius (box-shadow / filter: blur); sigma = blur / 2
+uniform float border_width = 0.0; // CSS border, drawn inside the shape's edge
+uniform vec4 border_color : source_color = vec4(0.0);
 
 varying vec2 local;
 
@@ -81,5 +83,14 @@ void fragment() {
 	} else {
 		cover = clamp(0.5 - d / max(aa, 1e-4), 0.0, 1.0);
 	}
-	COLOR = vec4(fill_color.rgb, fill_color.a * cover) * COLOR;
+	if (border_width > 0.0 && blur <= 0.0) {
+		// Fill inside, border band between the edge and border_width in.
+		float inner = clamp(0.5 - (d + border_width) / max(aa, 1e-4), 0.0, 1.0);
+		vec4 f = vec4(fill_color.rgb * fill_color.a, fill_color.a) * inner;
+		vec4 b = vec4(border_color.rgb * border_color.a, border_color.a) * (cover - inner);
+		vec4 c = f + b;
+		COLOR = vec4(c.a > 0.0 ? c.rgb / c.a : vec3(0.0), c.a) * COLOR;
+	} else {
+		COLOR = vec4(fill_color.rgb, fill_color.a * cover) * COLOR;
+	}
 }

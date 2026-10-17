@@ -13,6 +13,12 @@ const CREAM := Color("#ece5da")
 const INK := Color("#111111")
 const BLACK := Color("#010101")
 
+# Japanese secondary type (brand.ts JP), Wipeout/Designers Republic style.
+const JP := {
+	"mh": "ミニマル・ヒューマンズ", "scf": "ストーリー・コンテキスト・フレームワーク", "presents": "提供",
+	"story": "物語文脈", "boot": "起動", "ready": "準備完了", "warning": "警告", "decoding": "解読中", "signal": "信号",
+}
+
 const W := 1920.0
 const H := 1080.0
 const FPS := 30.0
@@ -35,6 +41,11 @@ const MH_SHORT_M := [0, 1, 2]
 const MH_SHORT_WORDS := [3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
 const MH_SHORT_CODE := [16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30]
 const SCF_MARK_EDGES := [0, 1, 2]
+const SCF_MARK := {
+	edges = [0, 1, 2], discS = 3, discC = 12, discF = 13,
+	nodes = [4, 5, 6, 7, 8, 9, 10, 11, 14, 15],
+	S = [16, 17], C = [18, 19], F = [20, 21],
+}
 const SCF_FULL := {
 	cloud = 0,
 	story = [1, 2, 3, 4, 5], context = [6, 7, 8, 9, 10, 11, 12], framework = [13, 14, 15, 16, 17, 18, 19, 20, 21],
@@ -63,7 +74,14 @@ static func font(family: String, weight := 400) -> FontFile:
 		"unbounded": "unbounded-latin-%d-normal.woff2", "mono": "jetbrains-mono-latin-%d-normal.woff2",
 		"archivo": "archivo-black-latin-%d-normal.woff2", "michroma": "michroma-latin-%d-normal.woff2",
 	}
-	return MotionFonts.font("res://demo/assets/fonts/" + (files[family] as String) % weight)
+	if family == "jp":
+		return MotionFonts.font("res://demo/assets/fonts/noto-jp-%s.woff2" % ("Black" if weight >= 700 else "Regular"))
+	var f := MotionFonts.font("res://demo/assets/fonts/" + (files[family] as String) % weight)
+	# Japanese characters inside latin text fall back to the Noto JP subset, as in the browser.
+	var jp := MotionFonts.font("res://demo/assets/fonts/noto-jp-%s.woff2" % ("Black" if weight >= 700 else "Regular"))
+	if not f.fallbacks.has(jp):
+		f.fallbacks = [jp]
+	return f
 
 
 ## Remotion springAt(f, fps)(at, damping, stiffness, mass).

@@ -38,6 +38,11 @@ const SHADER := preload("res://addons/motion_kit/shaders/motion_shape.gdshader")
 ## Soft edge: CSS blur radius in pixels (box-shadow blur, filter: blur). 0 = sharp.
 @export var blur := 0.0:
 	set(v): blur = v; _sync()
+## CSS border inside the edge (RECT and CIRCLE): width in pixels and colour.
+@export var border_width := 0.0:
+	set(v): border_width = v; _sync()
+@export var border_color := Color.BLACK:
+	set(v): border_color = v; _sync()
 ## Where the node origin sits on the shape: (0.5, 0.5) centre, (0, 0) top-left.
 @export var anchor := Vector2(0.5, 0.5):
 	set(v): anchor = v; queue_redraw()
@@ -89,6 +94,8 @@ func _sync() -> void:
 	_mat.set_shader_parameter("dash_fill", dash_fill)
 	_mat.set_shader_parameter("fill_color", color)
 	_mat.set_shader_parameter("blur", blur)
+	_mat.set_shader_parameter("border_width", border_width)
+	_mat.set_shader_parameter("border_color", border_color)
 	queue_redraw()
 
 

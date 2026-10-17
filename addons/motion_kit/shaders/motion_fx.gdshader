@@ -15,8 +15,22 @@ uniform float brightness = 1.0;
 uniform float pixel_size = 0.0;                     // 0 = off
 uniform float goo_blur = 0.0;                       // pixels; 0 = off
 uniform float goo_sharp = 22.0;
+uniform sampler2D blur_tex : filter_linear;          // horizontally blurred content (first pass)
+uniform float blur_sigma = 0.0;                     // sigma of that pass, pixels; 0 = no blurred texture
+uniform bool blur_main = false;                     // CSS filter: blur() on the content itself
+uniform float glow = 0.0;                           // > 0: blurred copy drawn under the content
+uniform float glow_strength = 1.0;
+uniform float shadow_blur = 0.0;                    // CSS text/box-shadow under the content
+uniform vec4 shadow_color : source_color = vec4(0.0);
+uniform vec2 shadow_offset = vec2(0.0);
 uniform vec4 ghost_a : source_color = vec4(1.0, 0.41, 0.54, 1.0);   // red ghost tint (Remotion's feColorMatrix, in sRGB)
 uniform vec4 ghost_b : source_color = vec4(0.38, 1.0, 1.0, 1.0);    // cyan ghost tint
+
+varying vec4 v_mod;
+
+void vertex() {
+	v_mod = COLOR;   // modulate x self_modulate, applied at the end (premultiplied)
+}
 
 vec4 sample_px(sampler2D tex, vec2 px) {
 	vec2 uv = px / frame_size;
@@ -37,6 +51,29 @@ vec4 goo(sampler2D tex, vec2 px) {
 	return vec4(straight * t, t);   // premultiplied, like every other sample
 }
 
+// Second (vertical) pass of the separable Gaussian, on the horizontally
+// blurred texture, using pairs of taps merged into bilinear fetches.
+vec4 vblur(vec2 px) {
+	vec2 uv = px / frame_size;
+	if (blur_sigma <= 0.01) return vec4(0.0);
+	float texel = 1.0 / frame_size.y;
+	float s = blur_sigma;
+	int n = int(ceil(s * 3.0));
+	vec4 acc = texture(blur_tex, uv);
+	float wsum = 1.0;
+	for (int i = 1; i <= n; i += 2) {
+		float o1 = float(i);
+		float o2 = float(i + 1);
+		float w1 = exp(-o1 * o1 / (2.0 * s * s));
+		float w2 = exp(-o2 * o2 / (2.0 * s * s));
+		float w = w1 + w2;
+		float o = (o1 * w1 + o2 * w2) / max(w, 1e-6);
+		acc += (texture(blur_tex, uv + vec2(0.0, o * texel)) + texture(blur_tex, uv - vec2(0.0, o * texel))) * w;
+		wsum += 2.0 * w;
+	}
+	return acc / wsum;
+}
+
 vec4 fetch(sampler2D tex, vec2 px) {
 	if (pixel_size > 0.5) px = (floor(px / pixel_size) + 0.5) * pixel_size;
 	return goo_blur > 0.0 ? goo(tex, px) : sample_px(tex, px);
@@ -49,7 +86,7 @@ void fragment() {
 		int band = clamp(int(floor(UV.y * float(slice_count))), 0, slice_count - 1);
 		off = slice_offsets[band];
 	}
-	vec4 m = fetch(TEXTURE, px - vec2(off, 0.0));   // premultiplied
+	vec4 m = blur_main ? vblur(px - vec2(off, 0.0)) : fetch(TEXTURE, px - vec2(off, 0.0));   // premultiplied
 	vec3 rgb = m.rgb;
 	float a = m.a;
 	if (split > 0.5) {
@@ -63,5 +100,16 @@ void fragment() {
 		rgb = rgb + ghosts * (1.0 - a);
 		a = a + ga * (1.0 - a);
 	}
-	COLOR = vec4(rgb * brightness, a);
+	// Glow and shadow sit under the content (premultiplied "over").
+	if (glow > 0.01) {
+		vec4 g = vblur(px) * glow_strength;
+		rgb = rgb + g.rgb * (1.0 - a);
+		a = a + min(g.a, 1.0) * (1.0 - a);
+	}
+	if (shadow_blur > 0.0 || shadow_color.a > 0.0) {
+		float sa = (shadow_blur > 0.01 ? vblur(px - shadow_offset).a : sample_px(TEXTURE, px - shadow_offset).a) * shadow_color.a;
+		rgb = rgb + shadow_color.rgb * sa * (1.0 - a);
+		a = a + sa * (1.0 - a);
+	}
+	COLOR = vec4(rgb * brightness * v_mod.rgb * v_mod.a, a * v_mod.a);
 }

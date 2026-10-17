@@ -85,12 +85,18 @@ func get_text_size() -> Vector2:
 	return Vector2(_width, _height)
 
 
-func _line_box() -> float:
-	if not font:
-		return font_size
-	var asc := font.get_ascent(int(round(font_size)))
-	var desc := font.get_descent(int(round(font_size)))
-	return font_size * line_height if line_height > 0.0 else asc + desc
+## Ascent and descent of one font face, NOT including its fallbacks (Godot's
+## Font.get_ascent() takes the maximum over the fallback chain; browsers size
+## a line only from the faces its glyphs actually use).
+static func _face_metrics(ts: TextServer, rid: RID, isize: int) -> Vector2:
+	return Vector2(ts.font_get_ascent(rid, isize), ts.font_get_descent(rid, isize))
+
+
+func _primary_metrics(ts: TextServer, isize: int) -> Vector2:
+	var rids := font.get_rids()
+	if rids.is_empty():
+		return Vector2(font.get_ascent(isize), font.get_descent(isize))
+	return _face_metrics(ts, rids[0], isize)
 
 
 func _layout() -> void:
@@ -106,10 +112,7 @@ func _layout() -> void:
 	var ts := TextServerManager.get_primary_interface()
 	var isize := int(round(font_size))
 	var k := font_size / float(isize)          # fractional sizes scale the integer-size glyphs
-	var asc := font.get_ascent(isize) * k
-	var desc := font.get_descent(isize) * k
-	var box := _line_box()
-	var half_leading := (box - (asc + desc)) * 0.5
+	var prim := _primary_metrics(ts, isize) * k
 	var track := tracking * font_size
 	var src := text.to_upper() if uppercase else text
 	var lines := src.split("\n")
@@ -122,15 +125,30 @@ func _layout() -> void:
 		var glyphs: Array = ts.shaped_text_get_glyphs(rid)
 		var x := 0.0
 		var recs: Array = []
+		# "normal" line height: the primary face is the strut; faces used by
+		# fallback glyphs can only make the line taller.
+		var asc := prim.x
+		var desc := prim.y
+		var seen := {}
 		for g in glyphs:
 			var adv: float = float(g.advance) * k
 			var off: Vector2 = (g.get("offset", Vector2.ZERO) as Vector2) * k
 			var ci: int = char_base + int(g.start)
 			recs.append({font_rid = g.font_rid, size = isize, index = g.index, pos = Vector2(x, 0) + off, adv = adv, char_i = ci, k = k})
+			if line_height <= 0.0 and not seen.has(g.font_rid):
+				seen[g.font_rid] = true
+				var m := _face_metrics(ts, g.font_rid, isize) * k
+				asc = maxf(asc, m.x)
+				desc = maxf(desc, m.y)
 			x += adv
 			# CSS letter-spacing goes after each character.
 			if adv != 0.0:
 				x += track
+		var box := asc + desc
+		var baseline := y + asc
+		if line_height > 0.0:
+			box = font_size * line_height
+			baseline = y + (box - (prim.x + prim.y)) * 0.5 + prim.x   # half-leading on the primary face
 		var line_w := x
 		var ox := 0.0
 		var avail := box_width
@@ -139,10 +157,10 @@ func _layout() -> void:
 				ox = (avail - line_w) * 0.5 if avail > 0.0 else -line_w * 0.5
 			HORIZONTAL_ALIGNMENT_RIGHT:
 				ox = (avail - line_w) if avail > 0.0 else -line_w
-		var baseline := y + half_leading + asc
 		for r in recs:
 			r.pos += Vector2(ox, baseline)
 			r.line_top = y
+			r.line_box = box
 			_glyphs.append(r)
 		_width = maxf(_width, line_w)
 		y += box
@@ -157,7 +175,6 @@ func _draw() -> void:
 		return
 	var ts := TextServerManager.get_primary_interface()
 	var ci := get_canvas_item()
-	var box := _line_box()
 	var count := visible_chars if visible_chars >= 0 else 1 << 30
 	for g in _glyphs:
 		var i: int = g.char_i
@@ -176,7 +193,7 @@ func _draw() -> void:
 		if absf(sx) < 1e-6 or absf(sy) < 1e-6:
 			continue
 		var pos: Vector2 = g.pos
-		var pivot := Vector2(pos.x + float(g.adv) * 0.5, float(g.line_top) + box * 0.5)
+		var pivot := Vector2(pos.x + float(g.adv) * 0.5, float(g.line_top) + float(g.line_box) * 0.5)
 		var xf := Transform2D(0.0, Vector2(float(o.get("tx", 0.0)), float(o.get("ty", 0.0))) + pivot) \
 			* Transform2D(deg_to_rad(float(o.get("rot", 0.0))), Vector2.ZERO) \
 			* Transform2D(Vector2(sx, 0), Vector2(0, sy), Vector2.ZERO) \

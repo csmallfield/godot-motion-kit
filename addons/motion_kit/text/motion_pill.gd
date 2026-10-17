@@ -23,6 +23,11 @@ extends Node2D
 	set(v): corner_radius = v; _sync()
 @export var tracking := 0.0:
 	set(v): tracking = v; _sync()
+## CSS border (added outside the padding, like content-box sizing).
+@export var border_width := 0.0:
+	set(v): border_width = v; _sync()
+@export var border_color := Color.BLACK:
+	set(v): border_color = v; _sync()
 
 var _bg: MotionShape
 var _label: MotionText
@@ -41,7 +46,7 @@ func _init() -> void:
 func get_box_size() -> Vector2:
 	if not font:
 		return Vector2.ZERO
-	return _label.get_text_size() + padding * 2.0
+	return _label.get_text_size() + padding * 2.0 + Vector2.ONE * border_width * 2.0
 
 
 func _sync() -> void:
@@ -56,4 +61,6 @@ func _sync() -> void:
 	_bg.size = sz
 	_bg.radius = minf(corner_radius, sz.y * 0.5)
 	_bg.color = background
-	_label.position = -sz * 0.5 + padding
+	_bg.border_width = border_width
+	_bg.border_color = border_color
+	_label.position = -sz * 0.5 + padding + Vector2.ONE * border_width

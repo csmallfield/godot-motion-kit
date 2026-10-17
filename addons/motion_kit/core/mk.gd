@@ -187,6 +187,27 @@ static func timecode(f: float, fps := 30.0) -> String:
 	return "%02d:%02d:%02d:%02d" % [floori(secs / 3600.0), floori(secs / 60.0) % 60, secs % 60, fi % rate]
 
 
+# ------------------------------------------------------------------ 3D projection helpers
+# For hand-rolled perspective (wireframes, tunnels, constellations drawn in 2D),
+# as the SCF "Vector Track" intro does. For real 3D, use Godot's 3D nodes.
+
+static func rot_x(p: Vector3, a: float) -> Vector3:
+	return Vector3(p.x, p.y * cos(a) - p.z * sin(a), p.y * sin(a) + p.z * cos(a))
+
+
+static func rot_y(p: Vector3, a: float) -> Vector3:
+	return Vector3(p.x * cos(a) + p.z * sin(a), p.y, -p.x * sin(a) + p.z * cos(a))
+
+
+## Pinhole projection of `p` seen from z = cam_z: returns Vector3(screen x,
+## screen y, depth), or null when the point is closer than `near`.
+static func project(p: Vector3, cam_z: float, focal: float, centre: Vector2, near := 40.0) -> Variant:
+	var dz := p.z - cam_z
+	if dz < near:
+		return null
+	return Vector3(centre.x + p.x * focal / dz, centre.y + p.y * focal / dz, dz)
+
+
 # ------------------------------------------------------------------ cubic bezier solver
 
 class _Bezier:
