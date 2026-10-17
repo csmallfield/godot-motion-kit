@@ -90,7 +90,13 @@ func _hide_all() -> void:
 		c.visible = false
 
 
+const STYLES := ["circle", "bars", "clock", "fade", "glitch", "crt"]
+
+
 func _run(style: String, origin: Vector2, reverse: bool) -> void:
+	if not STYLES.has(style):
+		push_warning("MotionTransition: unknown style '%s', using fade" % style)
+		style = "fade"
 	var size := get_viewport().get_visible_rect().size
 	_hide_all()
 	var elapsed := 0.0

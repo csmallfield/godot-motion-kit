@@ -9,7 +9,7 @@ extends RefCounted
 static var _cache := {}
 
 
-static func load(path: String, msdf := false) -> FontFile:
+static func font(path: String, msdf := false) -> FontFile:
 	var key := "%s|%s" % [path, msdf]
 	if _cache.has(key):
 		return _cache[key]

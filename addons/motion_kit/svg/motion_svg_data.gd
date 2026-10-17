@@ -39,6 +39,8 @@ static func from_string(svg_text: String, source_path := "") -> MotionSvgData:
 	return MotionSvgParser.parse(svg_text, source_path)
 
 
+## Parse an .svg from disk. For tools and editor use: exported games do not
+## contain the raw .svg, so load() the file imported as Motion SVG instead.
 static func from_file(path: String) -> MotionSvgData:
 	var text := FileAccess.get_file_as_string(path)
 	assert(text != "", "MotionSvgData: cannot read %s" % path)

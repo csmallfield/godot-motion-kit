@@ -2,7 +2,9 @@
 ## A group whose content is rendered offscreen and drawn back through an
 ## effect stack: slice glitch, RGB split, pixelate, brightness and goo.
 ## Put nodes under `content` (children placed under a MotionFX in a scene are
-## moved there when it enters the tree).
+## moved there when the game runs; in the editor they draw without effects).
+## Slices animate with the frame when the FX is inside a MotionComposition;
+## elsewhere call `_frame(f)` yourself.
 ##
 ## Slice offsets follow the SCF Remotion `Sliced` component exactly: band i of
 ## n moves by (r - 0.5) * 2 * amount * big, with r = MK.rand(seed*97 + i*13 +
@@ -40,6 +42,7 @@ var _vp: SubViewport
 var _view: Sprite2D
 var _mat: ShaderMaterial
 var _frame_f := 0.0
+var _offs := PackedFloat32Array()
 
 
 func _init() -> void:
@@ -63,9 +66,11 @@ func _init() -> void:
 
 
 func _ready() -> void:
-	# Adopt children authored under this node in a scene.
-	for c in get_children():
-		if c != _vp and c != _view:
+	# Adopt children authored under this node in a scene. Not in the editor:
+	# nodes moved into an internal viewport would not be saved with the scene.
+	# There they draw normally, without the effects.
+	if not Engine.is_editor_hint():
+		for c in get_children():
 			c.reparent(content, false)
 	_resize()
 	_apply()
@@ -88,11 +93,11 @@ func _frame(f: float) -> void:
 
 
 ## Remotion `Sliced` parameters in one call: amount and split in pixels.
-func set_slices(amount: float, split: float, count := 18, seed := 1.0) -> void:
+func set_slices(amount: float, split: float, count := 18, seed_value := 1.0) -> void:
 	slice_amount = amount
 	slice_split = split
 	slice_count = count
-	slice_seed = seed
+	slice_seed = seed_value
 	_apply()
 
 
@@ -106,15 +111,15 @@ func _apply() -> void:
 	_mat.set_shader_parameter("frame_size", size)
 	var quiet := slice_amount < 0.5 and slice_split < 0.5
 	var n := clampi(slice_count, 1, MAX_SLICES)
-	var offs := PackedFloat32Array()
-	offs.resize(MAX_SLICES)
+	if _offs.size() != MAX_SLICES:
+		_offs.resize(MAX_SLICES)
 	if not quiet:
 		for i in n:
 			var r := MK.rand(slice_seed * 97.0 + i * 13.0 + floorf(_frame_f / 2.0) * 7.0)
 			var big := 1.0 if r > 0.8 else (0.35 if r > 0.55 else 0.05)
-			offs[i] = (r - 0.5) * 2.0 * slice_amount * big
+			_offs[i] = (r - 0.5) * 2.0 * slice_amount * big
 	_mat.set_shader_parameter("slice_count", 0 if quiet else n)
-	_mat.set_shader_parameter("slice_offsets", offs)
+	_mat.set_shader_parameter("slice_offsets", _offs)
 	_mat.set_shader_parameter("split", 0.0 if quiet else slice_split)
 	_mat.set_shader_parameter("brightness", brightness)
 	_mat.set_shader_parameter("pixel_size", pixel_size)

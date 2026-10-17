@@ -26,8 +26,10 @@ var show_fn: Callable
 ## Build cells from an SVG: `cols` cells across; rows follow the aspect ratio.
 static func cells_from_svg(data: MotionSvgData, grid_cols: int, palette: Array[Color], alpha_threshold := 110.0 / 255.0) -> Dictionary:
 	var vb := data.view_box
-	var W := int(round(vb.size.x * 10.0))
-	var H := int(round(vb.size.y * 10.0))
+	# About 60 source pixels per cell (the Remotion grids came from 10x a ~96-unit
+	# viewBox), independent of how large the viewBox is.
+	var W := clampi(grid_cols * 60, 64, 4096)
+	var H := maxi(1, int(round(W * vb.size.y / vb.size.x)))
 	var img := Image.new()
 	img.load_svg_from_string(data.to_svg_string(W, H), 1.0)
 	img.convert(Image.FORMAT_RGBAF)
@@ -50,6 +52,8 @@ static func cells_from_svg(data: MotionSvgData, grid_cols: int, palette: Array[C
 					var w := wx * wy
 					acc += Vector4(c.r * c.a, c.g * c.a, c.b * c.a, c.a) * w
 					wsum += w
+			if wsum <= 0.0:
+				continue
 			acc /= wsum
 			if acc.w > alpha_threshold:
 				# Un-premultiply, then snap to the palette.

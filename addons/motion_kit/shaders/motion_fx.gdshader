@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
-// MotionFX post stack, applied to the group's rendered content:
+// MotionFX post stack, applied to the group's rendered content. The viewport
+// texture holds premultiplied colour, so samples are used as they come.
 //   slice glitch: horizontal bands shifted by per-band offsets (set from MK.rand on the CPU)
 //   RGB split: red and cyan ghosts, screen-blended under the content
 //   pixelate, brightness (CSS brightness()), goo (alpha threshold after blur)
@@ -32,8 +33,8 @@ vec4 goo(sampler2D tex, vec2 px) {
 	a /= 9.0;
 	float t = clamp(a * goo_sharp - goo_sharp * 0.45, 0.0, 1.0);
 	vec4 c = sample_px(tex, px);
-	vec3 rgb = c.a > 0.001 ? c.rgb : vec3(0.0);
-	return vec4(rgb, t);
+	vec3 straight = c.a > 0.001 ? c.rgb / c.a : vec3(0.0);
+	return vec4(straight * t, t);   // premultiplied, like every other sample
 }
 
 vec4 fetch(sampler2D tex, vec2 px) {
@@ -48,14 +49,15 @@ void fragment() {
 		int band = clamp(int(floor(UV.y * float(slice_count))), 0, slice_count - 1);
 		off = slice_offsets[band];
 	}
-	vec4 m = fetch(TEXTURE, px - vec2(off, 0.0));
-	vec3 rgb = m.rgb * m.a;
+	vec4 m = fetch(TEXTURE, px - vec2(off, 0.0));   // premultiplied
+	vec3 rgb = m.rgb;
 	float a = m.a;
 	if (split > 0.5) {
 		vec4 r = fetch(TEXTURE, px - vec2(off - split, 0.0));
 		vec4 c = fetch(TEXTURE, px - vec2(off + split, 0.0));
-		vec3 gr = vec3(r.r, ghost_a.g, ghost_a.b) * r.a;
-		vec3 gc = vec3(ghost_b.r, c.g, c.b) * c.a;
+		// Tinted ghosts, premultiplied: the kept channel is already scaled by alpha.
+		vec3 gr = vec3(r.r, ghost_a.g * r.a, ghost_a.b * r.a);
+		vec3 gc = vec3(ghost_b.r * c.a, c.g, c.b);
 		vec3 ghosts = 1.0 - (1.0 - gr) * (1.0 - gc);     // screen
 		float ga = 1.0 - (1.0 - r.a) * (1.0 - c.a);
 		rgb = rgb + ghosts * (1.0 - a);

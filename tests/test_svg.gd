@@ -115,3 +115,22 @@ func test_pixel_grid_matches_remotion_cells() -> String:
 		if score < 0.9:
 			return "grid %s agreement %.2f" % [key, score]
 	return ""
+
+func test_gradient_defs_survive() -> String:
+	var d := MotionSvgData.from_string('<svg viewBox="0 0 10 10"><defs><linearGradient id="g"><stop offset="0" stop-color="#f00"/><stop offset="1" stop-color="#00f"/></linearGradient></defs><rect width="10" height="10" fill="url(#g)"/></svg>')
+	if d.defs.count("<stop") != 2 or not d.defs.contains("</linearGradient>"):
+		return "defs: %s" % d.defs
+	return "" if d.parts[0].gradient else "part not marked as gradient"
+
+func test_colours_and_opacity() -> String:
+	var d := MotionSvgData.from_string('<svg viewBox="0 0 10 10"><rect fill="green" width="1" height="1"/><rect fill="rgb(255 0 0 / 50%)" width="1" height="1"/><rect fill="#fff" fill-opacity="50%" width="1" height="1"/><g display="none"><rect width="1" height="1"/></g><rect fill="gray" transform="translate()" width="1" height="1"/></svg>')
+	if d.parts.size() != 4: return "%d parts (hidden group should be skipped)" % d.parts.size()
+	if not (d.parts[0].fill as Color).is_equal_approx(Color("#008000")): return "green is %s" % d.parts[0].fill
+	if not (d.parts[1].fill as Color).is_equal_approx(Color(1, 0, 0, 0.5)): return "rgb() is %s" % d.parts[1].fill
+	if not is_equal_approx((d.parts[2].fill as Color).a, 0.5): return "fill-opacity %s" % d.parts[2].fill
+	if not (d.parts[3].fill as Color).is_equal_approx(Color("#808080")): return "gray is %s" % d.parts[3].fill
+	return ""
+
+func test_empty_input() -> String:
+	var d := MotionSvgData.from_string("")
+	return "" if d.parts.is_empty() and d.warnings.size() == 1 else "empty input"

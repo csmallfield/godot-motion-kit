@@ -1,6 +1,6 @@
 # Godot Motion Kit
 
-Motion graphics for Godot 4.5+: compositions that are a pure function of the frame,
+Motion graphics for Godot (written for 4.5+, tested on 4.7.2): compositions that are a pure function of the frame,
 Remotion-exact springs and easing, part-level SVG logo animation, kinetic type,
 glitch and CRT effects, scene transitions, and spring feedback for UI.
 It is pure GDScript, with no GDExtension and no build step.
@@ -11,8 +11,8 @@ the renders frame by frame:
 | Intro | Frames | Mean SSIM vs Remotion | Worst frame |
 | --- | --- | --- | --- |
 | E1 Supergraphic | 420 | 0.9987 | 0.9975 |
-| D1 Signal, all frames | 420 | 0.943 | 0.175 (TV static) |
-| D1 Signal, excluding the 48 frames of random TV static | 372 | 0.984 | 0.934 |
+| D1 Signal, all frames | 420 | 0.945 | 0.175 (TV static) |
+| D1 Signal, excluding the 48 frames of random TV static | 372 | 0.987 | 0.934 |
 
 Random static can't match pixel for pixel, so those frames are reported separately.
 `tools/compare/compare.py` reproduces all of these numbers.

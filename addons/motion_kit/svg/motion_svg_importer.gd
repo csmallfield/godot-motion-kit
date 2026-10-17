@@ -26,6 +26,11 @@ func _get_resource_type() -> String:
 	return "Resource"
 
 
+func _get_format_version() -> int:
+	# Bump when the parser changes, so imported SVGs are rebuilt.
+	return 2
+
+
 func _get_priority() -> float:
 	# Below Godot's texture importer (1.0), so plain SVG icons stay textures.
 	return 0.5

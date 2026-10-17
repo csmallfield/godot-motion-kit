@@ -34,6 +34,9 @@ enum Clock { PROCESS, AUDIO, MANUAL }
 @export var markers: Dictionary = {}
 ## Offset when nested inside another composition: this one sees parent f - start.
 @export var start := 0.0
+## When nested: hide outside [0, duration) of its own time, like a Remotion
+## <Sequence>; `loop` then repeats it within the parent's time.
+@export var hide_outside := true
 
 @export_group("Layout")
 ## Reference size the composition is authored in (1920x1080 for the SCF pieces).
@@ -66,7 +69,9 @@ func _ready() -> void:
 		return
 	if _is_nested():
 		return
-	process_mode = Node.PROCESS_MODE_ALWAYS
+	# Pause-safe by default, unless the user chose a process mode.
+	if process_mode == Node.PROCESS_MODE_INHERIT:
+		process_mode = Node.PROCESS_MODE_ALWAYS
 	if fit_to_viewport:
 		get_viewport().size_changed.connect(_fit)
 		_fit()
@@ -79,23 +84,12 @@ func _ready() -> void:
 func play(from := -1.0) -> void:
 	if from >= 0.0:
 		seek(from)
-	_dir = 1.0
-	_stop_at = -1.0
-	playing = true
-	# The first drawn frame shows the current frame rather than one step past it,
-	# so a Movie Maker render's first image is frame 0, as in Remotion.
-	_hold_first = true
-	if audio:
-		audio.play(frame / fps)
+	_start(1.0, -1.0, &"")
 
 
 ## Play backwards to frame 0 (or to `to`): a mirrored outro for free.
 func play_backwards(to := 0.0) -> void:
-	_dir = -1.0
-	_stop_at = to
-	playing = true
-	if audio:
-		audio.stop()   # sound does not run backwards
+	_start(-1.0, maxf(0.0, to), &"")
 
 
 ## Play from marker `a` to marker `b` (or frame numbers), forwards or backwards.
@@ -103,10 +97,23 @@ func play_segment(a: Variant, b: Variant) -> void:
 	var fa := _marker(a)
 	var fb := _marker(b)
 	seek(fa)
-	_dir = 1.0 if fb >= fa else -1.0
-	_stop_at = fb
-	_segment = StringName(str(b))
+	_start(1.0 if fb >= fa else -1.0, fb, StringName(str(b)))
+
+
+func _start(dir: float, stop_at: float, segment: StringName) -> void:
+	_dir = dir
+	_stop_at = stop_at
+	_segment = segment
+	_time = frame / fps
 	playing = true
+	# The first drawn frame shows the current frame rather than one step past it,
+	# so a Movie Maker render's first image is frame 0, as in Remotion.
+	_hold_first = true
+	if audio:
+		if dir > 0.0:
+			audio.play(frame / fps)
+		else:
+			audio.stop()   # sound does not run backwards
 
 
 func stop() -> void:
@@ -118,7 +125,7 @@ func stop() -> void:
 func seek(f: float) -> void:
 	_time = f / fps
 	render(f)
-	if clock == Clock.AUDIO and audio and audio.playing:
+	if audio and audio.playing:
 		audio.seek(f / fps)
 
 
@@ -133,7 +140,7 @@ func render(f: float) -> void:
 
 func _dispatch(node: Node, f: float) -> void:
 	if node is MotionComposition:
-		node.render(f - node.start)
+		node._render_nested(f - node.start)
 		return
 	if node.has_method(&"_frame"):
 		node.call(&"_frame", f)
@@ -142,8 +149,18 @@ func _dispatch(node: Node, f: float) -> void:
 		_dispatch(c, f)
 
 
+func _render_nested(local: float) -> void:
+	if loop and duration > 0.0:
+		local = fposmod(local, duration)
+	if hide_outside:
+		visible = local >= 0.0 and local < duration
+		if not visible:
+			return
+	render(local)
+
+
 func _process(delta: float) -> void:
-	if Engine.is_editor_hint() or not playing:
+	if Engine.is_editor_hint() or not playing or clock == Clock.MANUAL:
 		return
 	if _hold_first:
 		_hold_first = false
@@ -154,6 +171,7 @@ func _process(delta: float) -> void:
 	if clock == Clock.AUDIO and audio and audio.playing and not _movie:
 		var t := audio.get_playback_position() + AudioServer.get_time_since_last_mix() - AudioServer.get_output_latency()
 		f = maxf(0.0, t) * fps
+		_time = f / fps   # so time carries on smoothly if the sound stops
 	else:
 		var d := delta
 		if ignore_time_scale and Engine.time_scale > 0.0:
@@ -161,25 +179,30 @@ func _process(delta: float) -> void:
 		_time += d * speed * _dir
 		# Snap away float drift so movie renders land on exact frames.
 		f = snappedf(_time * fps, 1e-6)
-	if _stop_at >= 0.0 and ((_dir > 0.0 and f >= _stop_at) or (_dir < 0.0 and f <= _stop_at)):
-		f = _stop_at
-		playing = false
-		render(f)
+	var forward := _dir * signf(speed) >= 0.0
+	if _stop_at >= 0.0 and ((forward and f >= _stop_at) or (not forward and f <= _stop_at)):
+		_finish_at(_stop_at)
 		var seg := _segment
 		_segment = &""
 		_stop_at = -1.0
 		segment_finished.emit(seg)
 		return
-	if f >= duration:
-		if loop:
-			_time = fmod(f, duration) / fps
-			f = fmod(f, duration)
+	if f >= duration or f < 0.0:
+		if loop and duration > 0.0:
+			f = fposmod(f, duration)
+			_time = f / fps
+			if audio and forward:
+				audio.play(f / fps)
 		else:
-			f = duration
-			playing = false
-			render(f)
+			_finish_at(clampf(f, 0.0, duration))
 			finished.emit()
 			return
+	render(f)
+
+
+func _finish_at(f: float) -> void:
+	_time = f / fps
+	playing = false
 	render(f)
 
 

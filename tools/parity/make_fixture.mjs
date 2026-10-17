@@ -44,6 +44,11 @@ const icases = [
 const ef = { linear: (t) => t, ease: Easing.bezier(0.22, 1, 0.36, 1), ease_in_out: Easing.bezier(0.65, 0, 0.35, 1), ease_in_back: Easing.bezier(0.6, -0.28, 0.735, 0.045), quad: (t) => t * t };
 const ix = Array.from({ length: 161 }, (_, i) => -10 + i);
 for (const c of icases) out.interpolate.push({ ...c, xs: ix, values: ix.map((x) => interpolate(x, c.inputs, c.outputs, { ...clamp, easing: ef[c.easing] })) });
+// Extrapolation: Remotion applies the easing outside the range too.
+out.interpolate_extend = [
+  { inputs: [0, 10], outputs: [0, 1], easing: "quad" },
+  { inputs: [0, 10, 20], outputs: [0, 5, 3], easing: "linear" },
+].map((c) => ({ ...c, xs: ix, values: ix.map((x) => interpolate(x, c.inputs, c.outputs, { extrapolateLeft: "extend", extrapolateRight: "extend", easing: ef[c.easing] })) }));
 
 // The SCF project's own helpers (src/lib/anim.ts), reproduced verbatim.
 const rand = (seed) => { const x = Math.sin(seed * 12.9898 + 78.233) * 43758.5453; return x - Math.floor(x); };

@@ -1,0 +1,5 @@
+# Asset Library and release zips carry only the addon.
+/demo export-ignore
+/tests export-ignore
+/tools export-ignore
+/docs export-ignore

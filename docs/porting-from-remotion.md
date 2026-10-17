@@ -11,6 +11,7 @@ know the handful of places where the browser behaves in ways that aren't obvious
 | `spring({frame: f - at, fps, config})` | `MK.spring(f, at, damping, stiffness, mass, fps)` |
 | `interpolate(f, in, out, {clamp, easing})` | `MK.interp(f, in, out, easing)` (or `MK.map`, eased by default) |
 | `Easing.bezier(a, b, c, d)` | `MK.bezier(a, b, c, d)` |
+| the SCF `ease` curve | `MK.ease_out` (renamed: `ease` would shadow Godot's built-in `ease()`) |
 | `<div style={{position:"absolute", left, top}}>` | a `Node2D` at `(left, top)` |
 | `right: r`, `bottom: b` | `left = 1920 - r - width`, `top = 1080 - b - height` |
 | `transform: scale(s)` on a div (origin = centre) | `MotionShape` with its default centre anchor, `scale = s` |
@@ -23,7 +24,7 @@ know the handful of places where the browser behaves in ways that aren't obvious
 | `filter: brightness(k)` | `modulate = Color(k, k, k)` |
 | `box-shadow: 0 0 30px c` | a `MotionShape` the element's size, `blur = 30` |
 | `{cond && <X/>}` | `x.visible = cond` (build nodes once in `_ready`, toggle per frame) |
-| `<Sequence from={n}>` | a nested `MotionComposition` with `start = n` |
+| `<Sequence from={n} durationInFrames={d}>` | a nested `MotionComposition` with `start = n`, `duration = d` (hidden outside its range) |
 | `<Audio src=...>` | `audio` on the composition |
 
 ## Things that bit, and what to do

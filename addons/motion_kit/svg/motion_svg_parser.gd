@@ -22,12 +22,16 @@ const INHERITED := ["fill", "fill-opacity", "fill-rule", "stroke", "stroke-opaci
 static func parse(text: String, source := "") -> MotionSvgData:
 	var data := MotionSvgData.new()
 	data.source = source
+	if text.strip_edges().is_empty():
+		data.warnings.append("empty SVG")
+		return data
 	var rules := _parse_css(_collect_style_text(text))
 	data.defs = _collect_gradients(text)
 
 	var xml := XMLParser.new()
-	var err := xml.open_buffer(text.to_utf8_buffer())
-	assert(err == OK, "MotionSvgParser: cannot open %s" % source)
+	if xml.open_buffer(text.to_utf8_buffer()) != OK:
+		data.warnings.append("not readable as XML")
+		return data
 
 	# Element state stack: {style, xf, groups, skip, opacity}
 	var stack: Array[Dictionary] = []
@@ -62,8 +66,10 @@ static func parse(text: String, source := "") -> MotionSvgData:
 				state.style = style
 				if attrs.has("transform"):
 					state.xf = (parent.xf as Transform2D) * _parse_transform(attrs.transform)
-				var op := _num(style.get("opacity", "1"), 1.0)
+				var op := _alpha(style.get("opacity", "1"))
 				state.opacity = float(parent.opacity) * op
+				if style.get("display", "") == "none":
+					state.skip = int(state.skip) + 1   # a hidden group hides everything in it
 				if tag == "g" and attrs.has("id"):
 					var gs := PackedStringArray(parent.groups)
 					gs.append(attrs.id)
@@ -85,7 +91,7 @@ static func parse(text: String, source := "") -> MotionSvgData:
 
 # ------------------------------------------------------------------ parts
 
-static func _make_part(tag: String, a: Dictionary, state: Dictionary, data: MotionSvgData) -> Dictionary:
+static func _make_part(tag: String, a: Dictionary, state: Dictionary, _data: MotionSvgData) -> Dictionary:
 	var subs: Array = []   # each: {pts: PackedVector2Array, closed: bool}
 	match tag:
 		"path":
@@ -144,9 +150,9 @@ static func _make_part(tag: String, a: Dictionary, state: Dictionary, data: Moti
 	var stroke_src: String = style.get("stroke", "none")
 	var gradient := fill_src.begins_with("url(") or stroke_src.begins_with("url(")
 	var fill := _color(fill_src, style)
-	fill.a *= _num(style.get("fill-opacity", "1"), 1.0) * op
+	fill.a *= _alpha(style.get("fill-opacity", "1")) * op
 	var stroke := _color(stroke_src, style)
-	stroke.a *= _num(style.get("stroke-opacity", "1"), 1.0) * op
+	stroke.a *= _alpha(style.get("stroke-opacity", "1")) * op
 	var det := absf(xf.x.x * xf.y.y - xf.x.y * xf.y.x)
 	var sw := _num(style.get("stroke-width", "1"), 1.0) * sqrt(det)
 	var rule: String = style.get("fill-rule", "nonzero")
@@ -428,14 +434,14 @@ static func arc_to_cubics(p0: Vector2, rx: float, ry: float, phi_deg: float, lar
 		return Vector2(cx + rx * cos(t) * cp - ry * sin(t) * sp, cy + rx * cos(t) * sp + ry * sin(t) * cp)
 	var dpt := func(t: float) -> Vector2:
 		return Vector2(-rx * sin(t) * cp - ry * cos(t) * sp, -rx * sin(t) * sp + ry * cos(t) * cp)
-	var t := t1
+	var theta := t1
 	for i in segs:
-		var ta := t
-		var tb := t + delta
+		var ta := theta
+		var tb := theta + delta
 		var a: Vector2 = pt.call(ta)
 		var b: Vector2 = pt.call(tb) if i < segs - 1 else p1
 		out.append_array([a + dpt.call(ta) * k, b - dpt.call(tb) * k, b])
-		t = tb
+		theta = tb
 	return out
 
 
@@ -473,11 +479,31 @@ static func _collect_style_text(text: String) -> String:
 	return out
 
 
+## Gradient definitions, re-serialised from the XML stream (a regex cannot
+## match the nesting of <stop/> children reliably).
 static func _collect_gradients(text: String) -> String:
-	var re := RegEx.create_from_string("(?s)<(linearGradient|radialGradient)\\b.*?(</\\1>|/>)")
+	var xml := XMLParser.new()
+	if xml.open_buffer(text.to_utf8_buffer()) != OK:
+		return ""
 	var out := ""
-	for m in re.search_all(text):
-		out += m.get_string() + "\n"
+	var depth := 0   # > 0 while inside a gradient element
+	while xml.read() == OK:
+		var t := xml.get_node_type()
+		if t == XMLParser.NODE_ELEMENT:
+			var tag := _local(xml.get_node_name())
+			if depth == 0 and tag != "linearGradient" and tag != "radialGradient":
+				continue
+			var el := "<" + tag
+			for i in xml.get_attribute_count():
+				el += " %s=\"%s\"" % [_local(xml.get_attribute_name(i)), xml.get_attribute_value(i).xml_escape(true)]
+			if xml.is_empty():
+				out += el + "/>"
+			else:
+				out += el + ">"
+				depth += 1
+		elif t == XMLParser.NODE_ELEMENT_END and depth > 0:
+			out += "</%s>" % _local(xml.get_node_name())
+			depth -= 1
 	return out
 
 
@@ -542,6 +568,14 @@ static func _resolve_style(tag: String, a: Dictionary, parent: Dictionary, rules
 	return s
 
 
+# CSS colour keywords that Godot's (X11) colour table defines differently.
+const CSS_NAMES := {
+	"green": Color("#008000"), "gray": Color("#808080"), "grey": Color("#808080"),
+	"maroon": Color("#800000"), "purple": Color("#800080"), "darkgray": Color("#a9a9a9"),
+	"darkgrey": Color("#a9a9a9"), "lightgray": Color("#d3d3d3"), "lightgrey": Color("#d3d3d3"),
+}
+
+
 static func _color(src: String, style: Dictionary) -> Color:
 	src = src.strip_edges()
 	if src == "" or src == "none" or src == "transparent":
@@ -551,14 +585,37 @@ static func _color(src: String, style: Dictionary) -> Color:
 	if src == "currentColor":
 		src = style.get("color", "#000000")
 	if src.begins_with("rgb"):
-		var n := _numbers(src.substr(src.find("(")))
-		if n.size() >= 3:
-			var pct := "%" in src
-			var k := 100.0 if pct else 255.0
-			return Color(n[0] / k, n[1] / k, n[2] / k, n[3] if n.size() > 3 else 1.0)
+		# rgb(255, 0, 0) · rgb(100% 0% 0%) · rgba(255,0,0,0.5) · rgb(255 0 0 / 50%)
+		var inner := src.substr(src.find("(") + 1).trim_suffix(")")
+		var alpha_part := ""
+		if "/" in inner:
+			alpha_part = inner.get_slice("/", 1)
+			inner = inner.get_slice("/", 0)
+		var comps := inner.replace(",", " ").split(" ", false)
+		if comps.size() >= 3:
+			var ch := PackedFloat64Array()
+			for i in 3:
+				var c: String = comps[i]
+				ch.append(_num(c) / (100.0 if c.ends_with("%") else 255.0))
+			if alpha_part == "" and comps.size() > 3:
+				alpha_part = comps[3]
+			var a := _alpha(alpha_part) if alpha_part != "" else 1.0
+			return Color(ch[0], ch[1], ch[2], a)
 	if src.begins_with("#"):
 		return Color.html(src)
-	return Color.from_string(src, Color.BLACK)
+	var key := src.to_lower()
+	if CSS_NAMES.has(key):
+		return CSS_NAMES[key]
+	return Color.from_string(key, Color.BLACK)
+
+
+## An opacity value: "0.5" or "50%".
+static func _alpha(v: Variant) -> float:
+	var t := str(v).strip_edges()
+	if t.is_empty():
+		return 1.0
+	var n := _num(t, 1.0)
+	return clampf(n / 100.0 if t.ends_with("%") else n, 0.0, 1.0)
 
 
 # ------------------------------------------------------------------ transforms and numbers
@@ -574,20 +631,29 @@ static func _parse_transform(s: String) -> Transform2D:
 				if n.size() == 6:
 					t = Transform2D(Vector2(n[0], n[1]), Vector2(n[2], n[3]), Vector2(n[4], n[5]))
 			"translate":
-				t = Transform2D(0.0, Vector2(n[0], n[1] if n.size() > 1 else 0.0))
+				if n.size() >= 1:
+					t = Transform2D(0.0, Vector2(n[0], n[1] if n.size() > 1 else 0.0))
 			"scale":
+				if n.is_empty():
+					continue
 				var sx: float = n[0]
 				var sy: float = n[1] if n.size() > 1 else sx
 				t = Transform2D(Vector2(sx, 0), Vector2(0, sy), Vector2.ZERO)
 			"rotate":
+				if n.is_empty():
+					continue
 				var r := deg_to_rad(n[0])
 				t = Transform2D(r, Vector2.ZERO)
 				if n.size() == 3:
 					var c := Vector2(n[1], n[2])
 					t = Transform2D(0.0, c) * t * Transform2D(0.0, -c)
 			"skewX":
+				if n.is_empty():
+					continue
 				t = Transform2D(Vector2(1, 0), Vector2(tan(deg_to_rad(n[0])), 1), Vector2.ZERO)
 			"skewY":
+				if n.is_empty():
+					continue
 				t = Transform2D(Vector2(1, tan(deg_to_rad(n[0]))), Vector2(0, 1), Vector2.ZERO)
 		xf = xf * t
 	return xf

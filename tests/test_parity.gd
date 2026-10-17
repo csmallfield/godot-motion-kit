@@ -38,7 +38,7 @@ func test_bezier() -> String:
 	return "" if worst < TOL else "worst %s at %s" % [String.num_scientific(worst), where]
 
 func test_named_curves_match_fixture() -> String:
-	var named := {ease = MK.ease, ease_in_out = MK.ease_in_out, ease_in_back = MK.ease_in_back, ease_out_back = MK.ease_out_back}
+	var named := {ease = MK.ease_out, ease_in_out = MK.ease_in_out, ease_in_back = MK.ease_in_back, ease_out_back = MK.ease_out_back}
 	for c in fx.bezier:
 		if not named.has(c.name):
 			continue
@@ -48,7 +48,7 @@ func test_named_curves_match_fixture() -> String:
 	return ""
 
 func test_interpolate() -> String:
-	var ef := {linear = MK.linear, ease = MK.ease, ease_in_out = MK.ease_in_out, ease_in_back = MK.ease_in_back, quad = MK.ease_in_quad}
+	var ef := {linear = MK.linear, ease = MK.ease_out, ease_in_out = MK.ease_in_out, ease_in_back = MK.ease_in_back, quad = MK.ease_in_quad}
 	var worst := 0.0
 	for c in fx.interpolate:
 		for i in c.xs.size():
@@ -70,4 +70,20 @@ func test_rand_shake_typed() -> String:
 		var t := MK.typed("> verify ............ ok", r[0], 150.0, 120.0)
 		if t != r[1]:
 			return "typed at %s: '%s' vs '%s'" % [r[0], t, r[1]]
+	return ""
+
+func test_interpolate_extend() -> String:
+	var ef := {linear = MK.linear, quad = MK.ease_in_quad}
+	for c in fx.interpolate_extend:
+		for i in c.xs.size():
+			var got := MK.interp(float(c.xs[i]), c.inputs, c.outputs, ef[c.easing], MK.Extrapolate.EXTEND, MK.Extrapolate.EXTEND)
+			if absf(got - float(c.values[i])) > 1e-6:
+				return "%s x=%s: %s vs %s" % [c.easing, c.xs[i], got, c.values[i]]
+	return ""
+
+func test_timecode() -> String:
+	if MK.timecode(61 * 30 + 5) != "00:01:01:05":
+		return MK.timecode(61 * 30 + 5)
+	if MK.timecode(-3) != "00:00:00:00":
+		return MK.timecode(-3)
 	return ""

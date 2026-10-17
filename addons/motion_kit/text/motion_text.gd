@@ -115,7 +115,6 @@ func _layout() -> void:
 	var lines := src.split("\n")
 	var y := 0.0
 	var char_base := 0
-	var line_records: Array = []
 	for line in lines:
 		var tl := TextLine.new()
 		tl.add_string(line, font, isize)

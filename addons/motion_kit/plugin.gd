@@ -22,5 +22,7 @@ func _enable_plugin() -> void:
 
 
 func _disable_plugin() -> void:
-	if ProjectSettings.has_setting("autoload/" + AUTOLOAD):
+	# Only remove the autoload this plugin added (not one the user set up differently).
+	var path := "*res://addons/motion_kit/game/motion_transition.gd"
+	if ProjectSettings.get_setting("autoload/" + AUTOLOAD, "") == path:
 		remove_autoload_singleton(AUTOLOAD)

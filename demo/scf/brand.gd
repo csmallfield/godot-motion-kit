@@ -63,7 +63,7 @@ static func font(family: String, weight := 400) -> FontFile:
 		"unbounded": "unbounded-latin-%d-normal.woff2", "mono": "jetbrains-mono-latin-%d-normal.woff2",
 		"archivo": "archivo-black-latin-%d-normal.woff2", "michroma": "michroma-latin-%d-normal.woff2",
 	}
-	return MotionFonts.load("res://demo/assets/fonts/" + (files[family] as String) % weight)
+	return MotionFonts.font("res://demo/assets/fonts/" + (files[family] as String) % weight)
 
 
 ## Remotion springAt(f, fps)(at, damping, stiffness, mass).

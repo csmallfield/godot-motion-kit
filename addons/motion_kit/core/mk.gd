@@ -28,7 +28,7 @@ static func bezier(x1: float, y1: float, x2: float, y2: float) -> Callable:
 
 
 ## Named curves used throughout the SCF pieces.
-static var ease: Callable = bezier(0.22, 1.0, 0.36, 1.0)          ## Strong ease-out (Remotion `ease` in anim.ts).
+static var ease_out: Callable = bezier(0.22, 1.0, 0.36, 1.0)      ## Strong ease-out (the SCF anim.ts `ease`; renamed so it does not shadow Godot's ease()).
 static var ease_in_out: Callable = bezier(0.65, 0.0, 0.35, 1.0)
 static var ease_in_back: Callable = bezier(0.6, -0.28, 0.735, 0.045)
 static var ease_out_back: Callable = bezier(0.175, 0.885, 0.32, 1.275)
@@ -62,19 +62,18 @@ static func interp(x: float, inputs: Array, outputs: Array, easing: Callable = M
 			Extrapolate.IDENTITY: return x
 	if is_equal_approx(a, b):
 		return oa if x <= a else ob
-	var t := (x - a) / (b - a)
-	if t >= 0.0 and t <= 1.0:
-		t = easing.call(t)
+	# Remotion applies the easing to t outside [0, 1] too when extrapolating.
+	var t: float = easing.call((x - a) / (b - a))
 	return oa + (ob - oa) * t
 
 
 ## `map` from the SCF anim.ts: clamped interpolation, eased with `ease` by default.
-static func map(f: float, inputs: Array, outputs: Array, easing: Callable = MK.ease) -> float:
+static func map(f: float, inputs: Array, outputs: Array, easing: Callable = MK.ease_out) -> float:
 	return interp(f, inputs, outputs, easing)
 
 
 ## 0 → 1 over [start, start + dur], eased.
-static func prog(f: float, start: float, dur := 18.0, easing: Callable = MK.ease) -> float:
+static func prog(f: float, start: float, dur := 18.0, easing: Callable = MK.ease_out) -> float:
 	return interp(f, [start, start + dur], [0.0, 1.0], easing)
 
 
@@ -137,8 +136,8 @@ static func wob(f: float, at: float, k := 0.9, d := 5.0) -> float:
 
 ## Deterministic pseudo-random in [0, 1) for a seed. Same formula as the SCF
 ## Remotion `rand`, so seeded effects line up with the originals.
-static func rand(seed: float) -> float:
-	var x := sin(seed * 12.9898 + 78.233) * 43758.5453
+static func rand(s: float) -> float:
+	var x := sin(s * 12.9898 + 78.233) * 43758.5453
 	return x - floorf(x)
 
 
@@ -180,11 +179,12 @@ static func crt_off(f: float, at: float) -> Dictionary:
 	return {scale = Vector2(x, y), bright = 1.0 - y, dot = dot}
 
 
-## Timecode string HH:MM:SS:FF for frame `f` (the "ON AIR" clocks).
+## Timecode string HH:MM:SS:FF for frame `f` (negative frames read as 0).
 static func timecode(f: float, fps := 30.0) -> String:
-	var fi := int(floorf(f))
-	var s := fi / int(fps)
-	return "00:00:%02d:%02d" % [s, fi % int(fps)]
+	var rate := maxi(1, int(round(fps)))
+	var fi := maxi(0, int(floorf(f)))
+	var secs := floori(fi / float(rate))
+	return "%02d:%02d:%02d:%02d" % [floori(secs / 3600.0), floori(secs / 60.0) % 60, secs % 60, fi % rate]
 
 
 # ------------------------------------------------------------------ cubic bezier solver

@@ -12,7 +12,8 @@
 ##   rot         rotation in degrees about the pivot
 ##   pivot       Vector2 in logo units (default: the part's bbox centre)
 ##   o           opacity 0..1
-##   fill        Color, replaces the part's colour
+##   fill        Color, replaces a single-colour part's colour (parts with both
+##               fill and stroke, or a gradient, are tinted by it instead)
 ##   stroke      Color of the outline (drawn over the fill)
 ##   stroke_width  outline width in screen pixels (non-scaling)
 ##   draw        0..1 of the outline drawn, as a self-drawing line
@@ -39,7 +40,9 @@ extends Node2D
 	set(v):
 		only = v
 		queue_redraw()
-## Show only this region of the logo, in logo units (zero size = whole viewBox).
+## The region of the logo, in logo units, that maps to `width` (zero size =
+## whole viewBox). Like an SVG viewBox with overflow visible: parts outside it
+## still draw, so combine it with `only` or a clipping parent.
 @export var crop := Rect2():
 	set(v):
 		crop = v
@@ -64,6 +67,11 @@ var _overrides := {}
 
 # Raster cache shared by every MotionSvg: "rid:part:bucket" -> ImageTexture
 static var _cache := {}
+static var _cache_bytes := {}
+static var _cache_total := 0
+## Raster cache budget in bytes, shared by every MotionSvg; least recently used
+## rasters are dropped beyond it (they are rebuilt if needed again).
+static var cache_budget := 256 * 1024 * 1024
 # Outline cache: "rid:part:bucket" -> Array[PackedVector2Array]
 static var _outlines := {}
 static var _outline_lengths := {}
@@ -134,6 +142,8 @@ func prewarm() -> void:
 
 static func clear_cache() -> void:
 	_cache.clear()
+	_cache_bytes.clear()
+	_cache_total = 0
 	_outlines.clear()
 	_outline_lengths.clear()
 
@@ -149,9 +159,15 @@ func _kx() -> float:
 	return (width if width > 0.0 else vb.size.x) / vb.size.x
 
 
+## Screen pixels per local unit, including the window's stretch (a 1080p-authored
+## project shown at 4K rasterizes at 4K density).
 func _screen_scale() -> float:
 	var s := get_global_transform_with_canvas().get_scale()
-	return maxf(absf(s.x), absf(s.y))
+	var k := maxf(absf(s.x), absf(s.y))
+	if is_inside_tree():
+		var vs := get_viewport().get_final_transform().get_scale()
+		k *= maxf(absf(vs.x), absf(vs.y))
+	return k
 
 
 func _draw() -> void:
@@ -190,6 +206,8 @@ func _draw() -> void:
 
 		var part_scale := maxf(absf(sx), absf(sy))
 		var dens := px_per_unit * maxf(1.0, part_scale) * oversample
+		# Never ask for a raster wider than the texture limit: clamp density, not size.
+		dens = minf(dens, (MAX_TEX - 8) / maxf(1e-3, maxf(bbox.size.x, bbox.size.y) + p.stroke_width))
 		var bucket := _bucket(dens)
 		var drawing := o.has("draw")
 		var own_colour := _own_colour(p)
@@ -334,7 +352,11 @@ static func _raster_rect(p: Dictionary, bucket: int) -> Rect2:
 func _texture(i: int, bucket: int) -> Texture2D:
 	var key := _key(i, bucket)
 	if _cache.has(key):
-		return _cache[key]
+		# Refresh its place in the LRU order (Dictionaries keep insertion order).
+		var hit: Texture2D = _cache[key]
+		_cache.erase(key)
+		_cache[key] = hit
+		return hit
 	var p: Dictionary = data.parts[i]
 	var r := _raster_rect(p, bucket)
 	var dens := _bucket_density(bucket)
@@ -363,4 +385,12 @@ func _texture(i: int, bucket: int) -> Texture2D:
 	img.generate_mipmaps()
 	var tex := ImageTexture.create_from_image(img)
 	_cache[key] = tex
+	var bytes := int(w * h * 4 * 1.34)
+	_cache_bytes[key] = bytes
+	_cache_total += bytes
+	while _cache_total > cache_budget and _cache.size() > 1:
+		var oldest: String = _cache.keys()[0]
+		_cache_total -= int(_cache_bytes.get(oldest, 0))
+		_cache.erase(oldest)
+		_cache_bytes.erase(oldest)
 	return tex

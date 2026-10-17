@@ -45,6 +45,13 @@ const SHADER := preload("res://addons/motion_kit/shaders/motion_shape.gdshader")
 var _mat: ShaderMaterial
 
 
+# The material is built in code; keep it out of saved scenes and duplicates
+# (a copy then gets its own material from _init instead of sharing this one).
+func _validate_property(property: Dictionary) -> void:
+	if property.name == "material":
+		property.usage &= ~PROPERTY_USAGE_STORAGE
+
+
 func _init() -> void:
 	_mat = ShaderMaterial.new()
 	_mat.shader = SHADER
