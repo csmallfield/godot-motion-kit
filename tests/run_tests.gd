@@ -5,6 +5,7 @@ extends SceneTree
 const SUITES := [
 	"res://tests/test_parity.gd",
 	"res://tests/test_svg.gd",
+	"res://tests/test_game.gd",
 ]
 
 func _init() -> void:

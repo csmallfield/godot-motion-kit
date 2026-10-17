@@ -8,6 +8,10 @@ config/description="Motion graphics for Godot: frame-pure compositions, Remotion
 run/main_scene="res://demo/demo_menu.tscn"
 config/features=PackedStringArray("4.5")
 
+[autoload]
+
+MotionTransition="*res://addons/motion_kit/game/motion_transition.gd"
+
 [display]
 
 window/size/viewport_width=1920
@@ -17,7 +21,7 @@ window/stretch/aspect="keep"
 
 [editor_plugins]
 
-enabled=PackedStringArray()
+enabled=PackedStringArray("res://addons/motion_kit/plugin.cfg")
 
 [rendering]
 
