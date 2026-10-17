@@ -85,18 +85,24 @@ func get_text_size() -> Vector2:
 	return Vector2(_width, _height)
 
 
-## Ascent and descent of one font face, NOT including its fallbacks (Godot's
-## Font.get_ascent() takes the maximum over the fallback chain; browsers size
-## a line only from the faces its glyphs actually use).
-static func _face_metrics(ts: TextServer, rid: RID, isize: int) -> Vector2:
-	return Vector2(ts.font_get_ascent(rid, isize), ts.font_get_descent(rid, isize))
+const _METRIC_SIZE := 2048
+
+## Ascent and descent of one font face at `size` px, as a browser computes
+## them: NOT including the face's fallbacks (Godot's Font.get_ascent() takes
+## the maximum over the fallback chain; browsers size a line only from the
+## faces its glyphs actually use), and each rounded to the nearest pixel
+## (Chromium rounds; FreeType's size metrics round up, which would put every
+## baseline up to a pixel low). The unrounded values come from a large size.
+static func _face_metrics(ts: TextServer, rid: RID, size: float) -> Vector2:
+	var k := size / _METRIC_SIZE
+	return Vector2(roundf(ts.font_get_ascent(rid, _METRIC_SIZE) * k), roundf(ts.font_get_descent(rid, _METRIC_SIZE) * k))
 
 
-func _primary_metrics(ts: TextServer, isize: int) -> Vector2:
+func _primary_metrics(ts: TextServer, size: float) -> Vector2:
 	var rids := font.get_rids()
 	if rids.is_empty():
-		return Vector2(font.get_ascent(isize), font.get_descent(isize))
-	return _face_metrics(ts, rids[0], isize)
+		return Vector2(roundf(font.get_ascent(int(round(size)))), roundf(font.get_descent(int(round(size)))))
+	return _face_metrics(ts, rids[0], size)
 
 
 func _layout() -> void:
@@ -112,7 +118,7 @@ func _layout() -> void:
 	var ts := TextServerManager.get_primary_interface()
 	var isize := int(round(font_size))
 	var k := font_size / float(isize)          # fractional sizes scale the integer-size glyphs
-	var prim := _primary_metrics(ts, isize) * k
+	var prim := _primary_metrics(ts, font_size)
 	var track := tracking * font_size
 	var src := text.to_upper() if uppercase else text
 	var lines := src.split("\n")
@@ -137,7 +143,7 @@ func _layout() -> void:
 			recs.append({font_rid = g.font_rid, size = isize, index = g.index, pos = Vector2(x, 0) + off, adv = adv, char_i = ci, k = k})
 			if line_height <= 0.0 and not seen.has(g.font_rid):
 				seen[g.font_rid] = true
-				var m := _face_metrics(ts, g.font_rid, isize) * k
+				var m := _face_metrics(ts, g.font_rid, font_size)
 				asc = maxf(asc, m.x)
 				desc = maxf(desc, m.y)
 			x += adv
