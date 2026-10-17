@@ -1,4 +1,4 @@
 [gd_scene load_steps=2 format=3]
-[ext_resource type="Script" path="res://demo/tests/svg_draw_check.gd" id="1"]
+[ext_resource type="Script" path="res://tests/visual/svg_draw_check.gd" id="1"]
 [node name="SvgDrawCheck" type="Node2D"]
 script = ExtResource("1")
