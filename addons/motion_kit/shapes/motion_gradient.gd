@@ -1,7 +1,9 @@
 # SPDX-License-Identifier: Apache-2.0
 ## A rectangle filled with a CSS-style gradient: linear, radial, conic or
 ## repeating (stripes such as hazard bands), optionally blended with what is
-## behind it (CSS mix-blend-mode: add, multiply, screen, overlay).
+## behind it (CSS mix-blend-mode multiply, screen, overlay; ADD is a linear
+## dodge, min(1, backdrop + source), through the same formula; it is not the
+## CSS plus-lighter compositing operator).
 ##
 ##   var g := MotionGradient.linear(Vector2(1920, 1080), 105.0, [Color(1,1,1,0), Color.WHITE, Color(1,1,1,0)], [0.4, 0.5, 0.6])
 ##   var hazard := MotionGradient.stripes(Vector2(1920, 54), -45.0, [AMBER, AMBER, BLACK, BLACK], [0, 34, 34, 68])
@@ -14,6 +16,7 @@ enum Kind { LINEAR, RADIAL, CONIC, STRIPES }
 enum Blend { NORMAL, ADD, MULTIPLY, SCREEN, OVERLAY }
 
 const SHADER := preload("res://addons/motion_kit/shaders/motion_gradient.gdshader")
+const BLEND_SHADER := preload("res://addons/motion_kit/shaders/motion_gradient_blend.gdshader")
 const MAX_STOPS := 8
 
 @export var kind := Kind.LINEAR:
@@ -30,7 +33,7 @@ const MAX_STOPS := 8
 @export var colors: PackedColorArray = PackedColorArray([Color.BLACK, Color.WHITE]):
 	set(v): colors = v; _sync()
 ## Stop positions: 0..1 for LINEAR, RADIAL, CONIC; pixels for STRIPES (the
-## last stop is the repeat length).
+## pattern repeats every last - first pixels, as repeating-linear-gradient does).
 @export var positions: PackedFloat32Array = PackedFloat32Array([0.0, 1.0]):
 	set(v): positions = v; _sync()
 ## CSS background-position in pixels: moves the gradient (scrolling stripes).
@@ -42,6 +45,13 @@ const MAX_STOPS := 8
 	set(v): opacity = v; _sync()
 
 var _mat: ShaderMaterial
+# Blended gradients draw through an internal child, after an internal
+# BackBufferCopy: Godot copies the screen once per canvas otherwise, so a
+# blend would read a stale backdrop if anything earlier used the screen. It
+# copies the whole viewport: a RECT copy came out empty under nested
+# transforms in a SubViewport on the Compatibility renderer.
+var _bbc: BackBufferCopy
+var _fill: Node2D
 
 
 static func linear(sz: Vector2, angle_deg: float, cols: Array, pos: Array) -> MotionGradient:
@@ -74,14 +84,35 @@ func _validate_property(property: Dictionary) -> void:
 
 func _init() -> void:
 	_mat = ShaderMaterial.new()
-	_mat.shader = SHADER
-	material = _mat
 	_sync()
+
+
+func _blended() -> bool:
+	return blend != Blend.NORMAL
 
 
 func _sync() -> void:
 	if not _mat:
 		return
+	var want: Shader = BLEND_SHADER if _blended() else SHADER
+	if _mat.shader != want:
+		_mat.shader = want
+	if _blended():
+		if not _fill:
+			_bbc = BackBufferCopy.new()
+			_bbc.copy_mode = BackBufferCopy.COPY_MODE_VIEWPORT
+			add_child(_bbc, false, INTERNAL_MODE_FRONT)
+			_fill = Node2D.new()
+			_fill.draw.connect(_draw_fill)
+			add_child(_fill, false, INTERNAL_MODE_FRONT)
+		_fill.material = _mat
+		material = null
+		_fill.queue_redraw()
+	else:
+		if _fill:
+			_fill.queue_free(); _bbc.queue_free()
+			_fill = null; _bbc = null
+		material = _mat
 	var n := mini(mini(colors.size(), positions.size()), MAX_STOPS)
 	var cols := PackedColorArray()
 	var pos := PackedFloat32Array()
@@ -98,11 +129,17 @@ func _sync() -> void:
 	_mat.set_shader_parameter("stop_count", maxi(n, 1))
 	_mat.set_shader_parameter("stop_colors", cols)
 	_mat.set_shader_parameter("stop_pos", pos)
-	_mat.set_shader_parameter("blend", int(blend))
+	if _blended():
+		_mat.set_shader_parameter("blend", int(blend))
 	_mat.set_shader_parameter("opacity", opacity)
 	queue_redraw()
 
 
-func _draw() -> void:
+func _draw_fill() -> void:
 	if size.x > 0.0 and size.y > 0.0:
+		_fill.draw_rect(Rect2(Vector2.ZERO, size), Color.WHITE)
+
+
+func _draw() -> void:
+	if not _blended() and size.x > 0.0 and size.y > 0.0:
 		draw_rect(Rect2(Vector2.ZERO, size), Color.WHITE)

@@ -51,15 +51,22 @@ vec4 goo(sampler2D tex, vec2 px) {
 	return vec4(straight * t, t);   // premultiplied, like every other sample
 }
 
+// Outside the frame the content is transparent (not the clamped edge pixel).
+vec4 blur_tap(vec2 uv) {
+	if (uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0) return vec4(0.0);
+	return texture(blur_tex, uv);
+}
+
 // Second (vertical) pass of the separable Gaussian, on the horizontally
 // blurred texture, using pairs of taps merged into bilinear fetches.
+// blur_sigma is in texels of that texture (it includes render_scale).
 vec4 vblur(vec2 px) {
 	vec2 uv = px / frame_size;
 	if (blur_sigma <= 0.01) return vec4(0.0);
-	float texel = 1.0 / frame_size.y;
+	float texel = 1.0 / float(textureSize(blur_tex, 0).y);
 	float s = blur_sigma;
 	int n = int(ceil(s * 3.0));
-	vec4 acc = texture(blur_tex, uv);
+	vec4 acc = blur_tap(uv);
 	float wsum = 1.0;
 	for (int i = 1; i <= n; i += 2) {
 		float o1 = float(i);
@@ -68,7 +75,7 @@ vec4 vblur(vec2 px) {
 		float w2 = exp(-o2 * o2 / (2.0 * s * s));
 		float w = w1 + w2;
 		float o = (o1 * w1 + o2 * w2) / max(w, 1e-6);
-		acc += (texture(blur_tex, uv + vec2(0.0, o * texel)) + texture(blur_tex, uv - vec2(0.0, o * texel))) * w;
+		acc += (blur_tap(uv + vec2(0.0, o * texel)) + blur_tap(uv - vec2(0.0, o * texel))) * w;
 		wsum += 2.0 * w;
 	}
 	return acc / wsum;
@@ -107,7 +114,7 @@ void fragment() {
 		a = a + min(g.a, 1.0) * (1.0 - a);
 	}
 	if (shadow_blur > 0.0 || shadow_color.a > 0.0) {
-		float sa = (shadow_blur > 0.01 ? vblur(px - shadow_offset).a : sample_px(TEXTURE, px - shadow_offset).a) * shadow_color.a;
+		float sa = (blur_sigma > 0.01 ? vblur(px - shadow_offset).a : sample_px(TEXTURE, px - shadow_offset).a) * shadow_color.a;
 		rgb = rgb + shadow_color.rgb * sa * (1.0 - a);
 		a = a + sa * (1.0 - a);
 	}

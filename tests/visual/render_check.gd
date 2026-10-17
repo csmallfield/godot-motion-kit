@@ -28,6 +28,20 @@ func _ready() -> void:
 	var wht := ColorRect.new(); wht.color = Color.WHITE; wht.size = Vector2(100, 100); grp.add_child(wht)
 	# 5. Linear gradient, left to right, black to white over 512 px.
 	var g := MotionGradient.linear(Vector2(512, 100), 90.0, [Color.BLACK, Color.WHITE], [0.0, 1.0]); g.position = Vector2(1200, 300); add_child(g)
+	# 6. render_scale 2 keeps sigma in authoring pixels in both directions: a horizontal edge.
+	var fx2 := MotionFX.new(); fx2.size = Vector2(400, 200); fx2.render_scale = 2.0; fx2.position = Vector2(1000, 500); fx2.blur = 8.0; add_child(fx2)
+	var top := ColorRect.new(); top.color = Color.WHITE; top.position = Vector2(-100, -100); top.size = Vector2(600, 200); fx2.content.add_child(top)
+	# 7. A gradient fades with modulate.
+	var gm := MotionGradient.linear(Vector2(100, 40), 90.0, [Color.WHITE, Color.WHITE], [0.0, 1.0]); gm.position = Vector2(1500, 500); gm.modulate.a = 0.5; add_child(gm)
+	# 8. A blended gradient after other screen readers sees the current backdrop.
+	var under := ColorRect.new(); under.color = Color.WHITE; under.position = Vector2(1500, 600); under.size = Vector2(100, 40); add_child(under)
+	var mul := MotionGradient.linear(Vector2(100, 40), 90.0, [Color(0.5, 0.5, 0.5), Color(0.5, 0.5, 0.5)], [0.0, 1.0]); mul.position = Vector2(1500, 600)
+	mul.blend = MotionGradient.Blend.MULTIPLY; add_child(mul)
+	# 9. A shadow offset away from the frame edge leaves no streak of edge pixels.
+	var sfx2 := MotionFX.new(); sfx2.size = Vector2(300, 100); sfx2.position = Vector2(0, 950); sfx2.shadow_color = Color.WHITE; sfx2.shadow_blur = 4.0; sfx2.shadow_offset = Vector2(50, 0); add_child(sfx2)
+	var col := ColorRect.new(); col.color = Color(0.2, 0.2, 0.2); col.size = Vector2(10, 100); sfx2.content.add_child(col)
+	# 10. Repeating stripes repeat every (last - first) stop: stops at 10 and 20 px.
+	var st := MotionGradient.stripes(Vector2(100, 40), 90.0, [Color.WHITE, Color.BLACK], [10.0, 20.0]); st.position = Vector2(1200, 700); add_child(st)
 
 
 func _phi(x: float) -> float:
@@ -61,5 +75,11 @@ func _process(_d: float) -> void:
 	_check("group opacity red channel", c.r, 0.5)
 	_check("group opacity green channel", c.g, 0.5)
 	_check("gradient midpoint", img.get_pixel(1456, 350).r, 0.5, 0.01)
+	for d in [0, 8]:
+		_check("FX blur at render_scale 2, horizontal edge d=%d" % d, img.get_pixel(1200, 600 + d).r, 1.0 - _phi((d + 0.5) / 8.0), 0.015)
+	_check("gradient modulate 0.5", img.get_pixel(1550, 520).r, 0.5, 0.01)
+	_check("multiply after another gradient", img.get_pixel(1550, 620).r, 0.5, 0.01)
+	_check("no shadow streak from the frame edge", img.get_pixel(30, 1000).r, 0.0, 0.01)
+	_check("stripes anchored at the first stop", img.get_pixel(1205, 720).r, 0.45, 0.02)
 	print("%d failed" % _fails)
 	get_tree().quit(_fails)

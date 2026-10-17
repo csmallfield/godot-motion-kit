@@ -47,13 +47,14 @@ func line(a: Vector2, b: Vector2, col: Color, w := 1.0, opacity := 1.0) -> void:
 ## A dashed line: `dash` on, `gap` off, in pixels (SVG stroke-dasharray).
 func dashed(a: Vector2, b: Vector2, col: Color, w: float, dash: float, gap: float, opacity := 1.0) -> void:
 	var len := a.distance_to(b)
-	if len <= 0.0:
+	if len <= 0.0 or dash <= 0.0:
 		return
+	gap = maxf(gap, 0.0)
 	var dir := (b - a) / len
 	var s := 0.0
-	var c := _c(col, opacity)
+	var t := _thin(_c(col, opacity), w)
 	while s < len:
-		draw_line(a + dir * s, a + dir * minf(s + dash, len), c, w, true)
+		draw_line(a + dir * s, a + dir * minf(s + dash, len), t[0], t[1], true)
 		s += dash + gap
 
 
@@ -73,8 +74,8 @@ func polygon(pts: PackedVector2Array, fill: Color, stroke: Color, w := 1.0, opac
 	if pts.size() < 3:
 		return
 	if fill.a > 0.0:
-		var tri := Geometry2D.triangulate_polygon(pts)
-		if tri.size() > 0:
+		# Skip polygons Godot can't triangulate (self-intersecting), which would error.
+		if Geometry2D.triangulate_polygon(pts).size() > 0:
 			draw_colored_polygon(pts, _c(fill, opacity))
 	if stroke.a > 0.0 and w > 0.0:
 		polyline(pts, stroke, w, opacity, true)

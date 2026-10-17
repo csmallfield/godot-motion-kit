@@ -40,7 +40,8 @@ const MAX_SLICES := 64
 @export var shadow_blur := 0.0
 @export var shadow_offset := Vector2.ZERO
 ## One separable Gaussian pass is shared by blur, glow and shadow, so they use
-## a single radius: blur if set, else glow, else shadow_blur.
+## a single radius: blur if set, else glow, else shadow_blur. With blur set,
+## pixel_size and goo are not applied (the blurred content replaces them).
 @export_group("Other")
 @export var brightness := 1.0
 @export var pixel_size := 0.0
@@ -55,6 +56,7 @@ var content: Node2D
 
 var _vp: SubViewport
 var _vp_h: SubViewport      # horizontal blur pass
+var _blur_on := false       # the blur pass has been sized for use
 var _h_sprite: Sprite2D
 var _h_mat: ShaderMaterial
 var _view: Sprite2D
@@ -73,9 +75,26 @@ func _init() -> void:
 	content.name = "Content"
 	_vp.add_child(content)
 	add_child(_vp, false, Node.INTERNAL_MODE_FRONT)
+	_make_blur_pass()
+	_view = Sprite2D.new()
+	_view.centered = false
+	_view.texture = _vp.get_texture()
+	_mat = ShaderMaterial.new()
+	_mat.shader = SHADER
+	_mat.set_shader_parameter("blur_tex", _vp_h.get_texture())
+	_view.material = _mat
+	add_child(_view, false, Node.INTERNAL_MODE_FRONT)
+	_resize()
+
+
+# The horizontal blur pass has its own render target. It is created with the
+# content viewport (created later, it rendered a frame behind the content),
+# but kept at 1x1 until a blur, glow or shadow needs it.
+func _make_blur_pass() -> void:
 	_vp_h = SubViewport.new()
 	_vp_h.transparent_bg = true
 	_vp_h.disable_3d = true
+	_vp_h.size = Vector2i(1, 1)
 	_vp_h.render_target_update_mode = SubViewport.UPDATE_DISABLED
 	_h_sprite = Sprite2D.new()
 	_h_sprite.centered = false
@@ -85,14 +104,15 @@ func _init() -> void:
 	_h_sprite.material = _h_mat
 	_vp_h.add_child(_h_sprite)
 	add_child(_vp_h, false, Node.INTERNAL_MODE_FRONT)
-	_view = Sprite2D.new()
-	_view.centered = false
-	_view.texture = _vp.get_texture()
-	_mat = ShaderMaterial.new()
-	_mat.shader = SHADER
-	_view.material = _mat
-	add_child(_view, false, Node.INTERNAL_MODE_FRONT)
-	_resize()
+
+
+func _blur_size() -> Vector2i:
+	return _vp.size if _blur_on else Vector2i(1, 1)
+
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_VISIBILITY_CHANGED:
+		_apply()
 
 
 func _ready() -> void:
@@ -111,7 +131,7 @@ func _resize() -> void:
 		return
 	var px := (size * render_scale).round()
 	_vp.size = Vector2i(maxi(1, int(px.x)), maxi(1, int(px.y)))
-	_vp_h.size = _vp.size
+	_vp_h.size = _blur_size()
 	# A viewport's canvas transform can only be set once it is in the tree.
 	if _vp.is_inside_tree():
 		_vp.canvas_transform = Transform2D.IDENTITY.scaled(Vector2(render_scale, render_scale))
@@ -158,9 +178,22 @@ func _apply() -> void:
 	_mat.set_shader_parameter("goo_sharp", goo_sharp)
 	var sigma := blur if blur > 0.01 else (glow if glow > 0.01 else shadow_blur * 0.5)
 	var need := sigma > 0.01
-	_vp_h.render_target_update_mode = SubViewport.UPDATE_ALWAYS if need else SubViewport.UPDATE_DISABLED
+	# Hidden groups stop rendering offscreen (both passes).
+	# Viewports render in the order they became active, and the blur pass must
+	# render after the content it blurs, or it shows the previous frame. So
+	# whenever the content viewport (re)starts, the blur pass restarts after it.
+	var live := is_visible_in_tree() or not is_inside_tree()
+	var mode := SubViewport.UPDATE_ALWAYS if live else SubViewport.UPDATE_DISABLED
+	var restarted := mode != _vp.render_target_update_mode and live
+	_vp.render_target_update_mode = mode
+	if need and not _blur_on:
+		_blur_on = true
+		_vp_h.size = _blur_size()
+	var hmode := SubViewport.UPDATE_ALWAYS if (need and live) else SubViewport.UPDATE_DISABLED
+	if restarted:
+		_vp_h.render_target_update_mode = SubViewport.UPDATE_DISABLED
+	_vp_h.render_target_update_mode = hmode
 	_h_mat.set_shader_parameter("sigma", sigma * render_scale)
-	_mat.set_shader_parameter("blur_tex", _vp_h.get_texture())
 	_mat.set_shader_parameter("blur_sigma", sigma * render_scale if need else 0.0)
 	_mat.set_shader_parameter("blur_main", blur > 0.01)
 	_mat.set_shader_parameter("glow", glow)

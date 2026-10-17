@@ -24,7 +24,9 @@
 ##               stdDeviation "x y"), e.g. Vector2(26, 0) for a motion smear
 ##   blur_region Rect2 filter region as fractions of the part's bounds
 ##               (SVG filter x/y/width/height, e.g. Rect2(-0.5, -0.1, 2, 1.2));
-##               the blur is cut off outside it, as in a browser
+##               the blur is cut off outside it. Keep it wider than the part:
+##               ThorVG doesn't blur at all when the region is the bare bounds,
+##               where a browser still would
 @tool
 @icon("res://addons/motion_kit/icons/svg.svg")
 class_name MotionSvg
@@ -212,9 +214,12 @@ func _draw() -> void:
 
 		var part_scale := maxf(absf(sx), absf(sy))
 		var dens := px_per_unit * maxf(1.0, part_scale) * oversample
-		# Never ask for a raster wider than the texture limit: clamp density, not size.
-		dens = minf(dens, (MAX_TEX - 8) / maxf(1e-3, maxf(bbox.size.x, bbox.size.y) + p.stroke_width))
+		var pblur: Vector2 = o.get("blur", Vector2.ZERO)
+		# Never ask for a raster wider than the texture limit: clamp density, not size
+		# (the padding for a blur's three sigma either side counts too).
+		dens = minf(dens, (MAX_TEX - 8) / maxf(1e-3, maxf(bbox.size.x + 6.0 * pblur.x, bbox.size.y + 6.0 * pblur.y) + p.stroke_width))
 		var bucket := _bucket(dens)
+		pblur = _snap_blur(pblur, _bucket_density(bucket))
 		var drawing := o.has("draw")
 		var own_colour := _own_colour(p)
 
@@ -225,7 +230,6 @@ func _draw() -> void:
 			if own_colour and o.has("fill"):
 				col = o.fill
 			col.a *= fill_alpha
-			var pblur: Vector2 = o.get("blur", Vector2.ZERO)
 			_blur_region = o.get("blur_region", Rect2())
 			var tex := _texture(i, bucket, pblur)
 			if tex:
@@ -321,6 +325,20 @@ static func _sub(line: PackedVector2Array, a: float, b: float) -> PackedVector2A
 ## on-screen size changes by more than that.
 static func _bucket(dens: float) -> int:
 	return int(ceil(log(maxf(dens, 0.01)) / log(sqrt(2.0))))
+
+
+## An animated blur would re-rasterize the part on every frame. Snap it to
+## steps the eye can't tell apart: quarter pixels below 4 px, then 1/16 of an
+## octave (4%), so a smear animates through a few dozen cached rasters.
+static func _snap_blur(b: Vector2, dens: float) -> Vector2:
+	var out := Vector2.ZERO
+	for k in 2:
+		var px := b[k] * dens
+		if px <= 0.0:
+			continue
+		px = roundf(px * 4.0) / 4.0 if px < 4.0 else pow(2.0, roundf(log(px) / log(2.0) * 16.0) / 16.0)
+		out[k] = px / dens
+	return out
 
 
 static func _bucket_density(b: int) -> float:
