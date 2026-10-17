@@ -58,6 +58,35 @@ func dashed(a: Vector2, b: Vector2, col: Color, w: float, dash: float, gap: floa
 		s += dash + gap
 
 
+## A dashed polyline (SVG stroke-dasharray "dash gap" with stroke-dashoffset):
+## the pattern runs continuously around corners; a positive offset moves it
+## backwards along the line, as in SVG.
+func dashed_polyline(pts: PackedVector2Array, col: Color, w: float, dash: float, gap: float, offset := 0.0, opacity := 1.0) -> void:
+	if pts.size() < 2 or dash <= 0.0:
+		return
+	gap = maxf(gap, 0.0)
+	var period := dash + gap
+	var t := _thin(_c(col, opacity), w)
+	var phase := fposmod(offset, period)   # distance into the pattern at the start
+	for i in range(1, pts.size()):
+		var a := pts[i - 1]
+		var b := pts[i]
+		var len := a.distance_to(b)
+		if len <= 0.0:
+			continue
+		var dir := (b - a) / len
+		var s := 0.0
+		while s < len:
+			var into := fposmod(phase + s, period)
+			if into < dash:
+				var e := minf(len, s + dash - into)
+				draw_line(a + dir * s, a + dir * e, t[0], t[1], true)
+				s = e
+			else:
+				s += period - into
+		phase = fposmod(phase + len, period)
+
+
 func polyline(pts: PackedVector2Array, col: Color, w := 1.0, opacity := 1.0, closed := false) -> void:
 	if pts.size() < 2:
 		return

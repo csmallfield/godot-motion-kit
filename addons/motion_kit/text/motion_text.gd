@@ -40,6 +40,14 @@ extends Node2D
 ## Uppercase the text when drawing (CSS text-transform: uppercase).
 @export var uppercase := false:
 	set(v): uppercase = v; _dirty = true; queue_redraw()
+## CSS writing-mode: vertical-rl. Glyphs stand upright in columns that run top
+## to bottom, right to left, using the font's vertical forms (the long-vowel
+## mark turns, small kana shift). `box_width` is then the available column
+## height: text wraps between characters, never starting a column with
+## punctuation or a small kana (Japanese kinsoku), as browsers do.
+## The origin stays the top-left of the whole block; tracking runs down.
+@export var vertical := false:
+	set(v): vertical = v; _dirty = true; queue_redraw()
 
 ## Called from _frame as glyph_fn.call(i, f) -> Dictionary (or null) per character.
 var glyph_fn: Callable
@@ -49,6 +57,7 @@ var _glyphs: Array = []    # {font_rid, size, index, pos: Vector2, adv: float, c
 var _chars := 0
 var _width := 0.0
 var _height := 0.0
+var _baseline := 0.0
 var _overrides := {}
 
 
@@ -85,6 +94,13 @@ func get_text_size() -> Vector2:
 	return Vector2(_width, _height)
 
 
+## Distance from the top of the box to the first line's baseline (for CSS
+## align-items: baseline). For vertical text, half the column thickness.
+func get_baseline() -> float:
+	_layout()
+	return _baseline
+
+
 const _METRIC_SIZE := 2048
 
 ## Ascent and descent of one font face at `size` px, as a browser computes
@@ -113,12 +129,16 @@ func _layout() -> void:
 	_chars = 0
 	_width = 0.0
 	_height = 0.0
+	_baseline = 0.0
 	if not font or text.is_empty():
 		return
 	var ts := TextServerManager.get_primary_interface()
 	var isize := int(round(font_size))
 	var k := font_size / float(isize)          # fractional sizes scale the integer-size glyphs
 	var prim := _primary_metrics(ts, font_size)
+	if vertical:
+		_layout_vertical(ts, isize, k, prim)
+		return
 	var track := tracking * font_size
 	var src := text.to_upper() if uppercase else text
 	var lines := src.split("\n")
@@ -155,6 +175,8 @@ func _layout() -> void:
 		if line_height > 0.0:
 			box = font_size * line_height
 			baseline = y + (box - (prim.x + prim.y)) * 0.5 + prim.x   # half-leading on the primary face
+		if char_base == 0:
+			_baseline = baseline
 		var line_w := x
 		var ox := 0.0
 		var avail := box_width
@@ -173,6 +195,70 @@ func _layout() -> void:
 		char_base += line.length() + 1
 	_chars = maxi(0, char_base - 1)
 	_height = y
+
+
+# Characters that may not start a line (and so pull the one before them
+# down with them), and ones that may not end a line, after JIS X 4051.
+const _NO_START := "、。，．・：；？！ー－〜ゝゞヽヾ々ぁぃぅぇぉっゃゅょゎゕゖァィゥェォッャュョヮヵヶ）」』】〕〉》｝］"
+const _NO_END := "（「『【〔〈《｛［"
+
+
+func _layout_vertical(ts: TextServer, isize: int, k: float, prim: Vector2) -> void:
+	var track := tracking * font_size
+	var src := text.to_upper() if uppercase else text
+	# Column thickness: the horizontal line box, as for a horizontal line, with
+	# the glyphs centred on it (the ideographic central baseline).
+	var thick := font_size * line_height if line_height > 0.0 else prim.x + prim.y
+	var columns: Array = []        # each: Array of glyph records
+	var char_base := 0
+	for para in src.split("\n"):
+		var rid := ts.create_shaped_text(TextServer.DIRECTION_AUTO, TextServer.ORIENTATION_VERTICAL)
+		ts.shaped_text_add_string(rid, para, font.get_rids(), isize)
+		ts.shaped_text_shape(rid)
+		var recs: Array = []
+		for g in ts.shaped_text_get_glyphs(rid):
+			var adv: float = float(g.advance) * k
+			recs.append({font_rid = g.font_rid, size = isize, index = g.index, off = (g.get("offset", Vector2.ZERO) as Vector2) * k,
+				adv = adv, char_i = char_base + int(g.start), ch = para.substr(int(g.start), 1), k = k})
+		ts.free_rid(rid)
+		# Greedy columns with kinsoku.
+		var col: Array = []
+		var used := 0.0
+		for r in recs:
+			var step: float = r.adv + (track if r.adv != 0.0 else 0.0)
+			if box_width > 0.0 and not col.is_empty() and used + step > box_width + 0.01:
+				var carry: Array = []
+				# Don't start the next column with a forbidden character, or end this
+				# one with an opening bracket: move characters down until both hold.
+				var nxt: Array = [r]
+				while col.size() > 1 and (_NO_START.contains(nxt[0].ch) or _NO_END.contains(col[-1].ch)):
+					nxt.push_front(col.pop_back())
+				columns.append(col)
+				col = []
+				used = 0.0
+				for c in nxt:
+					col.append(c)
+					used += c.adv + (track if c.adv != 0.0 else 0.0)
+				continue
+			col.append(r)
+			used += step
+		columns.append(col)
+		char_base += para.length() + 1
+	_chars = maxi(0, char_base - 1)
+	_baseline = thick * 0.5
+	_width = thick * columns.size()
+	_height = 0.0
+	for ci in columns.size():
+		var cx := _width - thick * (ci + 0.5)
+		var y := 0.0
+		for r in columns[ci]:
+			r.pos = Vector2(cx, y) + r.off
+			r.pivot = Vector2(cx, y + r.adv * 0.5)
+			r.line_top = 0.0
+			r.line_box = thick
+			_glyphs.append(r)
+			y += r.adv + (track if r.adv != 0.0 else 0.0)
+		_height = maxf(_height, y)
 
 
 func _draw() -> void:
@@ -199,7 +285,7 @@ func _draw() -> void:
 		if absf(sx) < 1e-6 or absf(sy) < 1e-6:
 			continue
 		var pos: Vector2 = g.pos
-		var pivot := Vector2(pos.x + float(g.adv) * 0.5, float(g.line_top) + float(g.line_box) * 0.5)
+		var pivot: Vector2 = g.get("pivot", Vector2(pos.x + float(g.adv) * 0.5, float(g.line_top) + float(g.line_box) * 0.5))
 		var xf := Transform2D(0.0, Vector2(float(o.get("tx", 0.0)), float(o.get("ty", 0.0))) + pivot) \
 			* Transform2D(deg_to_rad(float(o.get("rot", 0.0))), Vector2.ZERO) \
 			* Transform2D(Vector2(sx, 0), Vector2(0, sy), Vector2.ZERO) \

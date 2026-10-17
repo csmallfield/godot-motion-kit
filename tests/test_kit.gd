@@ -87,8 +87,8 @@ func test_gradient_constructors() -> String:
 
 func test_part_blur_grows_the_raster() -> String:
 	var d := MotionSvgData.from_string('<svg viewBox="0 0 10 10"><rect x="2" y="2" width="6" height="6" fill="#fff"/></svg>')
-	var r_plain: Rect2 = MotionSvg._raster_rect(d.parts[0], 0, Vector2.ZERO)
-	var r_blur: Rect2 = MotionSvg._raster_rect(d.parts[0], 0, Vector2(2, 0))
+	var r_plain: Rect2 = MotionSvg._raster_rect(d.parts[0], Vector2i.ZERO, Vector2.ZERO)
+	var r_blur: Rect2 = MotionSvg._raster_rect(d.parts[0], Vector2i.ZERO, Vector2(2, 0))
 	# Three sigma of room, horizontally only for a horizontal blur.
 	if not (is_equal_approx(r_blur.position.x, r_plain.position.x - 6.0) and is_equal_approx(r_blur.size.y, r_plain.size.y)):
 		return "blurred raster %s vs plain %s" % [r_blur, r_plain]

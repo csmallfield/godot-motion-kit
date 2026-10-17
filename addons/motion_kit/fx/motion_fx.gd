@@ -44,6 +44,8 @@ const MAX_SLICES := 64
 ## pixel_size and goo are not applied (the blurred content replaces them).
 @export_group("Other")
 @export var brightness := 1.0
+## CSS filter: invert(), 0..1.
+@export_range(0.0, 1.0) var invert := 0.0
 @export var pixel_size := 0.0
 @export var goo_blur := 0.0
 @export var goo_sharp := 22.0
@@ -173,6 +175,7 @@ func _apply() -> void:
 	_mat.set_shader_parameter("slice_offsets", _offs)
 	_mat.set_shader_parameter("split", 0.0 if quiet else slice_split)
 	_mat.set_shader_parameter("brightness", brightness)
+	_mat.set_shader_parameter("invert", invert)
 	_mat.set_shader_parameter("pixel_size", pixel_size)
 	_mat.set_shader_parameter("goo_blur", goo_blur)
 	_mat.set_shader_parameter("goo_sharp", goo_sharp)

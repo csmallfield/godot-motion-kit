@@ -143,9 +143,9 @@ func get_logo_scale() -> float:
 func prewarm() -> void:
 	if not data:
 		return
-	var dens := _screen_scale() * _kx() * oversample
+	var dens := _screen_scale_xy() * _kx() * oversample
 	for i in data.parts.size():
-		_texture(i, _bucket(dens))
+		_texture(i, Vector2i(_bucket(dens.x), _bucket(dens.y)))
 
 
 static func clear_cache() -> void:
@@ -170,12 +170,35 @@ func _kx() -> float:
 ## Screen pixels per local unit, including the window's stretch (a 1080p-authored
 ## project shown at 4K rasterizes at 4K density).
 func _screen_scale() -> float:
-	var s := get_global_transform_with_canvas().get_scale()
-	var k := maxf(absf(s.x), absf(s.y))
+	var k := _screen_scale_xy()
+	return maxf(k.x, k.y)
+
+
+## The same per local axis: a node stretched 5x vertically needs 5x the
+## raster density down, not across.
+func _screen_scale_xy() -> Vector2:
+	var s := get_global_transform_with_canvas().get_scale().abs()
 	if is_inside_tree():
-		var vs := get_viewport().get_final_transform().get_scale()
-		k *= maxf(absf(vs.x), absf(vs.y))
-	return k
+		var vs := get_viewport().get_final_transform().get_scale().abs()
+		s *= maxf(vs.x, vs.y)
+	return s
+
+
+# Rasters are made for the on-screen scale at the last draw. Moving or scaling
+# the node (or a parent) doesn't redraw it, so watch the global transform and
+# redraw when the scale crosses into another density step.
+var _drawn_bucket := Vector2i(-999, -999)
+
+
+func _enter_tree() -> void:
+	set_notify_transform(true)
+
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_TRANSFORM_CHANGED and data:
+		var k := _screen_scale_xy() * _kx()
+		if Vector2i(_bucket(k.x), _bucket(k.y)) != _drawn_bucket:
+			queue_redraw()
 
 
 func _draw() -> void:
@@ -185,7 +208,9 @@ func _draw() -> void:
 	var kx := _kx()
 	var ky := stretch_h / vb.size.y if stretch_h > 0.0 else kx
 	var base := Transform2D(Vector2(kx, 0), Vector2(0, ky), Vector2(-vb.position.x * kx, -vb.position.y * ky))
-	var screen := _screen_scale()
+	var screen_xy := _screen_scale_xy()
+	var screen := maxf(screen_xy.x, screen_xy.y)
+	_drawn_bucket = Vector2i(_bucket(screen_xy.x * kx), _bucket(screen_xy.y * kx))
 	var px_per_unit := screen * maxf(kx, ky)
 	var use_only := only.size() > 0
 
@@ -213,13 +238,18 @@ func _draw() -> void:
 		draw_set_transform_matrix(xf)
 
 		var part_scale := maxf(absf(sx), absf(sy))
-		var dens := px_per_unit * maxf(1.0, part_scale) * oversample
+		# Raster density per axis of the part (a rotated part takes the larger for both).
+		var dens := Vector2(screen_xy.x * kx * maxf(1.0, absf(sx)), screen_xy.y * ky * maxf(1.0, absf(sy))) * oversample
+		if o.has("rot") and fmod(absf(float(o.rot)), 180.0) > 0.01:
+			dens = Vector2.ONE * maxf(dens.x, dens.y)
 		var pblur: Vector2 = o.get("blur", Vector2.ZERO)
 		# Never ask for a raster wider than the texture limit: clamp density, not size
 		# (the padding for a blur's three sigma either side counts too).
-		dens = minf(dens, (MAX_TEX - 8) / maxf(1e-3, maxf(bbox.size.x + 6.0 * pblur.x, bbox.size.y + 6.0 * pblur.y) + p.stroke_width))
-		var bucket := _bucket(dens)
-		pblur = _snap_blur(pblur, _bucket_density(bucket))
+		dens.x = minf(dens.x, (MAX_TEX - 8) / maxf(1e-3, bbox.size.x + 6.0 * pblur.x + p.stroke_width))
+		dens.y = minf(dens.y, (MAX_TEX - 8) / maxf(1e-3, bbox.size.y + 6.0 * pblur.y + p.stroke_width))
+		var bucket := Vector2i(_bucket(dens.x), _bucket(dens.y))
+		pblur = _snap_blur(pblur, Vector2(_bucket_density(bucket.x), _bucket_density(bucket.y)))
+		var obucket := maxi(bucket.x, bucket.y)   # outlines: one tolerance for both axes
 		var drawing := o.has("draw")
 		var own_colour := _own_colour(p)
 
@@ -245,9 +275,9 @@ func _draw() -> void:
 			if amount > 0.0:
 				if chromium_draw:
 					# Dash `draw`, gap 2, both scaled into screen pixels: see chromium_draw.
-					_draw_outline(i, bucket, amount / unit_px, 2.0 / unit_px, w_px / unit_px, scol)
+					_draw_outline(i, obucket, amount / unit_px, 2.0 / unit_px, w_px / unit_px, scol)
 				else:
-					_draw_outline(i, bucket, amount, INF, w_px / unit_px, scol)
+					_draw_outline(i, obucket, amount, INF, w_px / unit_px, scol)
 	draw_set_transform_matrix(Transform2D.IDENTITY)
 
 
@@ -330,14 +360,14 @@ static func _bucket(dens: float) -> int:
 ## An animated blur would re-rasterize the part on every frame. Snap it to
 ## steps the eye can't tell apart: quarter pixels below 4 px, then 1/16 of an
 ## octave (4%), so a smear animates through a few dozen cached rasters.
-static func _snap_blur(b: Vector2, dens: float) -> Vector2:
+static func _snap_blur(b: Vector2, dens: Vector2) -> Vector2:
 	var out := Vector2.ZERO
 	for k in 2:
-		var px := b[k] * dens
+		var px := b[k] * dens[k]
 		if px <= 0.0:
 			continue
 		px = roundf(px * 4.0) / 4.0 if px < 4.0 else pow(2.0, roundf(log(px) / log(2.0) * 16.0) / 16.0)
-		out[k] = px / dens
+		out[k] = px / dens[k]
 	return out
 
 
@@ -345,10 +375,10 @@ static func _bucket_density(b: int) -> float:
 	return pow(sqrt(2.0), b)
 
 
-func _key(i: int, bucket: int, blur := Vector2.ZERO) -> String:
+func _key(i: int, bucket: Variant, blur := Vector2.ZERO) -> String:
 	if blur == Vector2.ZERO:
-		return "%d:%d:%d" % [data.get_instance_id(), i, bucket]
-	return "%d:%d:%d:%s:%s:%s" % [data.get_instance_id(), i, bucket, blur.x, blur.y, _blur_region]
+		return "%d:%d:%s" % [data.get_instance_id(), i, bucket]
+	return "%d:%d:%s:%s:%s:%s" % [data.get_instance_id(), i, bucket, blur.x, blur.y, _blur_region]
 
 
 func _outline(i: int, bucket: int) -> Array:
@@ -368,17 +398,18 @@ func _outline(i: int, bucket: int) -> Array:
 
 
 ## The rectangle a part's raster covers, in logo units: its bounds plus two
-## pixels of padding, widened to a whole number of pixels so texels stay square.
-static func _raster_rect(p: Dictionary, bucket: int, blur := Vector2.ZERO) -> Rect2:
-	var dens := _bucket_density(bucket)
-	var r: Rect2 = (p.bbox as Rect2).grow(2.0 / dens + float(p.stroke_width) * 0.5)
+## pixels of padding, widened to a whole number of texels on each axis.
+static func _raster_rect(p: Dictionary, bucket: Vector2i, blur := Vector2.ZERO) -> Rect2:
+	var dens := Vector2(_bucket_density(bucket.x), _bucket_density(bucket.y))
+	var sw := float(p.stroke_width) * 0.5
+	var r: Rect2 = (p.bbox as Rect2).grow_individual(2.0 / dens.x + sw, 2.0 / dens.y + sw, 2.0 / dens.x + sw, 2.0 / dens.y + sw)
 	r = r.grow_individual(blur.x * 3.0, blur.y * 3.0, blur.x * 3.0, blur.y * 3.0)   # room for the blur
-	var w := minf(ceilf(r.size.x * dens), MAX_TEX)
-	var h := minf(ceilf(r.size.y * dens), MAX_TEX)
-	return Rect2(r.position, Vector2(w, h) / dens)
+	var w := minf(ceilf(r.size.x * dens.x), MAX_TEX)
+	var h := minf(ceilf(r.size.y * dens.y), MAX_TEX)
+	return Rect2(r.position, Vector2(w / dens.x, h / dens.y))
 
 
-func _texture(i: int, bucket: int, blur := Vector2.ZERO) -> Texture2D:
+func _texture(i: int, bucket: Vector2i, blur := Vector2.ZERO) -> Texture2D:
 	var key := _key(i, bucket, blur)
 	if _cache.has(key):
 		# Refresh its place in the LRU order (Dictionaries keep insertion order).
@@ -388,9 +419,8 @@ func _texture(i: int, bucket: int, blur := Vector2.ZERO) -> Texture2D:
 		return hit
 	var p: Dictionary = data.parts[i]
 	var r := _raster_rect(p, bucket, blur)
-	var dens := _bucket_density(bucket)
-	var w := clampi(int(round(r.size.x * dens)), 1, MAX_TEX)
-	var h := clampi(int(round(r.size.y * dens)), 1, MAX_TEX)
+	var w := clampi(int(round(r.size.x * _bucket_density(bucket.x))), 1, MAX_TEX)
+	var h := clampi(int(round(r.size.y * _bucket_density(bucket.y))), 1, MAX_TEX)
 	var body: String = p.svg
 	if not _own_colour(p):
 		var f: Color = p.fill

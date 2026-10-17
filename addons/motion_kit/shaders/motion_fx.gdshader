@@ -12,6 +12,7 @@ uniform int slice_count = 0;                        // 0 = no slicing
 uniform float slice_offsets[64];                    // pixels, one per band
 uniform float split = 0.0;                          // RGB split distance in pixels
 uniform float brightness = 1.0;
+uniform float invert = 0.0;                         // CSS invert(), applied before brightness
 uniform float pixel_size = 0.0;                     // 0 = off
 uniform float goo_blur = 0.0;                       // pixels; 0 = off
 uniform float goo_sharp = 22.0;
@@ -118,5 +119,6 @@ void fragment() {
 		rgb = rgb + shadow_color.rgb * sa * (1.0 - a);
 		a = a + sa * (1.0 - a);
 	}
+	rgb = mix(rgb, vec3(a) - rgb, invert);            // premultiplied 1 - c
 	COLOR = vec4(rgb * brightness * v_mod.rgb * v_mod.a, a * v_mod.a);
 }

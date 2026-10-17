@@ -173,14 +173,15 @@ func _build() -> void:
 		_title.add_child(p)
 		_pills.append(p)
 
-	# hazard bands: 54 px of stripes between 3 px black borders
+	# hazard bands: 54 px tall including 3 px black borders (Remotion's CSS sets
+	# box-sizing: border-box on everything), so 48 px of stripes
 	for top in [0.0, 1026.0]:
 		var band := Node2D.new(); band.position = Vector2(0, top); _shake.add_child(band)
-		var g := MotionGradient.stripes(Vector2(1920, 54), -45.0, [SCFBrand.AMBER, SCFBrand.AMBER, Color("#0a0a0a"), Color("#0a0a0a")], [0.0, 34.0, 34.0, 68.0])
+		var g := MotionGradient.stripes(Vector2(1920, 48), -45.0, [SCFBrand.AMBER, SCFBrand.AMBER, Color("#0a0a0a"), Color("#0a0a0a")], [0.0, 34.0, 34.0, 68.0])
 		g.position = Vector2(0, 3)
 		band.add_child(g)
 		_rect(band, Color("#0a0a0a"), Rect2(0, 0, 1920, 3))
-		_rect(band, Color("#0a0a0a"), Rect2(0, 57, 1920, 3))
+		_rect(band, Color("#0a0a0a"), Rect2(0, 51, 1920, 3))
 		_haz.append(band)
 		_haz_grad.append(g)
 
