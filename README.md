@@ -10,8 +10,8 @@ the renders frame by frame:
 
 | Intro | Frames | Mean SSIM vs Remotion | Worst frame |
 | --- | --- | --- | --- |
-| B1 Print | 410 | 0.9991 | 0.9967 |
-| B Print | 300 | 0.9989 | 0.9969 |
+| B1 Print | 410 | 0.9991 | 0.9956 |
+| B Print | 300 | 0.9988 | 0.9954 |
 | B3 Index | 420 | 0.9989 | 0.9980 |
 | E1 Supergraphic | 420 | 0.9988 | 0.9975 |
 | B2 Specimen | 420 | 0.9977 | 0.9888 |

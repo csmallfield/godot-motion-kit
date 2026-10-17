@@ -96,4 +96,6 @@ know the handful of places where the browser behaves in ways that aren't obvious
 16. **GDScript divides integers as integers.** `crop[2] / crop[3]` with whole numbers
    truncates (118 / 25 is 4). Convert to float first when porting arithmetic on arrays
    of numbers.
-
+17. **Animate scale, not font size.** A CSS `fontSize` that changes every frame is cheap in
+   the browser. In Godot every new size rasterizes a new set of glyphs, which cost B Print
+   a 50 ms hitch per frame at 900 px. Keep `font_size` fixed and animate the node's `scale`.

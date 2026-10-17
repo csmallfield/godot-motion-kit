@@ -42,6 +42,12 @@ func _ready() -> void:
 	var col := ColorRect.new(); col.color = Color(0.2, 0.2, 0.2); col.size = Vector2(10, 100); sfx2.content.add_child(col)
 	# 10. Repeating stripes repeat every (last - first) stop: stops at 10 and 20 px.
 	var st := MotionGradient.stripes(Vector2(100, 40), 90.0, [Color.WHITE, Color.BLACK], [10.0, 20.0]); st.position = Vector2(1200, 700); add_child(st)
+	# 12. Dashed polyline: phase from the offset, dashes bend round corners, and the
+	# pattern that used to stall on float rounding (3.3 / 6 / -237) finishes.
+	var dc := MotionCanvas.new(); add_child(dc)
+	dc.draw_fn = func(c: MotionCanvas, _f: float) -> void:
+		c.dashed_polyline(PackedVector2Array([Vector2(1000, 1000), Vector2(1100, 1000), Vector2(1100, 1050)]), Color.WHITE, 2.0, 10, 10, 5)
+		c.dashed_polyline(PackedVector2Array([Vector2(1200, 900), Vector2(1371.7, 1013.3), Vector2(1450, 1060)]), Color.WHITE, 1.0, 3.3, 6, -237)
 	# 11. CSS invert(1) on a group: 0.2 grey reads 0.8, outside the content stays as it was.
 	var ifx := MotionFX.new(); ifx.size = Vector2(100, 40); ifx.position = Vector2(1500, 800); ifx.invert = 1.0; add_child(ifx)
 	var g2 := ColorRect.new(); g2.color = Color(0.2, 0.2, 0.2); g2.size = Vector2(50, 40); ifx.content.add_child(g2)
@@ -84,6 +90,9 @@ func _process(_d: float) -> void:
 	_check("multiply after another gradient", img.get_pixel(1550, 620).r, 0.5, 0.01)
 	_check("no shadow streak from the frame edge", img.get_pixel(30, 1000).r, 0.0, 0.01)
 	_check("stripes anchored at the first stop", img.get_pixel(1205, 720).r, 0.45, 0.02)
+	_check("dash: on at the start (offset 5)", img.get_pixel(1002, 1000).r, 1.0, 0.3)
+	_check("dash: gap after 5 px", img.get_pixel(1010, 1000).r, 0.0, 0.05)
+	_check("dash: bends round the corner", img.get_pixel(1100, 1003).r, 1.0, 0.3)
 	_check("invert(1) of 0.2 grey", img.get_pixel(1520, 820).r, 0.8, 0.01)
 	_check("invert leaves transparent areas alone", img.get_pixel(1580, 820).r, 0.0, 0.01)
 	print("%d failed" % _fails)

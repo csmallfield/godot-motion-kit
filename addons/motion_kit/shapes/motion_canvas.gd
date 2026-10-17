@@ -59,15 +59,22 @@ func dashed(a: Vector2, b: Vector2, col: Color, w: float, dash: float, gap: floa
 
 
 ## A dashed polyline (SVG stroke-dasharray "dash gap" with stroke-dashoffset):
-## the pattern runs continuously around corners; a positive offset moves it
-## backwards along the line, as in SVG.
+## the pattern runs continuously around corners, and a dash that crosses a
+## corner bends with it. A positive offset moves the pattern backwards along
+## the line, as in SVG.
 func dashed_polyline(pts: PackedVector2Array, col: Color, w: float, dash: float, gap: float, offset := 0.0, opacity := 1.0) -> void:
 	if pts.size() < 2 or dash <= 0.0:
 		return
 	gap = maxf(gap, 0.0)
-	var period := dash + gap
 	var t := _thin(_c(col, opacity), w)
-	var phase := fposmod(offset, period)   # distance into the pattern at the start
+	# Walk the line carrying the pattern state (on/off and what is left of the
+	# current dash or gap), so every step makes progress whatever the floats do.
+	var ph := fposmod(offset, dash + gap)
+	var on := ph < dash
+	var left := (dash - ph) if on else (dash + gap - ph)
+	var run := PackedVector2Array()
+	if on:
+		run.append(pts[0])
 	for i in range(1, pts.size()):
 		var a := pts[i - 1]
 		var b := pts[i]
@@ -77,14 +84,27 @@ func dashed_polyline(pts: PackedVector2Array, col: Color, w: float, dash: float,
 		var dir := (b - a) / len
 		var s := 0.0
 		while s < len:
-			var into := fposmod(phase + s, period)
-			if into < dash:
-				var e := minf(len, s + dash - into)
-				draw_line(a + dir * s, a + dir * e, t[0], t[1], true)
-				s = e
-			else:
-				s += period - into
-		phase = fposmod(phase + len, period)
+			var step := minf(left, len - s)
+			s += step
+			left -= step
+			if left <= 1e-9:
+				if on:
+					run.append(a + dir * s)
+					if run.size() >= 2:
+						draw_polyline(run, t[0], t[1], true)
+					run = PackedVector2Array()
+				else:
+					run = PackedVector2Array([a + dir * s])
+				on = not on
+				left = dash if on else gap
+				if left <= 0.0:          # gap 0: the next dash starts at once
+					on = true
+					left = dash
+					run = PackedVector2Array([a + dir * s])
+		if on:
+			run.append(b)
+	if on and run.size() >= 2:
+		draw_polyline(run, t[0], t[1], true)
 
 
 func polyline(pts: PackedVector2Array, col: Color, w := 1.0, opacity := 1.0, closed := false) -> void:

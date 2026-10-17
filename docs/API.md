@@ -90,12 +90,15 @@ games `load()` the file imported as Motion SVG.
 does) and the line-box height; `get_baseline()` the distance from the top to the first
 baseline, for CSS `align-items: baseline` layouts.
 
+Animate a text's `scale`, not its `font_size`: each new size rasterizes new glyphs.
+
 `vertical = true` is CSS `writing-mode: vertical-rl`: glyphs stand upright in columns that
 run top to bottom and right to left, using the font's vertical forms (the long-vowel mark
 turns, small kana shift). `box_width` becomes the available column height; text wraps
 between characters and never starts a column with punctuation, a small kana or a long-vowel
 mark (Japanese kinsoku), as browsers do. The column is as thick as the horizontal line box,
-with glyphs centred on it.
+with glyphs centred on it. All glyphs stand upright, as with `text-orientation: upright`.
+Where no legal break exists, the column overflows, as in a browser.
 
 Line boxes follow Chromium: with `line_height = 0` ("normal") each line is as tall as the
 largest ascent plus descent among the faces its glyphs actually use (a fallback face only

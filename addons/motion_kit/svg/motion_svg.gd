@@ -143,9 +143,11 @@ func get_logo_scale() -> float:
 func prewarm() -> void:
 	if not data:
 		return
-	var dens := _screen_scale_xy() * _kx() * oversample
+	var screen := _screen_scale_xy()
 	for i in data.parts.size():
-		_texture(i, Vector2i(_bucket(dens.x), _bucket(dens.y)))
+		var o: Dictionary = _overrides.get(i, {})
+		var r := _part_density(data.parts[i], o)
+		_texture(i, _part_bucket(screen, r), _snap_blur(o.get("blur", Vector2.ZERO), _bucket_xy(_part_bucket(screen, r))))
 
 
 static func clear_cache() -> void:
@@ -184,10 +186,42 @@ func _screen_scale_xy() -> Vector2:
 	return s
 
 
+## A part's raster density per axis, as screen-independent factors: the
+## density is screen_xy * f, capped at `cap` so a raster never exceeds the
+## texture limit (the padding for a blur's three sigma counts too).
+## Returns [f: Vector2, cap: Vector2].
+func _part_density(p: Dictionary, o: Dictionary) -> Array:
+	var vb := _vb()
+	var kx := _kx()
+	var ky := stretch_h / vb.size.y if stretch_h > 0.0 else kx
+	var s := float(o.get("s", 1.0))
+	var sx := absf(float(o.get("sx", 1.0)) * s)
+	var sy := absf(float(o.get("sy", 1.0)) * s)
+	var f := Vector2(kx * maxf(1.0, sx), ky * maxf(1.0, sy)) * oversample
+	var rotated := o.has("rot") and fmod(absf(float(o.rot)), 180.0) > 0.01
+	var bbox: Rect2 = p.bbox
+	var pblur: Vector2 = o.get("blur", Vector2.ZERO)
+	var cap := Vector2((MAX_TEX - 8) / maxf(1e-3, bbox.size.x + 6.0 * pblur.x + p.stroke_width),
+		(MAX_TEX - 8) / maxf(1e-3, bbox.size.y + 6.0 * pblur.y + p.stroke_width))
+	return [f, cap, rotated]
+
+
+static func _part_bucket(screen: Vector2, r: Array) -> Vector2i:
+	var dens: Vector2 = screen * (r[0] as Vector2)
+	if r[2]:   # a rotated part takes the larger density on both axes
+		dens = Vector2.ONE * maxf(dens.x, dens.y)
+	var cap: Vector2 = r[1]
+	return Vector2i(_bucket(minf(dens.x, cap.x)), _bucket(minf(dens.y, cap.y)))
+
+
+static func _bucket_xy(b: Vector2i) -> Vector2:
+	return Vector2(_bucket_density(b.x), _bucket_density(b.y))
+
+
 # Rasters are made for the on-screen scale at the last draw. Moving or scaling
 # the node (or a parent) doesn't redraw it, so watch the global transform and
-# redraw when the scale crosses into another density step.
-var _drawn_bucket := Vector2i(-999, -999)
+# redraw when any part's density would cross into another step.
+var _drawn: Array = []          # [density factors, bucket] per drawn part
 
 
 func _enter_tree() -> void:
@@ -195,10 +229,12 @@ func _enter_tree() -> void:
 
 
 func _notification(what: int) -> void:
-	if what == NOTIFICATION_TRANSFORM_CHANGED and data:
-		var k := _screen_scale_xy() * _kx()
-		if Vector2i(_bucket(k.x), _bucket(k.y)) != _drawn_bucket:
-			queue_redraw()
+	if what == NOTIFICATION_TRANSFORM_CHANGED and data and not _drawn.is_empty():
+		var screen := _screen_scale_xy()
+		for e in _drawn:
+			if _part_bucket(screen, e[0]) != e[1]:
+				queue_redraw()
+				return
 
 
 func _draw() -> void:
@@ -210,8 +246,8 @@ func _draw() -> void:
 	var base := Transform2D(Vector2(kx, 0), Vector2(0, ky), Vector2(-vb.position.x * kx, -vb.position.y * ky))
 	var screen_xy := _screen_scale_xy()
 	var screen := maxf(screen_xy.x, screen_xy.y)
-	_drawn_bucket = Vector2i(_bucket(screen_xy.x * kx), _bucket(screen_xy.y * kx))
 	var px_per_unit := screen * maxf(kx, ky)
+	_drawn.clear()
 	var use_only := only.size() > 0
 
 	for i in data.parts.size():
@@ -238,17 +274,11 @@ func _draw() -> void:
 		draw_set_transform_matrix(xf)
 
 		var part_scale := maxf(absf(sx), absf(sy))
-		# Raster density per axis of the part (a rotated part takes the larger for both).
-		var dens := Vector2(screen_xy.x * kx * maxf(1.0, absf(sx)), screen_xy.y * ky * maxf(1.0, absf(sy))) * oversample
-		if o.has("rot") and fmod(absf(float(o.rot)), 180.0) > 0.01:
-			dens = Vector2.ONE * maxf(dens.x, dens.y)
-		var pblur: Vector2 = o.get("blur", Vector2.ZERO)
-		# Never ask for a raster wider than the texture limit: clamp density, not size
-		# (the padding for a blur's three sigma either side counts too).
-		dens.x = minf(dens.x, (MAX_TEX - 8) / maxf(1e-3, bbox.size.x + 6.0 * pblur.x + p.stroke_width))
-		dens.y = minf(dens.y, (MAX_TEX - 8) / maxf(1e-3, bbox.size.y + 6.0 * pblur.y + p.stroke_width))
-		var bucket := Vector2i(_bucket(dens.x), _bucket(dens.y))
-		pblur = _snap_blur(pblur, Vector2(_bucket_density(bucket.x), _bucket_density(bucket.y)))
+		# Raster density per axis of the part (see _part_density).
+		var dr := _part_density(p, o)
+		var bucket := _part_bucket(screen_xy, dr)
+		_drawn.append([dr, bucket])
+		var pblur: Vector2 = _snap_blur(o.get("blur", Vector2.ZERO), _bucket_xy(bucket))
 		var obucket := maxi(bucket.x, bucket.y)   # outlines: one tolerance for both axes
 		var drawing := o.has("draw")
 		var own_colour := _own_colour(p)

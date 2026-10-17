@@ -44,7 +44,9 @@ const MAX_SLICES := 64
 ## pixel_size and goo are not applied (the blurred content replaces them).
 @export_group("Other")
 @export var brightness := 1.0
-## CSS filter: invert(), 0..1.
+## CSS filter: invert(), 0..1. It applies to the finished group, glow, shadow
+## and RGB split included, just before brightness: CSS `invert() drop-shadow()`
+## (shadow after the invert) needs a second MotionFX around this one.
 @export_range(0.0, 1.0) var invert := 0.0
 @export var pixel_size := 0.0
 @export var goo_blur := 0.0

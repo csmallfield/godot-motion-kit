@@ -42,7 +42,8 @@ extends Node2D
 	set(v): uppercase = v; _dirty = true; queue_redraw()
 ## CSS writing-mode: vertical-rl. Glyphs stand upright in columns that run top
 ## to bottom, right to left, using the font's vertical forms (the long-vowel
-## mark turns, small kana shift). `box_width` is then the available column
+## mark turns, small kana shift). Every glyph stands upright, Latin included,
+## as with text-orientation: upright (CSS's default, mixed, turns Latin sideways). `box_width` is then the available column
 ## height: text wraps between characters, never starting a column with
 ## punctuation or a small kana (Japanese kinsoku), as browsers do.
 ## The origin stays the top-left of the whole block; tracking runs down.
@@ -114,7 +115,9 @@ const _METRIC_SIZES := [1000, 2048, 1024, 1536, 1800, 2000, 1200, 1250]
 ## (Chromium rounds; FreeType's size metrics round up, which would put every
 ## baseline up to a pixel low). The unrounded values are recovered from
 ## several large sizes (see _METRIC_SIZES), cached per face, so a descent of
-## 6.498 px rounds down to 6 as it does in the browser.
+## 6.498 px rounds down to 6 as it does in the browser. MSDF fonts are the
+## exception: Godot measures them at their msdf_size whatever the size asked,
+## so their metrics can be a pixel out at large sizes.
 static var _unit_metrics := {}
 
 static func _face_metrics(ts: TextServer, rid: RID, size: float) -> Vector2:
@@ -221,9 +224,11 @@ const _NO_END := "（「『【〔〈《｛［"
 func _layout_vertical(ts: TextServer, isize: int, k: float, prim: Vector2) -> void:
 	var track := tracking * font_size
 	var src := text.to_upper() if uppercase else text
-	# Column thickness: the horizontal line box, as for a horizontal line, with
-	# the glyphs centred on it (the ideographic central baseline).
-	var thick := font_size * line_height if line_height > 0.0 else prim.x + prim.y
+	# Column thickness: the horizontal line box of the faces actually used (the
+	# primary face as the strut), with the glyphs centred on it (the ideographic
+	# central baseline).
+	var thick := prim.x + prim.y
+	var seen := {}
 	var columns: Array = []        # each: Array of glyph records
 	var char_base := 0
 	for para in src.split("\n"):
@@ -232,6 +237,10 @@ func _layout_vertical(ts: TextServer, isize: int, k: float, prim: Vector2) -> vo
 		ts.shaped_text_shape(rid)
 		var recs: Array = []
 		for g in ts.shaped_text_get_glyphs(rid):
+			if not seen.has(g.font_rid):
+				seen[g.font_rid] = true
+				var m := _face_metrics(ts, g.font_rid, font_size)
+				thick = maxf(thick, m.x + m.y)
 			var adv: float = float(g.advance) * k
 			recs.append({font_rid = g.font_rid, size = isize, index = g.index, off = (g.get("offset", Vector2.ZERO) as Vector2) * k,
 				adv = adv, char_i = char_base + int(g.start), ch = para.substr(int(g.start), 1), k = k})
@@ -242,12 +251,20 @@ func _layout_vertical(ts: TextServer, isize: int, k: float, prim: Vector2) -> vo
 		for r in recs:
 			var step: float = r.adv + (track if r.adv != 0.0 else 0.0)
 			if box_width > 0.0 and not col.is_empty() and used + step > box_width + 0.01:
-				var carry: Array = []
 				# Don't start the next column with a forbidden character, or end this
-				# one with an opening bracket: move characters down until both hold.
-				var nxt: Array = [r]
-				while col.size() > 1 and (_NO_START.contains(nxt[0].ch) or _NO_END.contains(col[-1].ch)):
-					nxt.push_front(col.pop_back())
+				# one with an opening bracket: find the latest legal break before here.
+				# With none (a run of ーーー), there is no break opportunity and the
+				# column overflows, as in a browser.
+				var cut := col.size()
+				while cut > 0 and (_NO_START.contains((col[cut] if cut < col.size() else r).ch) or _NO_END.contains(col[cut - 1].ch)):
+					cut -= 1
+				if cut == 0:
+					col.append(r)
+					used += step
+					continue
+				var nxt: Array = col.slice(cut)
+				nxt.append(r)
+				col = col.slice(0, cut)
 				columns.append(col)
 				col = []
 				used = 0.0
@@ -259,6 +276,8 @@ func _layout_vertical(ts: TextServer, isize: int, k: float, prim: Vector2) -> vo
 			used += step
 		columns.append(col)
 		char_base += para.length() + 1
+	if line_height > 0.0:
+		thick = font_size * line_height
 	_chars = maxi(0, char_base - 1)
 	_baseline = thick * 0.5
 	_width = thick * columns.size()

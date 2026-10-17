@@ -159,3 +159,12 @@ func test_svg_raster_density_per_axis() -> String:
 	# so 10 + 2 * 2.5 = 15 units across and 10 + 2 * 1 = 12 units (48 texels) down.
 	var tex := Vector2(r.size.x * 1.0, r.size.y * 4.0)
 	return "" if tex.is_equal_approx(Vector2(15, 48)) else "raster %s texels" % tex
+
+
+func test_vertical_text_without_a_legal_break_overflows() -> String:
+	# Nothing may start a column here, so there is no break opportunity: the
+	# column overflows rather than putting a long-vowel mark at a column top.
+	var t := _vertical("ミーーーー", 96.0, 0.0, 2 * 96.0)
+	var cols := _columns(t)
+	t.free()
+	return "" if cols == [5] else "columns %s, want [5]" % [cols]

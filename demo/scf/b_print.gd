@@ -202,6 +202,7 @@ func _build_scf() -> void:
 		var letter := MotionText.new()
 		letter.font = PrintKit.archivo()
 		letter.line_height = 1.0
+		letter.font_size = 900
 		letter.color = PAPER
 		letter.text = "SCF"[i]
 		col.add_child(letter)
@@ -360,9 +361,11 @@ func _frame_scf(f: float) -> void:
 		col.radius = lerpf(0.0, r, morph)
 		var slide := maxf(0.0, 1.0 - floorf((f - 144 - i * 4) / 2.0) * 0.18) if f < 176 else 0.0
 		var letter: MotionText = c.letter
-		letter.font_size = lerpf(900.0, r * 1.5, morph)
-		var ts := letter.get_text_size()
-		letter.position = (sz - ts) * 0.5 + Vector2(0, slide * 1100.0)
+		# Animate the scale, not font_size: every new size would rasterize a new
+		# set of 900 px glyphs (a 50 ms hitch per frame of the morph).
+		var k := lerpf(900.0, r * 1.5, morph) / 900.0
+		letter.scale = Vector2(k, k)
+		letter.position = (sz - letter.get_text_size() * k) * 0.5 + Vector2(0, slide * 1100.0)
 		var fade := morph < 0.2
 		c.top.visible = fade
 		c.bot.visible = fade
