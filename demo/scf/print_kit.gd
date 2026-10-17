@@ -9,9 +9,10 @@ const PAPER := Color("#ece5da")
 const INK := Color("#0d0d0d")
 
 ## An inline <svg> inside a <div> sits on the text baseline, so the div is
-## taller than the svg by the descent of the default font (Times New Roman,
-## Liberation Serif on Linux, 16 px: 3 px). It shifts anything centred on that div.
-const STRUT_GAP := 3.0
+## taller than the svg by the strut below the baseline: the default font's
+## descent plus half its line gap (Times New Roman, Liberation Serif on Linux,
+## 16 px: 3 + 1 px). It shifts anything centred on that div.
+const STRUT_GAP := 4.0
 
 static var _fonts := {}
 static var _icons := {}
@@ -67,6 +68,78 @@ static func archivo() -> Font:
 		f.fallbacks = [MotionFonts.font("res://demo/assets/fonts/dejavu-sans-symbols.ttf")]
 		_fonts["archivo"] = f
 	return _fonts["archivo"]
+
+
+# ------------------------------------------------------------------ layout helpers
+
+static func rect(parent: Node, r: Rect2, col: Color) -> ColorRect:
+	var c := ColorRect.new()
+	c.position = r.position
+	c.size = r.size
+	c.color = col
+	c.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	parent.add_child(c)
+	return c
+
+
+static func add(parent: Node, n: Node2D) -> Node2D:
+	parent.add_child(n)
+	return n
+
+
+static func logo(parent: Node, key: String, width: float, pos: Vector2) -> MotionSvg:
+	var s := MotionSvg.new()
+	s.data = SCFBrand.logo(key)
+	s.width = width
+	s.position = pos
+	parent.add_child(s)
+	return s
+
+
+static func vjp(parent: Node, text: String, size: float, col: Color, track: float, right: float, top: float) -> MotionText:
+	var t := MotionText.new()
+	t.font = SCFBrand.font("jp", 900)
+	t.font_size = size
+	t.color = col
+	t.tracking = track
+	t.vertical = true
+	t.box_width = 1080.0 - top          # an abs-positioned box with only `top` set
+	t.text = text
+	t.position = Vector2(1920.0 - right - t.get_text_size().x, top)
+	parent.add_child(t)
+	return t
+
+
+## `right:`-anchored micro type: right-aligned lines ending at the edge.
+static func micro_right(parent: Node, text: String, right: float, y: float, c := INK, size := 16.0) -> MotionText:
+	var t := micro(text, size, c)
+	t.align = HORIZONTAL_ALIGNMENT_RIGHT
+	t.position = Vector2(1920.0 - right, y)
+	parent.add_child(t)
+	return t
+
+
+static func micro_at(parent: Node, text: String, x: float, y: float, c := INK, size := 16.0) -> MotionText:
+	var t := micro(text, size, c)
+	t.position = Vector2(x, y)
+	parent.add_child(t)
+	return t
+
+
+static func regs(parent: Node) -> Node2D:
+	var g := Node2D.new()
+	for p in [Vector2(50, 50), Vector2(1870, 50), Vector2(50, 1030), Vector2(1870, 1030)]:
+		g.add_child(reg(p.x, p.y))
+	parent.add_child(g)
+	return g
+
+
+## The scfMark disc i of a mark drawn at (x, y), w wide: centre and radius.
+static func scf_disc(i: int, x: float, y: float, w: float) -> Dictionary:
+	var d := SCFBrand.logo("scfMark")
+	var k := w / d.view_box.size.x
+	var bb: Rect2 = d.parts[i].bbox
+	return {c = Vector2(x, y) + bb.get_center() * k, r = bb.size.x * 0.5 * k}
 
 
 # ------------------------------------------------------------------ marks

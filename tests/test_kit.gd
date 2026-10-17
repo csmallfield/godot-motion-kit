@@ -93,3 +93,69 @@ func test_part_blur_grows_the_raster() -> String:
 	if not (is_equal_approx(r_blur.position.x, r_plain.position.x - 6.0) and is_equal_approx(r_blur.size.y, r_plain.size.y)):
 		return "blurred raster %s vs plain %s" % [r_blur, r_plain]
 	return ""
+
+
+func test_text_metrics_round_like_chromium_near_half() -> String:
+	# Space Mono's descent at 18 px is 6.498 px: Chromium rounds it to 6, so the
+	# line box is 20 + 6. FreeType's rounded-up size metrics would give 7.
+	var t := _text("space_mono", 18.0, "AB")
+	var h := t.get_text_size().y
+	var b := t.get_baseline()
+	t.free()
+	return "" if is_equal_approx(h, 26.0) and is_equal_approx(b, 20.0) else "line box %s, baseline %s; want 26, 20" % [h, b]
+
+
+func _vertical(text: String, size: float, track: float, avail: float) -> MotionText:
+	var t := MotionText.new()
+	t.font = SCFBrand.font("jp", 900)
+	t.font_size = size
+	t.tracking = track
+	t.vertical = true
+	t.box_width = avail
+	t.text = text
+	return t
+
+
+## Characters per column, right to left.
+func _columns(t: MotionText) -> Array:
+	var size := t.get_text_size()
+	var thick: float = size.x / roundf(size.x / (t._glyphs[0].line_box as float))
+	var counts := {}
+	for g in t._glyphs:
+		var col := int(floorf((size.x - (g.pivot as Vector2).x) / thick))
+		counts[col] = counts.get(col, 0) + 1
+	var out := []
+	for k in counts.size():
+		out.append(counts[k])
+	return out
+
+
+func test_vertical_text_wraps_into_columns() -> String:
+	# B Print: 96 px, letter-spacing 0.1em, 960 px of column: nine characters,
+	# then the last two in a second column to the left (as Chromium lays it out).
+	var t := _vertical(SCFBrand.JP.mh, 96.0, 0.1, 960.0)
+	var cols := _columns(t)
+	var w := t.get_text_size().x
+	t.free()
+	if cols != [9, 2]:
+		return "columns %s, want [9, 2]" % [cols]
+	return "" if w > 200.0 and w < 300.0 else "two columns %s px wide" % w
+
+
+func test_vertical_text_keeps_small_kana_and_dashes_off_column_tops() -> String:
+	# Seven characters fit; the eighth, ー, may not start a column, nor may the
+	# small ュ before it, so ヒュー moves down together.
+	var t := _vertical("ミニマル・ヒュー", 96.0, 0.0, 7 * 96.0)
+	var cols := _columns(t)
+	t.free()
+	return "" if cols == [5, 3] else "columns %s, want [5, 3]" % [cols]
+
+
+func test_svg_raster_density_per_axis() -> String:
+	var d := MotionSvgData.from_string('<svg viewBox="0 0 10 10"><rect x="0" y="0" width="10" height="10" fill="#fff"/></svg>')
+	var r: Rect2 = MotionSvg._raster_rect(d.parts[0], Vector2i(0, 4), Vector2.ZERO)
+	# bucket 0 = 1 texel per unit across, bucket 4 = 4 texels per unit down.
+	# Padding: 2 texels plus half the (default 1 unit) stroke width each side,
+	# so 10 + 2 * 2.5 = 15 units across and 10 + 2 * 1 = 12 units (48 texels) down.
+	var tex := Vector2(r.size.x * 1.0, r.size.y * 4.0)
+	return "" if tex.is_equal_approx(Vector2(15, 48)) else "raster %s texels" % tex

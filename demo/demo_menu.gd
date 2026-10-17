@@ -5,11 +5,15 @@
 # then MotionTransition changes scene. Mouse, keyboard and gamepad all work.
 extends MotionComposition
 
-const HOLD := 110.0   # the last item's spring (from frame 65) has settled by here
+const HOLD := 110.0   # the last item's spring (from frame 67) has settled by here
 const ITEMS := [
 	["E1  SUPERGRAPHIC", "res://demo/scf/e1_supergraphic.tscn", "circle"],
 	["D1  SIGNAL", "res://demo/scf/d1_signal.tscn", "glitch"],
 	["A  PIT LANE", "res://demo/scf/a_pit_lane.tscn", "bars"],
+	["B  PRINT", "res://demo/scf/b_print.tscn", "bars"],
+	["B1  PRINT", "res://demo/scf/b1_print.tscn", "clock"],
+	["B2  SPECIMEN", "res://demo/scf/b2_specimen.tscn", "bars"],
+	["B3  INDEX", "res://demo/scf/b3_index.tscn", "clock"],
 	["C  VECTOR TRACK", "res://demo/scf/c_vector_track.tscn", "crt"],
 	["TRANSITIONS", "", ""],
 	["QUIT", "", ""],
@@ -47,7 +51,7 @@ func _ready() -> void:
 
 	var font := SCFBrand.font("outfit", 800)
 	for i in ITEMS.size():
-		var slot := Control.new(); slot.position = Vector2(150, 420 + i * 100); slot.size = Vector2(900, 90)
+		var slot := Control.new(); slot.position = _slot_pos(i); slot.size = Vector2(620, 66)
 		slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		add_child(slot)
 		var b := Button.new()
@@ -55,11 +59,11 @@ func _ready() -> void:
 		b.flat = true
 		b.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		b.add_theme_font_override("font", font)
-		b.add_theme_font_size_override("font_size", 58)
+		b.add_theme_font_size_override("font_size", 44)
 		for state in ["font_color", "font_hover_color", "font_focus_color", "font_pressed_color", "font_hover_pressed_color"]:
 			b.add_theme_color_override(state, SCFBrand.CREAM)
 		b.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
-		b.size = Vector2(900, 90)
+		b.size = Vector2(620, 66)
 		var r := MotionReactive.new(); r.hover_offset = Vector2(28, 0); r.hover_scale = 1.03; r.focus_scale = 1.03
 		r.press_scale = 0.96; r.hover_tint = SCFBrand.AMBER
 		b.add_child(r)
@@ -71,6 +75,14 @@ func _ready() -> void:
 	play_segment("in", "hold")
 	segment_finished.connect(_on_segment)
 	(_slots[0].get_child(0) as Button).grab_focus.call_deferred()
+
+
+## The intros in a column on the left, TRANSITIONS and QUIT in a second one.
+func _slot_pos(i: int) -> Vector2:
+	var n := ITEMS.size() - 2
+	if i < n:
+		return Vector2(150, 410 + i * 76)
+	return Vector2(820, 410 + (i - n) * 76)
 
 
 func _frame(f: float) -> void:
@@ -93,8 +105,8 @@ func _frame(f: float) -> void:
 	_rule.size = Vector2(MK.map(f, [30, 48], [0, 760], MK.ease_in_out), 6)
 	_rule.visible = _rule.size.x > 0.0
 	for i in _slots.size():
-		var s: float = sp.call(40 + i * 5.0, 9, 150)
-		_slots[i].position.x = 150 - (1.0 - s) * 420.0
+		var s: float = sp.call(40 + i * 3.0, 9, 150)
+		_slots[i].position.x = _slot_pos(i).x - (1.0 - s) * 420.0
 		_slots[i].modulate.a = clampf(s * 1.5, 0.0, 1.0)
 
 

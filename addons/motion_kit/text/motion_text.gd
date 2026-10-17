@@ -101,17 +101,32 @@ func get_baseline() -> float:
 	return _baseline
 
 
-const _METRIC_SIZE := 2048
+# FreeType rounds a size's ascent and descent up to whole pixels, so
+# ceil(t * s) / s >= t at every size s; the smallest ratio over several sizes is
+# the true metric, exact when s is the font's units-per-em (1000 or 2048 for
+# nearly every font). Godot measures sizes above 2048 at 2048 and scales.
+const _METRIC_SIZES := [1000, 2048, 1024, 1536, 1800, 2000, 1200, 1250]
 
 ## Ascent and descent of one font face at `size` px, as a browser computes
 ## them: NOT including the face's fallbacks (Godot's Font.get_ascent() takes
 ## the maximum over the fallback chain; browsers size a line only from the
 ## faces its glyphs actually use), and each rounded to the nearest pixel
 ## (Chromium rounds; FreeType's size metrics round up, which would put every
-## baseline up to a pixel low). The unrounded values come from a large size.
+## baseline up to a pixel low). The unrounded values are recovered from
+## several large sizes (see _METRIC_SIZES), cached per face, so a descent of
+## 6.498 px rounds down to 6 as it does in the browser.
+static var _unit_metrics := {}
+
 static func _face_metrics(ts: TextServer, rid: RID, size: float) -> Vector2:
-	var k := size / _METRIC_SIZE
-	return Vector2(roundf(ts.font_get_ascent(rid, _METRIC_SIZE) * k), roundf(ts.font_get_descent(rid, _METRIC_SIZE) * k))
+	if not _unit_metrics.has(rid):
+		var a := INF
+		var d := INF
+		for s in _METRIC_SIZES:
+			a = minf(a, ts.font_get_ascent(rid, s) / float(s))
+			d = minf(d, ts.font_get_descent(rid, s) / float(s))
+		_unit_metrics[rid] = Vector2(a, d)
+	var m: Vector2 = _unit_metrics[rid] * size
+	return Vector2(roundf(m.x), roundf(m.y))
 
 
 func _primary_metrics(ts: TextServer, size: float) -> Vector2:

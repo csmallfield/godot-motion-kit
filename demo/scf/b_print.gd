@@ -33,78 +33,6 @@ func _ready() -> void:
 	super._ready()
 
 
-# ------------------------------------------------------------------ helpers
-
-static func _rect(parent: Node, r: Rect2, col: Color) -> ColorRect:
-	var c := ColorRect.new()
-	c.position = r.position
-	c.size = r.size
-	c.color = col
-	c.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	parent.add_child(c)
-	return c
-
-
-static func _add(parent: Node, n: Node2D) -> Node2D:
-	parent.add_child(n)
-	return n
-
-
-static func _logo(parent: Node, key: String, width: float, pos: Vector2) -> MotionSvg:
-	var s := MotionSvg.new()
-	s.data = SCFBrand.logo(key)
-	s.width = width
-	s.position = pos
-	parent.add_child(s)
-	return s
-
-
-static func _vjp(parent: Node, text: String, size: float, col: Color, track: float, right: float, top: float) -> MotionText:
-	var t := MotionText.new()
-	t.font = SCFBrand.font("jp", 900)
-	t.font_size = size
-	t.color = col
-	t.tracking = track
-	t.vertical = true
-	t.box_width = 1080.0 - top          # an abs-positioned box with only `top` set
-	t.text = text
-	t.position = Vector2(1920.0 - right - t.get_text_size().x, top)
-	parent.add_child(t)
-	return t
-
-
-## `right:`-anchored micro type: right-aligned lines ending at the edge.
-static func _micro_r(parent: Node, text: String, right: float, y: float, c := INK, size := 16.0) -> MotionText:
-	var t := PrintKit.micro(text, size, c)
-	t.align = HORIZONTAL_ALIGNMENT_RIGHT
-	t.position = Vector2(1920.0 - right, y)
-	parent.add_child(t)
-	return t
-
-
-static func _micro(parent: Node, text: String, x: float, y: float, c := INK, size := 16.0) -> MotionText:
-	var t := PrintKit.micro(text, size, c)
-	t.position = Vector2(x, y)
-	parent.add_child(t)
-	return t
-
-
-static func _regs(parent: Node) -> Node2D:
-	var g := Node2D.new()
-	for p in [Vector2(50, 50), Vector2(1870, 50), Vector2(50, 1030), Vector2(1870, 1030)]:
-		g.add_child(PrintKit.reg(p.x, p.y))
-	parent.add_child(g)
-	return g
-
-
-## The scfMark disc i laid out at SCF_X, SCF_Y, SCF_W: centre and radius.
-static func _disc(i: int) -> Dictionary:
-	var d := SCFBrand.logo("scfMark")
-	var k := SCF_W / d.view_box.size.x
-	var bb: Rect2 = d.parts[i].bbox
-	return {c = Vector2(SCF_X, SCF_Y) + bb.get_center() * k, r = bb.size.x * 0.5 * k}
-
-
 # ------------------------------------------------------------------ build
 
 func _build() -> void:
@@ -112,14 +40,14 @@ func _build() -> void:
 	_build_layouts()
 	_build_mh()
 	for i in 3:
-		_bars.append(_rect(self, Rect2(i * 640, 1080, 640, 0), [SCFBrand.BLUE, SCFBrand.AMBER, SCFBrand.RED][i]))
+		_bars.append(PrintKit.rect(self, Rect2(i * 640, 1080, 640, 0), [SCFBrand.BLUE, SCFBrand.AMBER, SCFBrand.RED][i]))
 	_build_scf()
 
 
 func _layout_root(bg: Color) -> Node2D:
 	var n := Node2D.new()
 	add_child(n)
-	_rect(n, Rect2(0, 0, 1920, 1080), bg)
+	PrintKit.rect(n, Rect2(0, 0, 1920, 1080), bg)
 	_layouts.append(n)
 	return n
 
@@ -132,7 +60,7 @@ func _build_layouts() -> void:
 	var dot := MotionShape.circle(220, SCFBrand.RED)
 	dot.position = Vector2(230, 220)
 	l0.add_child(dot)
-	_micro_r(l0, "MINIMAL HUMANS™\nPRODUCT MH-001\nBERLIN / DE\nFREE + OPEN SOURCE", 80, 120)
+	PrintKit.micro_right(l0, "MINIMAL HUMANS™\nPRODUCT MH-001\nBERLIN / DE\nFREE + OPEN SOURCE", 80, 120)
 	l0.add_child(PrintKit.reg(80, 80))
 	l0.add_child(PrintKit.reg(1840, 1000))
 
@@ -141,15 +69,15 @@ func _build_layouts() -> void:
 	var rot := Node2D.new()
 	l1.add_child(rot)
 	_l.rot = rot
-	var m := _logo(rot, "mhM", 1300, Vector2.ZERO)
+	var m := PrintKit.logo(rot, "mhM", 1300, Vector2.ZERO)
 	m.only = PackedInt32Array([2])
 	m.apply(func(_i): return {fill = PAPER})
 	var mh := m.get_size()
 	_l.rot_half = Vector2(mh.x, mh.y + PrintKit.STRUT_GAP) * 0.5   # the wrapping div's centre
 	m.position = -_l.rot_half
 	rot.rotation_degrees = -90.0
-	_vjp(l1, SCFBrand.JP.mh, 96, INK, 0.1, 120, 120)
-	var tm := _micro(l1, "™ ©\nMH/001", 80, 0)
+	PrintKit.vjp(l1, SCFBrand.JP.mh, 96, INK, 0.1, 120, 120)
+	var tm := PrintKit.micro_at(l1, "™ ©\nMH/001", 80, 0)
 	tm.position.y = 1080 - 70 - tm.get_text_size().y
 
 	# 2: a sheet of twelve M marks, every fifth one reversed
@@ -166,10 +94,10 @@ func _build_layouts() -> void:
 		box.border_width = bw
 		box.border_color = SCFBrand.RED if i == 6 else INK
 		l2.add_child(box)
-		var lm := _logo(l2, "mhM", 180, Vector2.ZERO)
+		var lm := PrintKit.logo(l2, "mhM", 180, Vector2.ZERO)
 		lm.position = pos + Vector2(bw, bw) + (Vector2(380, 270) - Vector2(bw, bw) * 2.0 - lm.get_size()) * 0.5
 		_l.cells.append({box = box, logo = lm})
-	_l.sheet = _micro(l2, "", 140, 1010)
+	_l.sheet = PrintKit.micro_at(l2, "", 140, 1010)
 
 	# 3: blue, MINIMAL HUMANS, barcode
 	var l3 := _layout_root(SCFBrand.BLUE)
@@ -177,7 +105,7 @@ func _build_layouts() -> void:
 	l3.add_child(_l.mhw)
 	_l.bar3 = PrintKit.barcode(80, 880, 520, 120, 0, PAPER)
 	l3.add_child(_l.bar3)
-	var est := _micro_r(l3, "EST. BERLIN\n™", 80, 0, PAPER)
+	var est := PrintKit.micro_right(l3, "EST. BERLIN\n™", 80, 0, PAPER)
 	est.position.y = 1080 - 70 - est.get_text_size().y
 
 	# 4: amber, an ink disc with 提供
@@ -193,29 +121,29 @@ func _build_layouts() -> void:
 	jp.text = SCFBrand.JP.presents
 	jp.position = -jp.get_text_size() * 0.5
 	disc.add_child(jp)
-	_micro(l4, "PRESENTED BY\nMINIMAL HUMANS", 80, 80)
+	PrintKit.micro_at(l4, "PRESENTED BY\nMINIMAL HUMANS", 80, 80)
 	l4.add_child(PrintKit.reg(1840, 80))
 
 	# 5: ink, the MH code glyphs stretched tall
 	var l5 := _layout_root(INK)
-	var code := _logo(l5, "mhShort", 1500, Vector2.ZERO)
+	var code := PrintKit.logo(l5, "mhShort", 1500, Vector2.ZERO)
 	code.only = PackedInt32Array(SCFBrand.MH_SHORT_CODE)
 	code.apply(func(_i): return {tx = -142.0, ty = -40.0})
 	_l.code = code
 	_l.code_h = code.get_size().y + PrintKit.STRUT_GAP
-	_l.code_mh = _micro(l5, "", 80, 0, SCFBrand.AMBER)
+	_l.code_mh = PrintKit.micro_at(l5, "", 80, 0, SCFBrand.AMBER)
 
 
 func _build_mh() -> void:
 	_mh = MotionFX.new()
 	add_child(_mh)
 	var c := _mh.content
-	_rect(c, Rect2(0, 0, 1920, 1080), PAPER)
-	_p.rule = _rect(c, Rect2(80, 150, 1760, 14), INK)
-	_p.head = _micro(c, "MH—001 / BERLIN DE / FREE + OPEN SOURCE / A STUDIO OF TWO", 80, 100)
-	_p.sheet = _micro_r(c, "SHEET 01 / 02", 80, 100)
-	_p.logo = _logo(c, "mhFull", 1560, Vector2(80, 236))
-	_p.tm = _micro(c, "™", 1650, 236, INK, 40)
+	PrintKit.rect(c, Rect2(0, 0, 1920, 1080), PAPER)
+	_p.rule = PrintKit.rect(c, Rect2(80, 150, 1760, 14), INK)
+	_p.head = PrintKit.micro_at(c, "MH—001 / BERLIN DE / FREE + OPEN SOURCE / A STUDIO OF TWO", 80, 100)
+	_p.sheet = PrintKit.micro_right(c, "SHEET 01 / 02", 80, 100)
+	_p.logo = PrintKit.logo(c, "mhFull", 1560, Vector2(80, 236))
+	_p.tm = PrintKit.micro_at(c, "™", 1650, 236, INK, 40)
 
 	# PRESENTS 提供 on an ink block: flex, gap 30, baseline-aligned, padding 16 30 10
 	var box := Node2D.new()
@@ -237,18 +165,18 @@ func _build_mh() -> void:
 	var y2 := asc - t2.get_baseline()
 	var ch := maxf(y1 + t1.get_text_size().y, y2 + t2.get_text_size().y)
 	var w := 30 + t1.get_text_size().x + 30 + t2.get_text_size().x + 30
-	_rect(box, Rect2(0, 0, w, 16 + ch + 10), INK)
+	PrintKit.rect(box, Rect2(0, 0, w, 16 + ch + 10), INK)
 	t1.position = Vector2(30, 16 + y1)
 	t2.position = Vector2(30 + t1.get_text_size().x + 30, 16 + y2)
 	box.add_child(t1)
 	box.add_child(t2)
 	_p.presents = box
 
-	_p.jp = _vjp(c, SCFBrand.JP.mh, 40, SCFBrand.RED, 0.2, 70, 240)
-	_p.strip = _add(c, PrintKit.strip(80, 860))
-	_p.barcode = _add(c, PrintKit.barcode(360, 860, 300, 40, 9))
-	_p.blurb = _micro(c, "A FREE + OPEN SOURCE STUDIO\nFROM BERLIN — PRESENTS ITS FIRST OPEN FORMAT", 720, 862)
-	_p.regs = _regs(c)
+	_p.jp = PrintKit.vjp(c, SCFBrand.JP.mh, 40, SCFBrand.RED, 0.2, 70, 240)
+	_p.strip = PrintKit.add(c, PrintKit.strip(80, 860))
+	_p.barcode = PrintKit.add(c, PrintKit.barcode(360, 860, 300, 40, 9))
+	_p.blurb = PrintKit.micro_at(c, "A FREE + OPEN SOURCE STUDIO\nFROM BERLIN — PRESENTS ITS FIRST OPEN FORMAT", 720, 862)
+	_p.regs = PrintKit.regs(c)
 	_p.ticker = PrintKit.Ticker.new(960, "MINIMAL HUMANS PRESENTS", SCFBrand.RED, INK, 14)
 	c.add_child(_p.ticker)
 
@@ -256,7 +184,7 @@ func _build_mh() -> void:
 func _build_scf() -> void:
 	_scf = Node2D.new()
 	add_child(_scf)
-	_rect(_scf, Rect2(0, 0, 1920, 1080), PAPER)
+	PrintKit.rect(_scf, Rect2(0, 0, 1920, 1080), PAPER)
 	var M: Dictionary = SCFBrand.SCF_MARK
 	var discs := [M.discS, M.discC, M.discF]
 	var cols := [SCFBrand.BLUE, SCFBrand.AMBER, SCFBrand.RED]
@@ -278,14 +206,14 @@ func _build_scf() -> void:
 		letter.text = "SCF"[i]
 		col.add_child(letter)
 		var fg := INK if i == 1 else PAPER
-		var top := _micro(col, "0%d\n%s" % [i + 1, words[i]], 40, 40, fg)
-		var bot := _micro(col, kanji[i], 40, 0, fg, 40)
-		_s.cols.append({col = col, letter = letter, top = top, bot = bot, d = _disc(discs[i])})
-	_s.mark = _logo(_scf, "scfMark", SCF_W, Vector2(SCF_X, SCF_Y))
-	_s.rule = _rect(_scf, Rect2(80, 150, 1760, 14), INK)
-	_s.head = _micro(_scf, "MINIMAL HUMANS PRESENTS / SCF — 1.0 / OPEN FORMAT", 80, 100)
-	_s.sheet = _micro_r(_scf, "SHEET 02 / 02", 80, 100)
-	var full := _logo(_scf, "scfFull", 800, Vector2(960, 236))
+		var top := PrintKit.micro_at(col, "0%d\n%s" % [i + 1, words[i]], 40, 40, fg)
+		var bot := PrintKit.micro_at(col, kanji[i], 40, 0, fg, 40)
+		_s.cols.append({col = col, letter = letter, top = top, bot = bot, d = PrintKit.scf_disc(discs[i], SCF_X, SCF_Y, SCF_W)})
+	_s.mark = PrintKit.logo(_scf, "scfMark", SCF_W, Vector2(SCF_X, SCF_Y))
+	_s.rule = PrintKit.rect(_scf, Rect2(80, 150, 1760, 14), INK)
+	_s.head = PrintKit.micro_at(_scf, "MINIMAL HUMANS PRESENTS / SCF — 1.0 / OPEN FORMAT", 80, 100)
+	_s.sheet = PrintKit.micro_right(_scf, "SHEET 02 / 02", 80, 100)
+	var full := PrintKit.logo(_scf, "scfFull", 800, Vector2(960, 236))
 	full.crop = Rect2(108, 4, 175, 76)
 	full.only = PackedInt32Array(SCFBrand.SCF_FULL.story + SCFBrand.SCF_FULL.context + SCFBrand.SCF_FULL.framework)
 	_s.full = full
@@ -298,7 +226,7 @@ func _build_scf() -> void:
 	var rows := [["FORMAT", "SQLITE"], ["QUERIES", "16 CANONICAL"], ["LICENCE", "APACHE-2.0\nCC BY 4.0"], ["VERSION", "1.0"]]
 	for i in 4:
 		var wcol: float = [150.0, 210.0, 200.0, 110.0][i]
-		_rect(info, Rect2(x, 0, wcol, 6), [SCFBrand.BLUE, SCFBrand.AMBER, SCFBrand.RED, INK][i])
+		PrintKit.rect(info, Rect2(x, 0, wcol, 6), [SCFBrand.BLUE, SCFBrand.AMBER, SCFBrand.RED, INK][i])
 		var key := MotionText.new()
 		key.font = PrintKit.mono_font(400)
 		key.font_size = 14
@@ -316,10 +244,10 @@ func _build_scf() -> void:
 		info.add_child(val)
 		x += wcol + 46
 	_s.info = info
-	_s.jp = _vjp(_scf, SCFBrand.JP.scf, 32, SCFBrand.BLUE, 0.12, 70, 236)
-	_s.regs = _regs(_scf)
-	_s.strip = _add(_scf, PrintKit.strip(80, 860))
-	_s.barcode = _add(_scf, PrintKit.barcode(360, 860, 300, 40, 44))
+	_s.jp = PrintKit.vjp(_scf, SCFBrand.JP.scf, 32, SCFBrand.BLUE, 0.12, 70, 236)
+	_s.regs = PrintKit.regs(_scf)
+	_s.strip = PrintKit.add(_scf, PrintKit.strip(80, 860))
+	_s.barcode = PrintKit.add(_scf, PrintKit.barcode(360, 860, 300, 40, 44))
 	_s.ticker = PrintKit.Ticker.new(960, "STORY CONTEXT FRAMEWORK", INK, PAPER, -14)
 	_scf.add_child(_s.ticker)
 

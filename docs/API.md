@@ -66,6 +66,10 @@ contours), `find(name)` (by id, class or group id), `sorted_by_x()`, `centre(i)`
 | `chromium_draw` | Reproduce Chromium's dash quirk when porting Remotion pieces (see the porting guide). |
 | `oversample`, `prewarm()`, `clear_cache()` | Raster density and cache control. |
 
+Rasters are made for the node's on-screen scale, separately per axis (a logo stretched 5×
+vertically gets 5× the density down, not across), and re-made when the scale moves into
+another density step.
+
 Single-colour parts are rasterized white by Godot's own ThorVG and tinted, so recolouring
 them costs nothing; parts with both a fill and a stroke, or a gradient, keep their own
 colours and `fill` tints them. Rasters are cached in √2 size steps (densities include the
@@ -83,12 +87,21 @@ games `load()` the file imported as Motion SVG.
 `uppercase`. Per-glyph overrides via `apply(fn)` / `glyph_fn(i, f)` with
 `tx ty s sx sy rot o color hide`. The origin is the top-left of the line box, as for a CSS block.
 `get_text_size()` gives the width (including tracking after the last character, as CSS
-does) and the line-box height.
+does) and the line-box height; `get_baseline()` the distance from the top to the first
+baseline, for CSS `align-items: baseline` layouts.
+
+`vertical = true` is CSS `writing-mode: vertical-rl`: glyphs stand upright in columns that
+run top to bottom and right to left, using the font's vertical forms (the long-vowel mark
+turns, small kana shift). `box_width` becomes the available column height; text wraps
+between characters and never starts a column with punctuation, a small kana or a long-vowel
+mark (Japanese kinsoku), as browsers do. The column is as thick as the horizontal line box,
+with glyphs centred on it.
 
 Line boxes follow Chromium: with `line_height = 0` ("normal") each line is as tall as the
 largest ascent plus descent among the faces its glyphs actually use (a fallback face only
 counts when one of its glyphs is on the line), and each face's ascent and descent are
-rounded to whole pixels, as Chromium rounds them.
+rounded to whole pixels, as Chromium rounds them. FreeType rounds those metrics up, so the
+kit recovers the exact values from several large sizes and rounds them itself.
 
 `MotionFonts.font(path, msdf=false)` loads ttf/otf/woff/woff2 with browser-like settings
 (no hinting, sub-pixel positioning). MSDF keeps glyphs sharp while they scale up, but
@@ -129,7 +142,8 @@ it runs whenever the frame changes. Helpers: `line(a, b, col, w, opacity)`,
 `dashed(a, b, col, w, dash, gap, opacity)`, `polyline(pts, col, w, opacity, closed)`,
 `polygon(pts, fill, stroke, w, opacity)`, `circle(c, r, fill, opacity)`,
 `ring(c, r, col, w, opacity)`, `ellipse(c, rx, ry, col, w, opacity)`,
-`rect(r, col, opacity, w)`. Lines thinner than a pixel draw at 1 px with their width as
+`rect(r, col, opacity, w)`, `dashed_polyline(pts, col, w, dash, gap, offset, opacity)` (SVG
+`stroke-dasharray` with `stroke-dashoffset`; the pattern runs on around corners). Lines thinner than a pixel draw at 1 px with their width as
 alpha, as a browser rasterizes them. Each call's `opacity` applies to that shape alone;
 for a group's opacity use `modulate.a` on the canvas.
 
@@ -138,6 +152,7 @@ for a group's opacity use `modulate.a` on the canvas.
 - `MotionFX`: children placed under it in a scene move into `content` when the game runs
   (in the editor they draw without the effects). It renders `content` offscreen, then applies `set_slices(amount, split, count, seed)`
   (offsets identical to the SCF `Sliced`), `brightness`, `pixel_size`, `goo_blur` and `goo_sharp`.
+  `invert` is CSS `filter: invert()`, 0 to 1.
   Raise `render_scale` for 4K output. Its `modulate` is the group's opacity and tint
   (one composited layer, like CSS `opacity` on a wrapper).
   - Blur family, sharing one separable Gaussian pass: `blur` is CSS `filter: blur()`

@@ -20,6 +20,9 @@ know the handful of places where the browser behaves in ways that aren't obvious
 | `<Logo part={(i) => ...}>` | `MotionSvg.apply(func(i): ...)`, with the same keys (`fillO` → `fill_o`, `drawWidth` → `draw_width`) |
 | CSS text, `letterSpacing: "0.3em"` | `MotionText.tracking = 0.3` |
 | `lineHeight: 0.9` | `MotionText.line_height = 0.9` |
+| `writing-mode: vertical-rl` | `MotionText.vertical = true`, `box_width` = the available height |
+| `filter: invert(1)` | `MotionFX.invert = 1` |
+| `strokeDasharray` + `strokeDashoffset` on a path | `MotionCanvas.dashed_polyline(..., offset)` |
 | `opacity` | `modulate.a`; on a wrapper whose children overlap, a `CanvasGroup` (`self_modulate.a`) or `MotionFX` so it fades as one layer |
 | `filter: brightness(k)` | `modulate = Color(k, k, k)` |
 | `box-shadow: 0 0 30px c` | a `MotionShape` the element's size, `blur = 30` |
@@ -75,3 +78,22 @@ know the handful of places where the browser behaves in ways that aren't obvious
    plus 10% (or what the code sets, often -50%/200%). A glow on a nearly horizontal line
    can be clipped vertically in the browser. `MotionSvg`'s `blur_region` reproduces a
    region on parts; `MotionFX` clips only at its `size`, so give it room.
+12. **Every box is border-box.** Remotion's own stylesheet sets `box-sizing: border-box` on
+   every element, so a `width` or `height` includes padding and border. A 54 px band with
+   3 px borders has 48 px of content. Getting this wrong cost A Pit Lane 0.04 of SSIM.
+13. **An inline `<svg>` in a `<div>` makes the div 4 px taller.** The svg sits on the text
+   baseline and the line keeps the default font's descent and half its line gap below it
+   (Times New Roman, which is Liberation Serif on Linux, at 16 px). It matters whenever
+   that div is centred, rotated about its centre, or stacked under something.
+   `PrintKit.STRUT_GAP` holds the value; svgs that are flex items have no gap.
+14. **Characters the web fonts lack come from system fonts.** Chromium falls back through
+   fontconfig, and with synthetic bold when the weight is missing. Find the face with
+   `fc-match 'monospace:charset=XXXX'`, subset just those glyphs, and add it to the Godot
+   font's `fallbacks` (a `FontVariation` with `variation_embolden = 0.5` stands in for
+   Chromium's fake bold).
+15. **`white-space: nowrap` collapses spaces; `pre` keeps them.** Collapse runs of spaces
+   yourself before handing text to `MotionText`.
+16. **GDScript divides integers as integers.** `crop[2] / crop[3]` with whole numbers
+   truncates (118 / 25 is 4). Convert to float first when porting arithmetic on arrays
+   of numbers.
+
