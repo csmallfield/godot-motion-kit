@@ -5,17 +5,22 @@ Remotion-exact springs and easing, part-level SVG logo animation, kinetic type,
 glitch and CRT effects, scene transitions, and spring feedback for UI.
 It is pure GDScript, with no GDExtension and no build step.
 
-It was built by porting two of the SCF intros from Remotion line for line and comparing
+It was built by porting four of the SCF intros from Remotion line for line and comparing
 the renders frame by frame:
 
 | Intro | Frames | Mean SSIM vs Remotion | Worst frame |
 | --- | --- | --- | --- |
-| E1 Supergraphic | 420 | 0.9987 | 0.9975 |
-| D1 Signal, all frames | 420 | 0.945 | 0.175 (TV static) |
+| E1 Supergraphic | 420 | 0.9988 | 0.9975 |
+| C Vector Track | 300 | 0.9965 | 0.9918 |
 | D1 Signal, excluding the 48 frames of random TV static | 372 | 0.987 | 0.934 |
+| D1 Signal, all frames | 420 | 0.945 | 0.175 (TV static) |
+| A Pit Lane | 300 | 0.958 | 0.940 |
 
 Random static can't match pixel for pixel, so those frames are reported separately.
-`tools/compare/compare.py` reproduces all of these numbers.
+A Pit Lane is dense with 1–2 px lines and small type, and what is left there is
+anti-aliasing: line positions and widths agree to a fraction of a pixel, but Skia and
+Godot shade the edge pixels differently. `tools/compare/compare.py` reproduces all of
+these numbers.
 
 ## Install
 
@@ -45,12 +50,14 @@ and rendered offline frame-exactly with Movie Maker.
 
 | Piece | What it does |
 | --- | --- |
-| `MK` | `spring`, `bezier` and named easings, `map`/`interp`, `prog`, `win`, `rand`, `shake`, `typed`, `crt_off`, `timecode` |
+| `MK` | `spring`, `bezier` and named easings, `map`/`interp`, `prog`, `win`, `rand`, `shake`, `typed`, `crt_off`, `timecode`; `rot_x`, `rot_y`, `project` for hand-rolled 3D |
 | `MotionComposition` | Root of a piece: fps, duration, markers, play / seek / reverse / segments, process, audio or manual clock, fit-to-viewport |
-| `MotionSvg` + `MotionSvgData` | SVG kept as vector parts; per-part move, scale, rotate, recolour, fade, self-drawing outline |
+| `MotionSvg` + `MotionSvgData` | SVG kept as vector parts; per-part move, scale, rotate, recolour, fade, blur, self-drawing outline |
 | `MotionText`, `MotionFonts`, `MotionPill` | Glyph-by-glyph type with CSS-style tracking and line height; tag pills |
-| `MotionShape` | SDF circle, rect, pill, ring, arc, with dashes and exact Gaussian blur (box-shadow) |
-| `MotionFX`, `MotionOverlay`, `MotionPixelGrid` | Slice glitch with RGB split, pixelate, brightness, goo; TV static, CRT; pixel builds from an SVG |
+| `MotionShape` | SDF circle, rect, pill, ring, arc, with dashes, borders and exact Gaussian blur (box-shadow) |
+| `MotionGradient` | CSS linear, radial, conic and repeating gradients (hazard stripes), scrollable, with add / multiply / screen / overlay blending |
+| `MotionCanvas` | Immediate-mode lines, dashes, polygons, circles, ellipses for loop-built SVG (wireframes, track floors, particle dust) |
+| `MotionFX`, `MotionOverlay`, `MotionPixelGrid` | Offscreen group: Gaussian blur, glow, drop/text shadow, slice glitch with RGB split, pixelate, brightness, goo; TV static, CRT; pixel builds from an SVG |
 | `MotionSpring`, `MotionReactive` | Stateful springs for input; drop-in hover, focus and press feedback for any Control |
 | `MotionTransition` (autoload) | `change_scene(path, style)` with circle, bars, clock, fade, glitch, crt |
 
@@ -61,7 +68,7 @@ piece across.
 ## Demo
 
 Open the project and run it. The menu builds in, reacts to mouse, keyboard and gamepad,
-and plays the two remade intros through transitions. Its TRANSITIONS item cycles
+and plays the four remade intros through transitions. Its TRANSITIONS item cycles
 through the six styles. The intros are in `demo/scf/`.
 
 ## Tests and comparisons
@@ -70,6 +77,7 @@ through the six styles. The intros are in `demo/scf/`.
 godot --headless --import --path .
 godot --headless --path . --script res://tests/run_tests.gd   # parity, SVG, springs
 godot --path . res://tests/perf.tscn                          # CPU per frame
+godot --path . res://tests/visual/render_check.tscn           # GPU: blur, shadow, group opacity, gradients
 
 # Render an intro with Movie Maker, then compare with a Remotion render of the original:
 godot --path . --write-movie out/E1/f.png --fixed-fps 30 --quit-after 420 res://demo/scf/e1_supergraphic.tscn

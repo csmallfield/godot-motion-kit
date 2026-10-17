@@ -5,10 +5,12 @@
 # then MotionTransition changes scene. Mouse, keyboard and gamepad all work.
 extends MotionComposition
 
-const HOLD := 70.0
+const HOLD := 110.0   # the last item's spring (from frame 65) has settled by here
 const ITEMS := [
 	["E1  SUPERGRAPHIC", "res://demo/scf/e1_supergraphic.tscn", "circle"],
 	["D1  SIGNAL", "res://demo/scf/d1_signal.tscn", "glitch"],
+	["A  PIT LANE", "res://demo/scf/a_pit_lane.tscn", "bars"],
+	["C  VECTOR TRACK", "res://demo/scf/c_vector_track.tscn", "crt"],
 	["TRANSITIONS", "", ""],
 	["QUIT", "", ""],
 ]
@@ -45,7 +47,7 @@ func _ready() -> void:
 
 	var font := SCFBrand.font("outfit", 800)
 	for i in ITEMS.size():
-		var slot := Control.new(); slot.position = Vector2(150, 430 + i * 110); slot.size = Vector2(900, 90)
+		var slot := Control.new(); slot.position = Vector2(150, 420 + i * 100); slot.size = Vector2(900, 90)
 		slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		add_child(slot)
 		var b := Button.new()
@@ -53,7 +55,7 @@ func _ready() -> void:
 		b.flat = true
 		b.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		b.add_theme_font_override("font", font)
-		b.add_theme_font_size_override("font_size", 64)
+		b.add_theme_font_size_override("font_size", 58)
 		for state in ["font_color", "font_hover_color", "font_focus_color", "font_pressed_color", "font_hover_pressed_color"]:
 			b.add_theme_color_override(state, SCFBrand.CREAM)
 		b.add_theme_stylebox_override("focus", StyleBoxEmpty.new())

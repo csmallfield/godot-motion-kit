@@ -23,7 +23,7 @@ func _process(_d: float) -> void:
 		return
 	match n:
 		110: _btn(1).grab_focus()
-		130: _btn(2).grab_focus()
-		150, 230, 310, 390, 470, 550: _btn(2).pressed.emit()
+		130: _btn(4).grab_focus()
+		150, 230, 310, 390, 470, 550: _btn(4).pressed.emit()
 		640: _btn(0).grab_focus()
 		655: _btn(0).pressed.emit()
