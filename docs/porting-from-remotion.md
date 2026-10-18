@@ -48,10 +48,10 @@ know the handful of places where the browser behaves in ways that aren't obvious
    `MotionSvg.chromium_draw = true` to reproduce this exactly. New work should leave it
    off, so `draw` means the true fraction.
 2. **Frame 0.** Movie Maker writes an image after the first process step. Compositions
-   hold their first frame on `play()`, so image 0 is frame 0, as in Remotion. Movie
-   Maker's process `delta` is also not uniform over the first frames (0.75, 1, 1.25,
-   0.875… of a frame at `--fixed-fps`), so a movie render steps exactly one frame per
-   image instead (set `movie_fps` if you record at another rate).
+   hold their first frame on `play()`, so image 0 is frame 0, as in Remotion. Godot's
+   physics jitter fix also wobbles the process `delta` over the first frames (0.75, 1,
+   1.25, 0.875… of a frame), so a root composition turns it off under Movie Maker;
+   do the same in your own movie-rendered scenes.
 3. **Float precision.** `Vector2` and `Transform2D` are 32-bit in standard Godot builds;
    the maths in `MK` returns 64-bit floats. Keep values as floats until they become positions.
 4. **Godot's JSON reader rounds 17-digit decimals.** Fixtures use exactly representable seeds.

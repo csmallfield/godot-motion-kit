@@ -211,10 +211,9 @@ static func _part_bucket(screen: Vector2, r: Array) -> Vector2i:
 	if r[2]:   # a rotated part takes the larger density on both axes
 		dens = Vector2.ONE * maxf(dens.x, dens.y)
 	var cap: Vector2 = r[1]
-	# Buckets round up, so a capped axis takes the step at or below the cap:
-	# rounding past it would make the raster clamp and crop the part.
-	return Vector2i(_bucket(dens.x) if dens.x <= cap.x else _bucket_floor(cap.x),
-		_bucket(dens.y) if dens.y <= cap.y else _bucket_floor(cap.y))
+	# Buckets round up, but never past the step at or below the cap: a density
+	# over the cap would make the raster clamp and crop the part.
+	return Vector2i(mini(_bucket(dens.x), _bucket_floor(cap.x)), mini(_bucket(dens.y), _bucket_floor(cap.y)))
 
 
 static func _bucket_floor(dens: float) -> int:
@@ -492,6 +491,10 @@ func _texture(i: int, bucket: Vector2i, blur := Vector2.ZERO) -> Texture2D:
 		push_warning("MotionSvg: could not rasterize part %d of %s" % [i, data.source])
 		_cache[key] = null
 		return null
+	# ThorVG leaves transparent texels black; bilinear filtering and mipmaps would
+	# blend edge texels toward that black, a dark fringe wherever a part's edge
+	# lies over its own colour. Bleed the edge colours outward first.
+	img.fix_alpha_edges()
 	img.generate_mipmaps()
 	var tex := ImageTexture.create_from_image(img)
 	_cache[key] = tex

@@ -12,9 +12,9 @@ uniform int slice_count = 0;                        // 0 = no slicing
 uniform float slice_offsets[64];                    // pixels, one per band
 uniform float split = 0.0;                          // RGB split distance in pixels
 uniform float brightness = 1.0;
-uniform float invert = 0.0;
+uniform float invert = 0.0;                         // CSS invert(), applied before brightness
 uniform vec2 alpha_matrix = vec2(1.0, 0.0);         // feColorMatrix alpha row: a * x + y
-uniform vec4 flood_color : source_color = vec4(0.0); // feFlood + feComposite in (a > 0 to use)                         // CSS invert(), applied before brightness
+uniform vec4 flood_color : source_color = vec4(0.0); // feFlood + feComposite in (a > 0 to use)
 uniform float pixel_size = 0.0;                     // 0 = off
 uniform float goo_blur = 0.0;                       // pixels; 0 = off
 uniform float goo_sharp = 22.0;
@@ -106,10 +106,10 @@ void fragment() {
 			straight = flood_color.rgb;
 		}
 		m = vec4(straight * am, am);
-		if (source_atop) {
-			vec4 src = sample_px(TEXTURE, px - vec2(off, 0.0));
-			m = src * m.a + m * (1.0 - src.a);
-		}
+	}
+	if (source_atop) {
+		vec4 src = sample_px(TEXTURE, px - vec2(off, 0.0));
+		m = src * m.a + m * (1.0 - src.a);
 	}
 	vec3 rgb = m.rgb;
 	float a = m.a;

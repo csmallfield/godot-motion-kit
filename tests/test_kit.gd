@@ -178,7 +178,11 @@ func test_svg_capped_density_rounds_down() -> String:
 	var dens := MotionSvg._bucket_xy(b)
 	if dens.x > 10.0 + 1e-6 or dens.y > 40.0 * 1.4143:
 		return "bucket %s gives density %s past the cap (10, 50)" % [b, dens]
-	return "" if dens.x > 10.0 / 1.4143 else "density %s fell more than a step below the cap" % dens
+	if dens.x <= 10.0 / 1.4143:
+		return "density %s fell more than a step below the cap" % dens
+	# Just under the cap, rounding up would cross it: 9 must not become 11.3.
+	var under := MotionSvg._bucket_xy(MotionSvg._part_bucket(Vector2(9.0, 9.0), r))
+	return "" if under.x <= 10.0 + 1e-6 else "density 9 under cap 10 rounded up to %s" % under.x
 
 
 func test_cells_resize_and_read() -> String:
@@ -189,6 +193,11 @@ func test_cells_resize_and_read() -> String:
 		c.free()
 		return "cells %d, want 6" % c.cells.size()
 	c.cells = PackedByteArray([0, 1, 2, 3, 4, 5])
+	c.set_cell(1, 0, 9)
+	c.refresh()
+	if c.get_cell(1, 0) != 9:
+		c.free()
+		return "set_cell did not store"
 	var got := [c.get_cell(0, 0), c.get_cell(2, 1), c.get_cell(3, 0), c.get_cell(-1, 0)]
 	c.free()
 	return "" if got == [0, 5, 0, 0] else "get_cell %s, want [0, 5, 0, 0]" % [got]

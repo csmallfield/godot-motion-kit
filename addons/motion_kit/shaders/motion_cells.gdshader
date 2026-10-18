@@ -44,18 +44,27 @@ void fragment() {
 	float ga = 1.0 - (1.0 - gv) * (1.0 - gh);
 	vec3 pm = grid_color.rgb * ga;     // premultiplied
 	float pa = ga;
-	// The cell under the pixel centre.
-	ivec2 ci = ivec2(floor(local / cell));
-	if (ci.x >= 0 && ci.y >= 0 && ci.x < dims.x && ci.y < dims.y) {
-		int s = int(round(texelFetch(state, ci, 0).r * 255.0));
-		if (s > 0) {
-			vec2 o = local - vec2(ci) * cell;
-			float c = cover(o.x, fw.x, inset, cell.x - inset) * cover(o.y, fw.y, inset, cell.y - inset);
+	// Cells cover the pixel's footprint between them (they never overlap), so
+	// their coverages add: sum the cells around the pixel, then lay that over the grid.
+	vec3 cp = vec3(0.0);
+	float ca = 0.0;
+	ivec2 c0 = ivec2(floor(local / cell));
+	for (int dy = -1; dy <= 1; dy++) {
+		for (int dx = -1; dx <= 1; dx++) {
+			ivec2 ci = c0 + ivec2(dx, dy);
+			if (ci.x < 0 || ci.y < 0 || ci.x >= dims.x || ci.y >= dims.y) continue;
+			int s = int(round(texelFetch(state, ci, 0).r * 255.0));
+			if (s <= 0) continue;
+			vec2 lo = vec2(ci) * cell;
+			float c = cover(local.x, fw.x, lo.x + inset, lo.x + cell.x - inset)
+				* cover(local.y, fw.y, lo.y + inset, lo.y + cell.y - inset);
 			vec4 col = palette[min(s, 15)];
-			c *= col.a;
-			pm = col.rgb * c + pm * (1.0 - c);
-			pa = c + pa * (1.0 - c);
+			cp += col.rgb * col.a * c;
+			ca += col.a * c;
 		}
 	}
+	ca = min(ca, 1.0);
+	pm = cp + pm * (1.0 - ca);
+	pa = ca + pa * (1.0 - ca);
 	COLOR = pa > 0.0 ? vec4(pm / pa, pa) * COLOR : vec4(0.0);
 }

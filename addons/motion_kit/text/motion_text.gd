@@ -41,7 +41,9 @@ extends Node2D
 @export var uppercase := false:
 	set(v): uppercase = v; _dirty = true; queue_redraw()
 ## CSS -webkit-text-stroke: a stroke of this many pixels centred on each glyph's
-## outline, painted over the fill (so half of it eats into the letter).
+## outline, painted over the fill (so half of it eats into the letter). A
+## transparent `color` gives outline-only type. Widths snap to half pixels, and
+## each new width rasterizes new outline glyphs: animate scale, not the width.
 @export var stroke_width := 0.0:
 	set(v): stroke_width = v; queue_redraw()
 @export var stroke_color := Color.BLACK:
@@ -308,6 +310,10 @@ func _draw() -> void:
 	var ts := TextServerManager.get_primary_interface()
 	var ci := get_canvas_item()
 	var count := visible_chars if visible_chars >= 0 else 1 << 30
+	var stroked := stroke_width > 0.0
+	# Fills first, then strokes over all of them, as Chromium paints
+	# -webkit-text-stroke: a glyph's fill never covers its neighbour's stroke.
+	var strokes := []
 	for g in _glyphs:
 		var i: int = g.char_i
 		if i >= count:
@@ -317,7 +323,9 @@ func _draw() -> void:
 			continue
 		var col: Color = o.get("color", color)
 		col.a *= float(o.get("o", 1.0))
-		if col.a <= 0.0:
+		var sc := Color(stroke_color, stroke_color.a * float(o.get("o", 1.0)))
+		var stroke_on := stroked and sc.a > 0.0
+		if col.a <= 0.0 and not stroke_on:
 			continue
 		var s := float(o.get("s", 1.0))
 		var sx := float(o.get("sx", 1.0)) * s
@@ -333,10 +341,15 @@ func _draw() -> void:
 		var k: float = g.k
 		if not is_equal_approx(k, 1.0):
 			xf = xf * Transform2D(Vector2(k, 0), Vector2(0, k), pos - pos * k)
-		draw_set_transform_matrix(xf)
-		ts.font_draw_glyph(g.font_rid, ci, g.size, pos, g.index, col)
-		if stroke_width > 0.0:
-			# Godot's outline of size n is a stroke n / 2 wide, centred on the contour.
-			var sc := Color(stroke_color, stroke_color.a * float(o.get("o", 1.0)))
-			ts.font_draw_glyph_outline(g.font_rid, ci, g.size, maxi(1, int(round(stroke_width * 2.0 / k))), pos, g.index, sc)
+		if col.a > 0.0:
+			draw_set_transform_matrix(xf)
+			ts.font_draw_glyph(g.font_rid, ci, g.size, pos, g.index, col)
+		if stroke_on:
+			strokes.append([g, xf, sc])
+	for e in strokes:
+		var g: Dictionary = e[0]
+		draw_set_transform_matrix(e[1])
+		# Godot's outline of size n is a stroke n / 2 wide, centred on the contour
+		# (whole sizes only, so the width snaps to half pixels).
+		ts.font_draw_glyph_outline(g.font_rid, ci, g.size, maxi(1, int(round(stroke_width * 2.0 / float(g.k)))), g.pos, g.index, e[2])
 	draw_set_transform_matrix(Transform2D.IDENTITY)

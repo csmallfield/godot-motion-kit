@@ -66,6 +66,11 @@ func dashed_polyline(pts: PackedVector2Array, col: Color, w: float, dash: float,
 	if pts.size() < 2 or dash <= 0.0:
 		return
 	gap = maxf(gap, 0.0)
+	if dash + gap < 0.25:
+		# A pattern finer than a quarter pixel reads as a solid line at its duty
+		# cycle (and walking it dash by dash could take millions of steps).
+		polyline(pts, col, w, opacity * dash / (dash + gap))
+		return
 	var t := _thin(_c(col, opacity), w)
 	# Walk the line carrying the pattern state (on/off and what is left of the
 	# current dash or gap), so every step makes progress whatever the floats do.

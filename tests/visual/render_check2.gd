@@ -17,6 +17,16 @@ func _ready() -> void:
 	# 2. Grid lines compound where they cross, as two overlapping rects would.
 	var grid := MotionCells.new(); grid.columns = 3; grid.rows = 3; grid.position = Vector2(200, 0)
 	grid.grid_color = Color(1, 1, 1, 0.25); add_child(grid)
+	# 2b. Cells with no inset off the pixel grid meet without a seam; a value past
+	# the palette draws nothing.
+	var solid := MotionCells.new(); solid.columns = 2; solid.rows = 1; solid.inset = 0.0; solid.position = Vector2(300.5, 0)
+	solid.palette = PackedColorArray([Color.TRANSPARENT, Color.WHITE]); solid.cells = PackedByteArray([1, 1]); add_child(solid)
+	var beyond := MotionCells.new(); beyond.columns = 1; beyond.rows = 1; beyond.position = Vector2(300, 100)
+	beyond.palette = PackedColorArray([Color.TRANSPARENT, Color.WHITE]); beyond.cells = PackedByteArray([5]); add_child(beyond)
+	# 2c. Outline-only text: a transparent fill with a stroke still draws the stroke.
+	var ot := MotionText.new(); ot.font = SCFBrand.font("outfit", 900); ot.font_size = 120; ot.text = "I"
+	ot.color = Color(1, 1, 1, 0); ot.stroke_width = 6.0; ot.stroke_color = Color.WHITE; ot.position = Vector2(1300, 0); add_child(ot)
+	ot.set_meta("probe", true)
 	# 3. alpha_matrix + flood_color: alpha 0.5 * 2 - 0.5 = 0.5, filled red.
 	var fl := MotionFX.new(); fl.size = Vector2(100, 50); fl.position = Vector2(400, 0); fl.alpha_matrix = Vector2(2, -0.5)
 	fl.flood_color = Color.RED; add_child(fl)
@@ -51,6 +61,14 @@ func _process(_d: float) -> void:
 	_check("grid line alpha", img.get_pixel(224, 10).r, 0.25, 0.01)
 	_check("grid lines compound at a crossing", img.get_pixel(224, 24).r, 1.0 - 0.75 * 0.75, 0.01)
 	_check("between grid lines", img.get_pixel(212, 10).r, 0.0, 0.01)
+	_check("cells with no inset meet without a seam", img.get_pixel(324, 10).r, 1.0, 0.01)
+	_check("a value past the palette draws nothing", img.get_pixel(310, 110).r, 0.0, 0.01)
+	var lit := 0
+	for x in range(1300, 1420):
+		for y in range(0, 150, 3):
+			if img.get_pixel(x, y).r > 0.5:
+				lit += 1
+	_check("outline-only text draws its stroke (lit pixels > 0)", 1.0 if lit > 20 else 0.0, 1.0, 0.0)
 	_check("flood red", img.get_pixel(450, 25).r, 0.5, 0.01)
 	_check("flood replaces the colour", img.get_pixel(450, 25).g, 0.0, 0.01)
 	var inner := img.get_pixel(600 + 98, 50)

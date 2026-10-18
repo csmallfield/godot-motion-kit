@@ -46,9 +46,9 @@ nodes inside a `MotionFX`. A nested composition receives `f - start` and, like a
 | `play(from=-1)`, `play_backwards(to=0)`, `play_segment(a, b)`, `stop()`, `seek(f)`, `render(f)` | |
 | signals `finished`, `segment_finished(name)` | |
 
-Movie Maker renders advance exactly one movie frame per image (`movie_fps`, default the
-composition's `fps`): Godot's process delta wobbles over the first frames. To split or
-resume a long Movie Maker render, pass `-- --mk-start=N` on the command line:
+Under Movie Maker a root composition sets `Engine.physics_jitter_fix` to 0, so every
+image is exactly one step (the jitter fix otherwise wobbles the first frames' deltas).
+To split or resume a long Movie Maker render, pass `-- --mk-start=N` on the command line:
 the top-level composition starts at frame N (the files still count from 0).
 
 ## MotionSvg (Node2D) and MotionSvgData (Resource)
@@ -94,7 +94,8 @@ games `load()` the file imported as Motion SVG.
 `uppercase`. Per-glyph overrides via `apply(fn)` / `glyph_fn(i, f)` with
 `tx ty s sx sy rot o color hide`. The origin is the top-left of the line box, as for a CSS block.
 `stroke_width` / `stroke_color` are CSS `-webkit-text-stroke`: a stroke centred on each
-glyph's outline, painted over the fill. `get_text_size()` gives the width (including tracking after the last character, as CSS
+glyph's outline, painted over all the fills (a transparent `color` gives outline-only
+type). Widths snap to half pixels; animate scale rather than the width. `get_text_size()` gives the width (including tracking after the last character, as CSS
 does) and the line-box height; `get_baseline()` the distance from the top to the first
 baseline, for CSS `align-items: baseline` layouts.
 
@@ -172,7 +173,9 @@ automata, LED boards, pixel mosaics, minimaps. `columns`, `rows`, `cell_size`, `
 half-covered edge pixels of an SVG `<rect x="1.5">`), `palette` (up to 16 colours, index 0
 never drawn), `grid_color` / `grid_width` (lines on every boundary; crossings compound
 like overlapping rects), `cells` (row-major `PackedByteArray`; setting it re-uploads the
-small state texture only), `get_cell(x, y)`.
+small state texture only), `get_cell(x, y)`, `set_cell(x, y, v)` (uploads once at the end of
+the frame). An indexed write `cells[i] = v` doesn't run the setter: call `refresh()` after
+editing the array in place. Values past the palette draw nothing.
 
 ## Effects
 

@@ -34,11 +34,6 @@ enum Clock { PROCESS, AUDIO, MANUAL }
 @export var markers: Dictionary = {}
 ## Offset when nested inside another composition: this one sees parent f - start.
 @export var start := 0.0
-## Frame rate of a Movie Maker render of this composition (0 = `fps`). Movie
-## renders step time by exactly one movie frame per frame, since Godot's process
-## delta isn't uniform over the first frames; Godot doesn't expose --fixed-fps,
-## so set this when recording at a rate other than the composition's.
-@export var movie_fps := 0.0
 ## When nested: hide outside [0, duration) of its own time, like a Remotion
 ## <Sequence>; `loop` then repeats it within the parent's time.
 @export var hide_outside := true
@@ -80,6 +75,12 @@ func _ready() -> void:
 	if fit_to_viewport:
 		get_viewport().size_changed.connect(_fit)
 		_fit()
+	if _movie:
+		# Godot's physics jitter fix nudges each frame's process delta to line up
+		# physics ticks, so under Movie Maker the first deltas run 0.75, 1, 1.25,
+		# 0.875... of a frame and frames 2-4 land between frames. An offline render
+		# has nothing to smooth: switch it off so every image is exactly one step.
+		Engine.physics_jitter_fix = 0.0
 	render(0.0)
 	# `-- --mk-start=N` on the command line starts the top-level composition at
 	# frame N: resume or split a long Movie Maker render (its files still count
@@ -185,11 +186,7 @@ func _process(delta: float) -> void:
 		_time = f / fps   # so time carries on smoothly if the sound stops
 	else:
 		var d := delta
-		if _movie:
-			# Movie Maker's process delta is not uniform over the first frames
-			# (0.75, 1, 1.25, 0.875... of a frame at --fixed-fps), so step exactly.
-			d = 1.0 / (movie_fps if movie_fps > 0.0 else fps)
-		elif ignore_time_scale and Engine.time_scale > 0.0:
+		if ignore_time_scale and Engine.time_scale > 0.0:
 			d /= Engine.time_scale
 		_time += d * speed * _dir
 		# Snap away float drift so movie renders land on exact frames.

@@ -37,13 +37,21 @@ const MAX_COLOURS := 16
 	set(v): grid_color = v; _sync()
 @export var grid_width := 1.0:
 	set(v): grid_width = v; _sync()
-## Row-major cell values, columns * rows bytes.
+## Row-major cell values, columns * rows bytes. Assigning the array uploads it;
+## an indexed write (`cells[i] = v`) does not run the setter, so use set_cell()
+## or call refresh() after editing it in place.
 @export var cells := PackedByteArray():
 	set(v): cells = v; _upload()
 
 var _mat: ShaderMaterial
 var _img: Image
 var _tex: ImageTexture
+var _pending := false
+
+
+func _validate_property(property: Dictionary) -> void:
+	if property.name == "material":
+		property.usage &= ~PROPERTY_USAGE_STORAGE
 
 
 func _init() -> void:
@@ -51,6 +59,22 @@ func _init() -> void:
 	_mat.shader = SHADER
 	material = _mat
 	_resize()
+
+
+## Set one cell; the upload happens once, at the end of the frame.
+func set_cell(x: int, y: int, v: int) -> void:
+	if x < 0 or y < 0 or x >= columns or y >= rows:
+		return
+	cells[y * columns + x] = v
+	if not _pending:
+		_pending = true
+		refresh.call_deferred()
+
+
+## Re-upload `cells` after editing the array in place.
+func refresh() -> void:
+	_pending = false
+	_upload()
 
 
 ## Value of the cell at (x, y), or 0 outside the grid.
@@ -89,6 +113,7 @@ func _sync() -> void:
 		return
 	var pal := PackedColorArray()
 	pal.resize(MAX_COLOURS)
+	pal.fill(Color(0, 0, 0, 0))   # values past the palette draw nothing
 	for i in mini(palette.size(), MAX_COLOURS):
 		pal[i] = palette[i]
 	_mat.set_shader_parameter("palette", pal)
