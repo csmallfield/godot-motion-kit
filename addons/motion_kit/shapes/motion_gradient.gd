@@ -12,7 +12,7 @@
 class_name MotionGradient
 extends Node2D
 
-enum Kind { LINEAR, RADIAL, CONIC, STRIPES }
+enum Kind { LINEAR, RADIAL, CONIC, STRIPES, RINGS }
 enum Blend { NORMAL, ADD, MULTIPLY, SCREEN, OVERLAY }
 
 const SHADER := preload("res://addons/motion_kit/shaders/motion_gradient.gdshader")
@@ -39,6 +39,24 @@ const MAX_STOPS := 8
 ## CSS background-position in pixels: moves the gradient (scrolling stripes).
 @export var shift := Vector2.ZERO:
 	set(v): shift = v; _sync()
+@export_group("Rings")
+## RINGS: `ring_count` circle strokes `ring_width` px wide, radii ring_r0 +
+## i * ring_gap about `ring_center` (pixels, in the node's space), coloured
+## colors[0]; `ring_clip` > 0 clips them to a circle of that radius (an SVG
+## clipPath). Drawn analytically, so 90 rings cost one quad.
+@export var ring_center := Vector2.ZERO:
+	set(v): ring_center = v; _sync()
+@export var ring_r0 := 6.0:
+	set(v): ring_r0 = v; _sync()
+@export var ring_gap := 22.0:
+	set(v): ring_gap = v; _sync()
+@export var ring_count := 90:
+	set(v): ring_count = v; _sync()
+@export var ring_width := 9.0:
+	set(v): ring_width = v; _sync()
+@export var ring_clip := 0.0:
+	set(v): ring_clip = v; _sync()
+@export_group("")
 @export var blend := Blend.NORMAL:
 	set(v): blend = v; _sync()
 @export_range(0.0, 1.0) var opacity := 1.0:
@@ -67,6 +85,18 @@ static func linear(sz: Vector2, angle_deg: float, cols: Array, pos: Array) -> Mo
 static func stripes(sz: Vector2, angle_deg: float, cols: Array, px: Array) -> MotionGradient:
 	var g := linear(sz, angle_deg, cols, px)
 	g.kind = Kind.STRIPES
+	return g
+
+
+## Concentric circle strokes over a `sz` rectangle (see the Rings properties).
+static func rings(sz: Vector2, center: Vector2, col: Color, width: float, gap: float, count := 90, r0 := 6.0) -> MotionGradient:
+	var g := linear(sz, 0.0, [col, col], [0.0, 1.0])
+	g.kind = Kind.RINGS
+	g.ring_center = center
+	g.ring_width = width
+	g.ring_gap = gap
+	g.ring_count = count
+	g.ring_r0 = r0
 	return g
 
 
@@ -132,6 +162,13 @@ func _sync() -> void:
 	if _blended():
 		_mat.set_shader_parameter("blend", int(blend))
 	_mat.set_shader_parameter("opacity", opacity)
+	if kind == Kind.RINGS:
+		_mat.set_shader_parameter("ring_center", ring_center)
+		_mat.set_shader_parameter("ring_r0", ring_r0)
+		_mat.set_shader_parameter("ring_gap", maxf(ring_gap, 0.01))
+		_mat.set_shader_parameter("ring_count", float(ring_count))
+		_mat.set_shader_parameter("ring_width", ring_width)
+		_mat.set_shader_parameter("ring_clip", ring_clip)
 	queue_redraw()
 
 
