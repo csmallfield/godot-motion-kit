@@ -70,6 +70,7 @@ and rendered offline frame-exactly with Movie Maker.
 | --- | --- |
 | `MK` | `spring`, `bezier` and named easings, `map`/`interp`, `prog`, `win`, `rand`, `shake`, `typed`, `crt_off`, `timecode`; `rot_x`, `rot_y`, `project` for hand-rolled 3D |
 | `MotionComposition` | Root of a piece: fps, duration, markers, play / seek / reverse / segments, process, audio or manual clock, fit-to-viewport |
+| `MotionCue`, `MotionCuePlayer` | Cue sheets: declared moments (name, intensity, data) that fire as playback crosses them, relayed on one global bus, exportable as JSON; a stand-in player that maps cues to WAVs |
 | `MotionSvg` + `MotionSvgData` | SVG kept as vector parts; per-part move, scale, rotate, recolour, fade, blur, self-drawing outline |
 | `MotionText`, `MotionFonts`, `MotionPill` | Glyph-by-glyph type with CSS-style tracking, line height, text stroke and browser-exact line boxes; vertical Japanese; tag pills |
 | `MotionShape` | SDF circle, rect, pill, ring, arc, with dashes, borders and exact Gaussian blur (box-shadow) |

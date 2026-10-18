@@ -51,6 +51,61 @@ image is exactly one step (the jitter fix otherwise wobbles the first frames' de
 To split or resume a long Movie Maker render, pass `-- --mk-start=N` on the command line:
 the top-level composition starts at frame N (the files still count from 0).
 
+## Cues (MotionComposition, MotionCue, MotionCuePlayer)
+
+A composition keeps a **cue sheet**: the moments sound (or anything else) should land on.
+Cues are declared, not detected: the picture is a pure function of `f`, so nothing in it
+"starts" in a way the kit could notice. Declare them from the same constants the
+animation uses, and they fire as playback crosses them, whether or not anything listens.
+
+```gdscript
+func _init() -> void:
+	cue(12, &"count", 0.7, {pitch = 0.9})     # returns 12
+	beats(120, 0, 240)                         # a cue on every beat, accents every 4th
+
+func _frame(f: float) -> void:
+	var s := MK.spring(f, cue(66, &"go"), 8, 180)   # one number for picture and sound
+```
+
+| Member | Notes |
+| --- | --- |
+| `cue(at, name, intensity=1, data={}) -> float` | Declare a cue at frame `at` of this composition; returns `at`. The same name at the same frame updates it. |
+| `beats(bpm, from, to, name=&"beat", intensity=0.6, accent_every=4)` | A cue per beat, `data.beat` = index, intensity 1 on accents. |
+| `clear_cues()` | Remove this composition's own cues. |
+| `get_cue_sheet() -> Array[MotionCue]` | Every cue that can fire in this timeline, sorted: its own and nested compositions' (offset by `start`, repeated when they loop, dropped outside their duration). |
+| `cues_between(a, b, inclusive=false)` | Cues in (a, b], to schedule sounds ahead of the picture. |
+| `export_cue_sheet(path="") -> String` | JSON `{fps, duration, cues: [{frame, time, name, intensity, data}]}` for sound design tools. |
+| signal `cue_fired(cue)` | Playback crossed a cue. |
+| signal `cue_sync(frame, state)` | `&"start"`, `&"seek"` (a jump) or `&"stop"` (stopped or finished). |
+
+`MotionCue`: `name`, `frame` (in the firing composition's timeline), `time` (seconds),
+`intensity` (0..1 by convention), `data` (free-form: `pitch`, `volume_db`, `pan`, a sound
+id…), `reversed`, `composition` (the one that declared it) and `local_frame`.
+`MotionCue.bus` relays every composition's cues (`fired(cue)`) and changes
+(`sync(composition, frame, state)`), so an audio system subscribes once.
+
+Firing rules, which an audio system can rely on:
+
+- Playback fires each cue it crosses exactly once, in order, including one on the frame
+  playback starts from. A long frame (a hitch) fires everything it skipped over.
+- `seek()` fires nothing in between and emits `seek`; `stop()` and the end emit `stop`.
+- Backwards playback fires cues in reverse order with `reversed = true`.
+- A loop fires every pass. Nested compositions' cues fire from the root composition.
+- `render(f)` (scrubbing, the editor slider) never fires cues.
+- Cues fire after the frame is drawn, from `_process`. Live, a sound starts on the next
+  audio mix (plus output latency); for tighter sync, schedule from `cues_between(f, f +
+  lookahead)`. Under Movie Maker the measured offset is 1–10 ms, so offline renders carry
+  their sound with them.
+- A cue marks where its sound should **start**. A sound with a lead-in (a whoosh peaking
+  250 ms in) needs its cue earlier, or a listener that aligns the sound's own sync point.
+
+`MotionCuePlayer` is the stand-in listener: a Node with `composition` (empty listens to
+every composition through the bus), `sounds` (cue name, `prefix*` or `*` → AudioStream;
+exact match first, then the longest prefix), `volume_db`, `bus`, `voices`,
+`play_reversed` and `stop_on_sync` (stop sounding voices on seek and stop). Intensity sets
+the volume (linear) and `data.volume_db` / `data.pitch` adjust it. Signal
+`played(cue, player)`.
+
 ## MotionSvg (Node2D) and MotionSvgData (Resource)
 
 Import an `.svg` as **Motion SVG** (Import dock → Import As), or build one with

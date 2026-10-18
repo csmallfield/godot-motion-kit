@@ -1,6 +1,6 @@
 ---
 name: godot-motion-kit
-description: Make motion graphics directly in Godot 4 with the Godot Motion Kit addon (intros, idents, logo reveals, kinetic type, title cards, animated HUD or menus, transitions), from a written brief to a rendered, reviewed piece. Use when asked to create or revise such a piece in a Godot project.
+description: Make motion graphics directly in Godot 4 with the Godot Motion Kit addon (intros, idents, logo reveals, kinetic type, title cards, animated HUD or menus, transitions), from a brief to a rendered, reviewed piece with cue-driven sound.
 ---
 
 # Making motion graphics in Godot with the Motion Kit
@@ -63,6 +63,7 @@ from one of these numbers, so retiming is editing a constant:
 ```
 
 Put beats on a musical grid if there will be sound (120 bpm = a beat every 15 frames).
+Every beat that should be heard becomes a `cue()` in the code (section 6).
 
 ## 3. Build it
 
@@ -87,6 +88,8 @@ func _init() -> void:
 	duration = 180
 	fps = 30
 	markers = {"in": 0.0, "hold": 120.0, "out": float(OUT)}
+	cue(10, &"title", 1.0)          # the beat sheet's moments, for sound (section 6)
+	cue(OUT, &"whoosh.out", 0.8)
 
 
 func _ready() -> void:
@@ -156,7 +159,9 @@ Pick techniques from the brief; `docs/techniques.md` gives each one an example.
 **Composition.** `play()`, `play_segment("in", "hold")`, `play_backwards(0)` (reverse
 outro), `seek(f)`, `render(f)`; `clock = AUDIO` with `audio` locks to the soundtrack;
 nested compositions see `f - start`; `fit_to_viewport`; `preview_frame` scrubs in the
-editor.
+editor. Cues: `cue(at, name, intensity, data)`, `beats(bpm, from, to)`,
+`cues_between(a, b)`, `export_cue_sheet(path)`, signals `cue_fired` and `cue_sync`,
+global `MotionCue.bus`; `MotionCuePlayer` plays WAVs on cues.
 
 **SVG.** Import as Motion SVG; `MotionSvg` with `data`, `width`, `only`, `crop`;
 `apply(func(i): return {...})` per frame with keys `tx ty s sx sy rot pivot o fill stroke
@@ -225,17 +230,41 @@ Also check: scrub it in the editor (Preview Frame) and play it backwards; anythi
 breaks has hidden state. For pieces that run during gameplay, run `tests/perf.tscn`-style
 timing on the script cost and profile blur-heavy pieces on the target GPU.
 
-## 6. Sound (optional)
+## 6. Sound: cues
 
-Lock sound to the beat sheet: a cue sheet of hits at frame numbers (whooshes on slides,
-hits on landings, a riser into the reveal) over a bed at the piece's tempo. Synthesising
-it from code keeps it reproducible and licence-free. Load the result as an
-`AudioStreamPlayer` and set it as the composition's `audio`; Movie Maker records it into
-`f.wav`. When a timing changes, change the matching cue.
+Declare every moment sound should land on as a cue, from the same constants the
+animation uses, so picture and sound can't drift apart. Do this even with no sound yet:
+cues fire whether or not anything listens, and an audio system can subscribe later.
+
+```gdscript
+func _init() -> void:
+	cue(12, &"count", 0.7, {pitch = 0.9})   # frame, name, intensity 0..1, free-form data
+	cue(GO_AT, &"go", 1.0)
+	beats(120, 0, 240)                       # optional: a cue on every beat, accents every 4th
+# in _frame, the same number drives the picture:  MK.spring(f, GO_AT, 8, 180)
+```
+
+- Name cues by what happens (`whoosh.in`, `count`, `hit`, `pop`), dot-separated so
+  listeners can match families with `prefix*`. Intensity says how hard it lands; put
+  `pitch`, `volume_db`, `pan` or a sound id in `data`.
+- A cue marks where its sound **starts**. Place a whoosh's cue before the move it
+  accompanies (its swell peaks later); hits and pops go on the landing frame.
+- To hear it now, add a `MotionCuePlayer` with `composition = self` and
+  `sounds = {&"whoosh.*": load(...), &"go": load(...)}`. Movie Maker records it into
+  `f.wav`, so review renders carry their sound (measured 1–10 ms from the frame).
+- A music bed or soundtrack goes on the composition's `audio` (with `clock = AUDIO` to
+  lock the picture to it live).
+- For sound design outside Godot, `export_cue_sheet(path)` writes every cue as JSON
+  (frames, seconds, names, intensities, data).
+- Playback fires each crossed cue once, in order; seeking fires none (listeners get a
+  `seek` sync); reverse fires with `reversed = true`; loops fire every pass; nested
+  compositions fire from the root. Scrubbing with `render(f)` fires nothing.
+- When a timing changes, change the constant: the cue moves with it.
 
 ## 7. Deliver
 
-- The scene and script, the brief in the header, assets in the project.
+- The scene and script, the brief and beat sheet in the header, the cue sheet in
+  `_init`, assets in the project.
 - A contact sheet of the beat frames and a video for review:
   `ffmpeg -framerate 30 -i out/piece/f%08d.png -i out/piece/f.wav -c:v libx264 -pix_fmt yuv420p -crf 18 -shortest piece.mp4`
 - In the game: instantiate the scene and `play()`, or `play_segment("in", "hold")` and

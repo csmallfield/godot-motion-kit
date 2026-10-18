@@ -16,6 +16,9 @@
 #   80-110  GRID READY tracking settles; 96 LAP pill pops
 #   120-150 hold: bands crawl, GO breathes
 #   150-174 out: springs back the other way, ends on black
+#
+# Sound: the cue sheet in _init (whooshes, count blips, the GO hit, a tick and
+# a pop) drives a MotionCuePlayer; Movie Maker records it into f.wav.
 @tool
 extends MotionComposition
 
@@ -45,6 +48,16 @@ func _init() -> void:
 	duration = 180
 	fps = 30
 	markers = {"in": 0.0, "hold": 120.0, "out": float(OUT)}
+	# The cue sheet: every moment sound should land on, from the same constants
+	# the animation uses. It fires whether or not anything listens.
+	cue(0, &"whoosh.in", 0.8)
+	cue(4, &"whoosh.in", 0.6)
+	for i in COUNT.size():
+		cue(COUNT[i], &"count", 0.7 + 0.15 * i, {n = 3 - i, pitch = [0.9, 1.0, 1.12][i]})
+	cue(GO_AT, &"go", 1.0)
+	cue(80, &"tick", 0.5)
+	cue(96, &"pop", 0.8)
+	cue(OUT, &"whoosh.out", 0.9)
 
 
 func _ready() -> void:
@@ -120,6 +133,19 @@ func _build() -> void:
 	_pill.text = "LAP 1/3"
 	_pill.position = Vector2(960, 790)
 	_stage.add_child(_pill)
+
+	# A stand-in listener: one WAV per cue name. An audio system would
+	# subscribe to the same cues (cue_fired, or MotionCue.bus for all pieces).
+	var sfx := MotionCuePlayer.new()
+	sfx.composition = self
+	sfx.sounds = {
+		&"whoosh.*": load("res://demo/assets/audio/sfx/whoosh.wav"),
+		&"count": load("res://demo/assets/audio/sfx/blip.wav"),
+		&"go": load("res://demo/assets/audio/sfx/hit.wav"),
+		&"tick": load("res://demo/assets/audio/sfx/tick.wav"),
+		&"pop": load("res://demo/assets/audio/sfx/pop.wav"),
+	}
+	add_child(sfx)
 
 
 ## Speed lines radiating from the centre after GO, longer and fainter as they go.

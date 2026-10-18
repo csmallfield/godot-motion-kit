@@ -8,6 +8,14 @@
 ## manual (`render(f)` / the editor's Preview Frame slider).
 ##
 ## Nested compositions are driven by their parent and receive `f - start`.
+##
+## Cues: declare the moments sound should land on with `cue(frame, name,
+## intensity)` (it returns the frame, so one constant drives both picture and
+## sound). Playback fires each cue it crosses on `cue_fired` and on the global
+## `MotionCue.bus`, whether or not anything listens; seeking fires none but
+## emits `cue_sync` (start, seek, stop) so listeners can follow. Nested compositions' cues fire from
+## the root, offset by their `start`. The whole sheet can be read ahead
+## (`cues_between`) for scheduling, or exported as JSON for sound design.
 @tool
 @icon("res://addons/motion_kit/icons/composition.svg")
 class_name MotionComposition
@@ -15,6 +23,12 @@ extends Node2D
 
 signal finished
 signal segment_finished(name: StringName)
+## Playback crossed a cue (see `cue()`); also relayed on `MotionCue.bus.fired`.
+signal cue_fired(cue: MotionCue)
+## Playback changed at `frame`: `state` is &"start" (play from here), &"seek"
+## (a jump: drop sounding cues, reschedule) or &"stop" (stopped or finished).
+## Also relayed on `MotionCue.bus.sync`.
+signal cue_sync(frame: float, state: StringName)
 
 enum Clock { PROCESS, AUDIO, MANUAL }
 
@@ -61,6 +75,11 @@ var _stop_at := -1.0
 var _segment := &""
 var _hold_first := false
 var _movie := Engine.get_write_movie_path() != ""
+var _cues: Array[MotionCue] = []
+var _sheet: Array[MotionCue] = []    # own cues and nested ones, in this timeline, sorted
+var _sheet_dirty := true
+var _fired_to := 0.0                 # cues up to here (in play direction) have fired
+var _fire_inclusive := true          # the next range includes _fired_to itself
 
 
 func _ready() -> void:
@@ -113,6 +132,9 @@ func play_segment(a: Variant, b: Variant) -> void:
 
 
 func _start(dir: float, stop_at: float, segment: StringName) -> void:
+	_fired_to = frame
+	_fire_inclusive = true   # a cue on the starting frame fires with it
+	_sync(&"start")
 	_dir = dir
 	_stop_at = stop_at
 	_segment = segment
@@ -132,6 +154,7 @@ func stop() -> void:
 	playing = false
 	if audio:
 		audio.stop()
+	_sync(&"stop")
 
 
 func seek(f: float) -> void:
@@ -139,6 +162,10 @@ func seek(f: float) -> void:
 	render(f)
 	if audio and audio.playing:
 		audio.seek(f / fps)
+	# A jump fires nothing: cues between the old and new frame were skipped.
+	_fired_to = f
+	_fire_inclusive = true
+	_sync(&"seek")
 
 
 ## Draw frame `f` now. Safe to call at any time, in any order.
@@ -177,6 +204,7 @@ func _process(delta: float) -> void:
 	if _hold_first:
 		_hold_first = false
 		render(frame)
+		_fire_to(frame)
 		return
 	var f: float
 	# Movie Maker steps time exactly, so a movie render always uses process time.
@@ -193,6 +221,7 @@ func _process(delta: float) -> void:
 		f = snappedf(_time * fps, 1e-6)
 	var forward := _dir * signf(speed) >= 0.0
 	if _stop_at >= 0.0 and ((forward and f >= _stop_at) or (not forward and f <= _stop_at)):
+		_fire_to(_stop_at)
 		_finish_at(_stop_at)
 		var seg := _segment
 		_segment = &""
@@ -201,21 +230,179 @@ func _process(delta: float) -> void:
 		return
 	if f >= duration or f < 0.0:
 		if loop and duration > 0.0:
+			# Fire to the end (or start) of the loop, then on from the other side.
+			_fire_to(duration if forward else 0.0)
 			f = fposmod(f, duration)
 			_time = f / fps
+			_fired_to = 0.0 if forward else duration
+			_fire_inclusive = true
 			if audio and forward:
 				audio.play(f / fps)
 		else:
+			_fire_to(clampf(f, 0.0, duration))
 			_finish_at(clampf(f, 0.0, duration))
 			finished.emit()
 			return
 	render(f)
+	_fire_to(f)
 
 
 func _finish_at(f: float) -> void:
 	_time = f / fps
 	playing = false
 	render(f)
+	_sync(&"stop")
+
+
+# ------------------------------------------------------------------ cues
+
+## Declare a cue at frame `at` (in this composition's own timeline) and return
+## `at`, so the same number drives the animation: `MK.spring(f, cue(66, &"go"), ...)`
+## or `var go_at := cue(66, &"go", 1.0)`. Declaring the same name at the same
+## frame again updates it. Usually called from `_init` or a build step.
+func cue(at: float, name: StringName, intensity := 1.0, data := {}) -> float:
+	for c in _cues:
+		if c.name == name and is_equal_approx(c.local_frame, at):
+			c.intensity = intensity
+			c.data = data
+			_sheet_dirty = true
+			return at
+	var c := MotionCue.new(name, at, intensity, data)
+	c.composition = self
+	_cues.append(c)
+	_sheet_dirty = true
+	return at
+
+
+## Declare a cue on every beat at `bpm` from frame `from` to `to` (inclusive):
+## `name` with `data.beat` (0, 1, 2...), intensity 1 on every `accent_every`th
+## beat and `intensity` otherwise. Returns the frames.
+func beats(bpm: float, from: float, to: float, name: StringName = &"beat", intensity := 0.6, accent_every := 4) -> PackedFloat32Array:
+	var out := PackedFloat32Array()
+	var step := fps * 60.0 / bpm
+	var i := 0
+	var at := from
+	while at <= to + 1e-6:
+		cue(at, name, 1.0 if accent_every > 0 and i % accent_every == 0 else intensity, {beat = i})
+		out.append(at)
+		i += 1
+		at = from + i * step
+	return out
+
+
+## Remove every cue this composition declared (not its children's).
+func clear_cues() -> void:
+	_cues.clear()
+	_sheet_dirty = true
+
+
+## Every cue that can fire in this timeline, sorted by frame: this composition's
+## own and its nested compositions' (offset by their `start`, repeated when they
+## loop, dropped outside their duration when they hide outside it).
+func get_cue_sheet() -> Array[MotionCue]:
+	if _sheet_dirty:
+		_rebuild_sheet()
+	return _sheet
+
+
+## Cues with a frame in (a, b] (or [a, b] with `inclusive`), for scheduling
+## sounds ahead of the picture.
+func cues_between(a: float, b: float, inclusive := false) -> Array[MotionCue]:
+	var out: Array[MotionCue] = []
+	for c in get_cue_sheet():
+		if (c.frame > a or (inclusive and c.frame >= a)) and c.frame <= b:
+			out.append(c)
+	return out
+
+
+## The cue sheet as JSON ({fps, duration, cues: [{frame, time, name, intensity,
+## data}]}), written to `path` when given: hand it to a sound designer or a
+## synthesis script so every hit lands where the picture does.
+func export_cue_sheet(path := "") -> String:
+	var cues := []
+	for c in get_cue_sheet():
+		cues.append(c.to_dict())
+	var json := JSON.stringify({fps = fps, duration = duration, cues = cues}, "\t")
+	if path != "":
+		var fa := FileAccess.open(path, FileAccess.WRITE)
+		if fa:
+			fa.store_string(json)
+	return json
+
+
+func _rebuild_sheet() -> void:
+	_sheet.clear()
+	_collect(self, 0.0, INF)
+	_sheet.sort_custom(func(a: MotionCue, b: MotionCue) -> bool: return a.frame < b.frame)
+	_sheet_dirty = false
+
+
+## Adds `comp`'s cues (and its children's) to the sheet, at `offset`, below `limit`.
+func _collect(comp: MotionComposition, offset: float, limit: float) -> void:
+	for c in comp._cues:
+		var reps := [0.0]
+		if comp != self and comp.loop and comp.duration > 0.0:
+			reps = []
+			var k := 0.0
+			while offset + c.local_frame + k * comp.duration < minf(limit, duration):
+				reps.append(k * comp.duration)
+				k += 1.0
+		for r in reps:
+			if comp != self and comp.hide_outside and not comp.loop and (c.local_frame < 0.0 or c.local_frame >= comp.duration):
+				continue
+			var at: float = offset + c.local_frame + r
+			if at >= limit:
+				continue
+			var e := c.copy()
+			e.frame = at
+			e.fps = fps
+			_sheet.append(e)
+	for child in comp.find_children("*", "MotionComposition", true, false):
+		# Only direct nested compositions: deeper ones are collected through them.
+		if _nearest_composition(child) == comp:
+			_collect(child, offset + child.start, offset + child.start + (INF if child.loop else child.duration))
+
+
+static func _nearest_composition(n: Node) -> MotionComposition:
+	var p := n.get_parent()
+	while p and not p is MotionComposition:
+		p = p.get_parent()
+	return p
+
+
+## Fire every cue crossed since the last call, up to `to`, in play order.
+func _fire_to(to: float) -> void:
+	if _is_nested():
+		return
+	var forward := _dir * signf(speed) >= 0.0
+	var from := _fired_to
+	var incl := _fire_inclusive
+	var sheet := get_cue_sheet()
+	if forward:
+		for c in sheet:
+			if (c.frame > from or (incl and c.frame >= from)) and c.frame <= to:
+				_emit_cue(c, false)
+	else:
+		for i in range(sheet.size() - 1, -1, -1):
+			var c: MotionCue = sheet[i]
+			if (c.frame < from or (incl and c.frame <= from)) and c.frame >= to:
+				_emit_cue(c, true)
+	_fired_to = to
+	_fire_inclusive = false
+
+
+func _emit_cue(c: MotionCue, reversed: bool) -> void:
+	var e := c.copy()
+	e.reversed = reversed
+	cue_fired.emit(e)
+	MotionCue.bus.fired.emit(e)
+
+
+func _sync(state: StringName) -> void:
+	if _is_nested() or Engine.is_editor_hint():
+		return
+	cue_sync.emit(frame, state)
+	MotionCue.bus.sync.emit(self, frame, state)
 
 
 func _marker(m: Variant) -> float:

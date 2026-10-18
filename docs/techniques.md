@@ -32,6 +32,22 @@ That rule buys scrubbing, reversing, audio lock and exact offline renders for fr
 | Time-scale immunity | `ignore_time_scale` (default on) keeps the piece at full speed. | Hit-stop or slow motion in gameplay while the HUD keeps animating. |
 | Hand-rolled 3D | `MK.rot_x`, `MK.rot_y`, `MK.project` project points; draw them with `MotionCanvas`. | C Vector Track's wireframe track and the rotating wireframe mark above it. |
 
+## Sound and cues
+
+Sound follows the picture through a cue sheet: declared moments that fire as playback
+crosses them. Picture and sound come from one set of numbers, so retiming a beat
+retimes its sound.
+
+| Technique | How to use it | Practical example |
+| --- | --- | --- |
+| Declare a cue | `cue(at, name, intensity, data)` in `_init`; it returns `at`, so `MK.spring(f, cue(66, &"go"), ...)` keeps one number. | The race ident's whooshes, count blips, GO hit, tick and pop. |
+| Beat grid | `beats(bpm, from, to)` puts a cue on every beat with accents. | Cuts and pops on a 120 bpm grid; a pulse that a music system can lock to. |
+| Play WAVs on cues | A `MotionCuePlayer` maps names (or `prefix*`) to streams; intensity sets volume, `data.pitch` the pitch. | The race ident's sound effects, with no audio code in the piece. |
+| Listen to everything | Connect to `MotionCue.bus.fired` once, instead of to each composition. | A game-wide audio manager hearing every intro, transition and HUD piece. |
+| Schedule ahead | `cues_between(f, f + lookahead)` for sounds that must start exactly on a frame. | An audio kit queueing hits a few frames early to beat output latency. |
+| Hand off to sound design | `export_cue_sheet(path)` writes JSON with frames, times, names, intensities and data. | Feeding a synthesis script or a DAW session, instead of copying frame numbers by hand. |
+| Offline renders with sound | Movie Maker records cue-driven sound into `f.wav` (measured 1–10 ms from the frame). | Review videos that carry their effects with them. |
+
 ## SVG and logos
 
 Import an `.svg` as **Motion SVG** and each shape stays a separate part you can move,
