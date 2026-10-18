@@ -55,11 +55,12 @@ and rendered offline frame-exactly with Movie Maker.
 | `MK` | `spring`, `bezier` and named easings, `map`/`interp`, `prog`, `win`, `rand`, `shake`, `typed`, `crt_off`, `timecode`; `rot_x`, `rot_y`, `project` for hand-rolled 3D |
 | `MotionComposition` | Root of a piece: fps, duration, markers, play / seek / reverse / segments, process, audio or manual clock, fit-to-viewport |
 | `MotionSvg` + `MotionSvgData` | SVG kept as vector parts; per-part move, scale, rotate, recolour, fade, blur, self-drawing outline |
-| `MotionText`, `MotionFonts`, `MotionPill` | Glyph-by-glyph type with CSS-style tracking, line height and browser-exact line boxes; vertical Japanese; tag pills |
+| `MotionText`, `MotionFonts`, `MotionPill` | Glyph-by-glyph type with CSS-style tracking, line height, text stroke and browser-exact line boxes; vertical Japanese; tag pills |
 | `MotionShape` | SDF circle, rect, pill, ring, arc, with dashes, borders and exact Gaussian blur (box-shadow) |
-| `MotionGradient` | CSS linear, radial, conic and repeating gradients (hazard stripes), scrollable, with add / multiply / screen / overlay blending |
+| `MotionGradient` | CSS linear, radial, conic and repeating gradients (hazard stripes), concentric ring stacks (moiré), scrollable, with add / multiply / screen / overlay blending |
 | `MotionCanvas` | Immediate-mode lines, dashes, polygons, circles, ellipses for loop-built SVG (wireframes, track floors, particle dust) |
-| `MotionFX`, `MotionOverlay`, `MotionPixelGrid` | Offscreen group: Gaussian blur, glow, drop/text shadow, slice glitch with RGB split, pixelate, brightness, goo; TV static, CRT; pixel builds from an SVG |
+| `MotionCells` | Palette-indexed byte grid in one quad with exact sub-pixel coverage: cellular automata, LED boards, pixel mosaics, minimaps |
+| `MotionFX`, `MotionOverlay`, `MotionPixelGrid` | Offscreen group: Gaussian blur, glow, drop/text shadow, slice glitch with RGB split, pixelate, brightness, invert, SVG-exact goo (metaballs, flood fill, colour-keeping atop); TV static, CRT; pixel builds from an SVG |
 | `MotionSpring`, `MotionReactive` | Stateful springs for input; drop-in hover, focus and press feedback for any Control |
 | `MotionTransition` (autoload) | `change_scene(path, style)` with circle, bars, clock, fade, glitch, crt |
 
@@ -70,7 +71,7 @@ piece across.
 ## Demo
 
 Open the project and run it. The menu builds in, reacts to mouse, keyboard and gamepad,
-and plays the eight remade intros through transitions. Its TRANSITIONS item cycles
+and plays the eighteen remade intros through transitions. Its TRANSITIONS item cycles
 through the six styles. The intros are in `demo/scf/`.
 
 ## Tests and comparisons
@@ -80,10 +81,15 @@ godot --headless --import --path .
 godot --headless --path . --script res://tests/run_tests.gd   # parity, SVG, springs
 godot --path . res://tests/perf.tscn                          # CPU per frame
 godot --path . res://tests/visual/render_check.tscn           # GPU: blur, shadow, group opacity, gradients
+godot --path . res://tests/visual/render_check2.tscn          # GPU: cells, goo, rings, text stroke
+godot --path . res://tests/visual/svg_cache_check.tscn        # GPU: SVG rasters outlive cache eviction
 
 # Render an intro with Movie Maker, then compare with a Remotion render of the original:
 godot --path . --write-movie out/E1/f.png --fixed-fps 30 --quit-after 420 res://demo/scf/e1_supergraphic.tscn
 python3 tools/compare/compare.py <remotion_frames_dir> out/E1 out/E1-compare --label E1
+
+# Long renders can be split or resumed: frames 200-419 written as files 0-219
+godot --path . --write-movie out/G1b/f.png --fixed-fps 30 --quit-after 220 res://demo/scf/g1_lava.tscn -- --mk-start=200
 ```
 
 The parity fixture (`tests/fixtures/remotion_parity.json`) holds values computed by

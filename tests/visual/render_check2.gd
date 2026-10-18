@@ -27,6 +27,10 @@ func _ready() -> void:
 	var ot := MotionText.new(); ot.font = SCFBrand.font("outfit", 900); ot.font_size = 120; ot.text = "I"
 	ot.color = Color(1, 1, 1, 0); ot.stroke_width = 6.0; ot.stroke_color = Color.WHITE; ot.position = Vector2(1300, 0); add_child(ot)
 	ot.set_meta("probe", true)
+	# 2d. SVG rasters are premultiplied: a fade (modulate) and a tint still apply.
+	var sd := MotionSvgData.from_string('<svg viewBox="0 0 10 10"><rect x="0" y="0" width="10" height="10" fill="#fff"/></svg>')
+	var fade := MotionSvg.new(); fade.data = sd; fade.width = 40; fade.position = Vector2(1500, 0); fade.modulate.a = 0.5; add_child(fade)
+	var tint := MotionSvg.new(); tint.data = sd; tint.width = 40; tint.position = Vector2(1560, 0); tint.set_part(0, {fill = Color(1, 0, 0)}); add_child(tint)
 	# 3. alpha_matrix + flood_color: alpha 0.5 * 2 - 0.5 = 0.5, filled red.
 	var fl := MotionFX.new(); fl.size = Vector2(100, 50); fl.position = Vector2(400, 0); fl.alpha_matrix = Vector2(2, -0.5)
 	fl.flood_color = Color.RED; add_child(fl)
@@ -69,6 +73,9 @@ func _process(_d: float) -> void:
 			if img.get_pixel(x, y).r > 0.5:
 				lit += 1
 	_check("outline-only text draws its stroke (lit pixels > 0)", 1.0 if lit > 20 else 0.0, 1.0, 0.0)
+	_check("SVG fade through modulate", img.get_pixel(1520, 20).r, 0.5, 0.01)
+	_check("SVG tint (red channel)", img.get_pixel(1580, 20).r, 1.0, 0.01)
+	_check("SVG tint (green channel)", img.get_pixel(1580, 20).g, 0.0, 0.01)
 	_check("flood red", img.get_pixel(450, 25).r, 0.5, 0.01)
 	_check("flood replaces the colour", img.get_pixel(450, 25).g, 0.0, 0.01)
 	var inner := img.get_pixel(600 + 98, 50)

@@ -4,7 +4,9 @@
 #   godot --path . res://tests/perf.tscn   (headless works too)
 extends Node
 
-const SCENES := ["res://demo/scf/e1_supergraphic.tscn", "res://demo/scf/d1_signal.tscn", "res://demo/scf/a_pit_lane.tscn", "res://demo/scf/c_vector_track.tscn", "res://demo/scf/b_print.tscn", "res://demo/scf/b1_print.tscn", "res://demo/scf/b2_specimen.tscn", "res://demo/scf/b3_index.tscn"]
+const SCENES := ["res://demo/scf/e1_supergraphic.tscn", "res://demo/scf/d1_signal.tscn", "res://demo/scf/a_pit_lane.tscn", "res://demo/scf/c_vector_track.tscn", "res://demo/scf/b_print.tscn", "res://demo/scf/b1_print.tscn", "res://demo/scf/b2_specimen.tscn", "res://demo/scf/b3_index.tscn",
+	"res://demo/scf/f1_strobe.tscn", "res://demo/scf/f2_moire.tscn", "res://demo/scf/f3_goo.tscn", "res://demo/scf/f4_hyperspeed.tscn", "res://demo/scf/f5_automaton.tscn",
+	"res://demo/scf/g1_lava.tscn", "res://demo/scf/g2_splash.tscn", "res://demo/scf/g3_cells.tscn", "res://demo/scf/g4_ferro.tscn", "res://demo/scf/g5_goo_type.tscn"]
 var _i := -1
 var _comp: MotionComposition
 var _f := 0

@@ -87,7 +87,27 @@ static var _outline_lengths := {}
 const MAX_TEX := 4096
 
 
+const SHADER := preload("res://addons/motion_kit/shaders/motion_svg.gdshader")
+static var _material: ShaderMaterial
+
+
+## The rasters are premultiplied; this material filters them correctly. A
+## material you set yourself must un-premultiply the texture the same way.
+static func default_material() -> ShaderMaterial:
+	if not _material:
+		_material = ShaderMaterial.new()
+		_material.shader = SHADER
+	return _material
+
+
+func _validate_property(property: Dictionary) -> void:
+	if property.name == "material" and material == _material:
+		property.usage &= ~PROPERTY_USAGE_STORAGE
+
+
 func _init() -> void:
+	if material == null:
+		material = default_material()
 	texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 
 
@@ -491,10 +511,11 @@ func _texture(i: int, bucket: Vector2i, blur := Vector2.ZERO) -> Texture2D:
 		push_warning("MotionSvg: could not rasterize part %d of %s" % [i, data.source])
 		_cache[key] = null
 		return null
-	# ThorVG leaves transparent texels black; bilinear filtering and mipmaps would
+	# ThorVG leaves transparent texels black; filtering straight colour would
 	# blend edge texels toward that black, a dark fringe wherever a part's edge
-	# lies over its own colour. Bleed the edge colours outward first.
-	img.fix_alpha_edges()
+	# lies over its own colour. Store premultiplied (the SHADER un-premultiplies
+	# after filtering); bleeding the edges instead costs ten times as much.
+	img.premultiply_alpha()
 	img.generate_mipmaps()
 	var tex := ImageTexture.create_from_image(img)
 	_cache[key] = tex
