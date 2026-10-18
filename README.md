@@ -5,20 +5,30 @@ Remotion-exact springs and easing, part-level SVG logo animation, kinetic type,
 glitch and CRT effects, scene transitions, and spring feedback for UI.
 It is pure GDScript, with no GDExtension and no build step.
 
-It was built by porting eight of the SCF intros from Remotion line for line and comparing
-the renders frame by frame:
+It was built by porting eighteen of the SCF intros from Remotion line for line and
+comparing the renders frame by frame (SSIM on luma at half size):
 
 | Intro | Frames | Mean SSIM vs Remotion | Worst frame |
 | --- | --- | --- | --- |
-| B1 Print | 410 | 0.9991 | 0.9956 |
-| B Print | 300 | 0.9988 | 0.9954 |
-| B3 Index | 420 | 0.9989 | 0.9980 |
-| E1 Supergraphic | 420 | 0.9988 | 0.9975 |
-| B2 Specimen | 420 | 0.9977 | 0.9888 |
-| C Vector Track | 300 | 0.9965 | 0.9918 |
-| A Pit Lane | 300 | 0.9957 | 0.9863 |
+| E1 Supergraphic | 420 | 0.9994 | 0.9985 |
 | D1 Signal, excluding the 48 frames of random TV static | 372 | 0.9875 | 0.934 |
 | D1 Signal, all frames | 420 | 0.946 | 0.175 (TV static) |
+| A Pit Lane | 300 | 0.9958 | 0.9862 |
+| B Print | 300 | 0.9990 | 0.9954 |
+| B1 Print | 410 | 0.9993 | 0.9956 |
+| B2 Specimen | 420 | 0.9980 | 0.9970 |
+| B3 Index | 420 | 0.9991 | 0.9984 |
+| C Vector Track | 300 | 0.9967 | 0.9929 |
+| F1 Strobe | 420 | 0.9993 | 0.9888 |
+| F2 Moiré | 420 | 0.9987 | 0.9924 |
+| F3 Goo | 420 | 0.9982 | 0.9898 |
+| F4 Hyperspeed | 420 | 0.9978 | 0.9931 |
+| F5 Automaton | 420 | 0.9996 | 0.9920 |
+| G1 Lava | 420 | 0.9989 | 0.9915 |
+| G2 Splash | 420 | 0.9993 | 0.9927 |
+| G3 Cells | 420 | 0.9993 | 0.9910 |
+| G4 Ferro | 420 | 0.9989 | 0.9818 |
+| G5 Goo Pile | 420 | 0.9991 | 0.9916 |
 
 Random static can't match pixel for pixel, so those frames are reported separately.
 `tools/compare/compare.py` reproduces all of
