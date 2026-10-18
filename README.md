@@ -5,8 +5,14 @@ Remotion-exact springs and easing, part-level SVG logo animation, kinetic type,
 glitch and CRT effects, scene transitions, and spring feedback for UI.
 It is pure GDScript, with no GDExtension and no build step.
 
-It was built by porting eighteen of the SCF intros from Remotion line for line and
-comparing the renders frame by frame (SSIM on luma at half size):
+You make pieces directly in Godot: write a brief, turn it into a beat sheet in frames,
+build it with the kit, render it and review the frames. The workflow is written up as an
+agent skill in [skills/godot-motion-kit/SKILL.md](skills/godot-motion-kit/SKILL.md),
+every technique has an example in [docs/techniques.md](docs/techniques.md), and
+`demo/examples/race_ident.gd` is a piece made that way from scratch.
+
+To prove the kit, eighteen of the SCF intros were ported from Remotion line for line and
+their renders compared frame by frame (SSIM on luma at half size):
 
 | Intro | Frames | Mean SSIM vs Remotion | Worst frame |
 | --- | --- | --- | --- |
@@ -74,9 +80,10 @@ and rendered offline frame-exactly with Movie Maker.
 | `MotionSpring`, `MotionReactive` | Stateful springs for input; drop-in hover, focus and press feedback for any Control |
 | `MotionTransition` (autoload) | `change_scene(path, style)` with circle, bars, clock, fade, glitch, crt |
 
-See [docs/API.md](docs/API.md) for the reference and
-[docs/porting-from-remotion.md](docs/porting-from-remotion.md) for moving a Remotion
-piece across.
+See [docs/techniques.md](docs/techniques.md) for what to use when (with examples and
+best practices), [docs/API.md](docs/API.md) for the reference, and
+[docs/porting-from-remotion.md](docs/porting-from-remotion.md) only if you need to match
+an existing browser animation exactly.
 
 ## Demo
 
@@ -94,7 +101,11 @@ godot --path . res://tests/visual/render_check.tscn           # GPU: blur, shado
 godot --path . res://tests/visual/render_check2.tscn          # GPU: cells, goo, rings, text stroke
 godot --path . res://tests/visual/svg_cache_check.tscn        # GPU: SVG rasters outlive cache eviction
 
-# Render an intro with Movie Maker, then compare with a Remotion render of the original:
+# Render any composition and review it as a contact sheet:
+tools/render.sh res://demo/examples/race_ident.tscn out/race 180
+python3 tools/sheet/sheet.py out/race out/race-sheet.png --every 15 --motion
+
+# Porting only: render an intro with Movie Maker, then compare with a Remotion render of the original:
 godot --path . --write-movie out/E1/f.png --fixed-fps 30 --quit-after 420 res://demo/scf/e1_supergraphic.tscn
 python3 tools/compare/compare.py <remotion_frames_dir> out/E1 out/E1-compare --label E1
 
