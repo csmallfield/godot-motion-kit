@@ -211,7 +211,14 @@ static func _part_bucket(screen: Vector2, r: Array) -> Vector2i:
 	if r[2]:   # a rotated part takes the larger density on both axes
 		dens = Vector2.ONE * maxf(dens.x, dens.y)
 	var cap: Vector2 = r[1]
-	return Vector2i(_bucket(minf(dens.x, cap.x)), _bucket(minf(dens.y, cap.y)))
+	# Buckets round up, so a capped axis takes the step at or below the cap:
+	# rounding past it would make the raster clamp and crop the part.
+	return Vector2i(_bucket(dens.x) if dens.x <= cap.x else _bucket_floor(cap.x),
+		_bucket(dens.y) if dens.y <= cap.y else _bucket_floor(cap.y))
+
+
+static func _bucket_floor(dens: float) -> int:
+	return int(floor(log(maxf(dens, 0.01)) / log(sqrt(2.0)) + 1e-6))
 
 
 static func _bucket_xy(b: Vector2i) -> Vector2:
@@ -222,6 +229,9 @@ static func _bucket_xy(b: Vector2i) -> Vector2:
 # the node (or a parent) doesn't redraw it, so watch the global transform and
 # redraw when any part's density would cross into another step.
 var _drawn: Array = []          # [density factors, bucket] per drawn part
+# Textures the last draw used. The canvas holds only their RIDs, so they must
+# outlive the cache's eviction until the next draw replaces them.
+var _live: Array[Texture2D] = []
 
 
 func _enter_tree() -> void:
@@ -248,6 +258,7 @@ func _draw() -> void:
 	var screen := maxf(screen_xy.x, screen_xy.y)
 	var px_per_unit := screen * maxf(kx, ky)
 	_drawn.clear()
+	_live.clear()
 	var use_only := only.size() > 0
 
 	for i in data.parts.size():
@@ -293,6 +304,7 @@ func _draw() -> void:
 			_blur_region = o.get("blur_region", Rect2())
 			var tex := _texture(i, bucket, pblur)
 			if tex:
+				_live.append(tex)
 				draw_texture_rect(tex, _raster_rect(p, bucket, pblur), false, col)
 
 		# Outline: self-drawing line, or a full stroke override
