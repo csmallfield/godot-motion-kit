@@ -40,6 +40,12 @@ extends Node2D
 ## Uppercase the text when drawing (CSS text-transform: uppercase).
 @export var uppercase := false:
 	set(v): uppercase = v; _dirty = true; queue_redraw()
+## CSS -webkit-text-stroke: a stroke of this many pixels centred on each glyph's
+## outline, painted over the fill (so half of it eats into the letter).
+@export var stroke_width := 0.0:
+	set(v): stroke_width = v; queue_redraw()
+@export var stroke_color := Color.BLACK:
+	set(v): stroke_color = v; queue_redraw()
 ## CSS writing-mode: vertical-rl. Glyphs stand upright in columns that run top
 ## to bottom, right to left, using the font's vertical forms (the long-vowel
 ## mark turns, small kana shift). Every glyph stands upright, Latin included,
@@ -329,4 +335,8 @@ func _draw() -> void:
 			xf = xf * Transform2D(Vector2(k, 0), Vector2(0, k), pos - pos * k)
 		draw_set_transform_matrix(xf)
 		ts.font_draw_glyph(g.font_rid, ci, g.size, pos, g.index, col)
+		if stroke_width > 0.0:
+			# Godot's outline of size n is a stroke n / 2 wide, centred on the contour.
+			var sc := Color(stroke_color, stroke_color.a * float(o.get("o", 1.0)))
+			ts.font_draw_glyph_outline(g.font_rid, ci, g.size, maxi(1, int(round(stroke_width * 2.0 / k))), pos, g.index, sc)
 	draw_set_transform_matrix(Transform2D.IDENTITY)
