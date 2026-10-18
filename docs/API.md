@@ -81,7 +81,10 @@ colours and `fill` tints them. Rasters are cached in √2 size steps (densities 
 window stretch), shared between nodes, and evicted least-recently-used beyond
 `MotionSvg.cache_budget` (256 MB); a raster the current frame draws stays alive until the
 next draw even if the cache drops it. A raster is capped at 4096 px a side: past that the
-part is drawn from a lower-density raster rather than cropped. Outlines are live anti-aliased polylines. `modulate.a`
+part is drawn from a lower-density raster rather than cropped. Rasters are stored with
+premultiplied alpha, so filtering leaves no dark fringe where a part lies over its own
+colour; `MotionSvg.default_material()` (set on every node) un-premultiplies them, and a
+`material` of your own must do the same. Outlines are live anti-aliased polylines. `modulate.a`
 applies to each part separately, so overlapping parts show through each other while a
 logo fades. For CSS `opacity` on a wrapper (one composited layer), put the `MotionSvg` in
 a `CanvasGroup` and fade the group's `self_modulate.a`. `MotionSvgData.from_file()` needs the raw .svg, so it is for tools;
