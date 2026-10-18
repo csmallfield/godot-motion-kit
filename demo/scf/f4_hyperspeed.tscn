@@ -1,0 +1,11 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://demo/scf/f4_hyperspeed.gd" id="1"]
+[ext_resource type="AudioStream" path="res://demo/assets/audio/F4-Hyperspeed.wav" id="2"]
+
+[node name="F4Hyperspeed" type="Node2D" node_paths=PackedStringArray("audio")]
+script = ExtResource("1")
+audio = NodePath("Sound")
+
+[node name="Sound" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("2")

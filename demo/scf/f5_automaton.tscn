@@ -1,0 +1,11 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://demo/scf/f5_automaton.gd" id="1"]
+[ext_resource type="AudioStream" path="res://demo/assets/audio/F5-Automaton.wav" id="2"]
+
+[node name="F5Automaton" type="Node2D" node_paths=PackedStringArray("audio")]
+script = ExtResource("1")
+audio = NodePath("Sound")
+
+[node name="Sound" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("2")
