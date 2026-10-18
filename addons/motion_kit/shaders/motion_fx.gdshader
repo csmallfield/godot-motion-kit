@@ -12,7 +12,9 @@ uniform int slice_count = 0;                        // 0 = no slicing
 uniform float slice_offsets[64];                    // pixels, one per band
 uniform float split = 0.0;                          // RGB split distance in pixels
 uniform float brightness = 1.0;
-uniform float invert = 0.0;                         // CSS invert(), applied before brightness
+uniform float invert = 0.0;
+uniform vec2 alpha_matrix = vec2(1.0, 0.0);         // feColorMatrix alpha row: a * x + y
+uniform vec4 flood_color : source_color = vec4(0.0); // feFlood + feComposite in (a > 0 to use)                         // CSS invert(), applied before brightness
 uniform float pixel_size = 0.0;                     // 0 = off
 uniform float goo_blur = 0.0;                       // pixels; 0 = off
 uniform float goo_sharp = 22.0;
@@ -95,6 +97,15 @@ void fragment() {
 		off = slice_offsets[band];
 	}
 	vec4 m = blur_main ? vblur(px - vec2(off, 0.0)) : fetch(TEXTURE, px - vec2(off, 0.0));   // premultiplied
+	if (alpha_matrix != vec2(1.0, 0.0) || flood_color.a > 0.0) {
+		float am = clamp(m.a * alpha_matrix.x + alpha_matrix.y, 0.0, 1.0);
+		vec3 straight = m.a > 0.0001 ? m.rgb / m.a : vec3(0.0);
+		if (flood_color.a > 0.0) {
+			am *= flood_color.a;
+			straight = flood_color.rgb;
+		}
+		m = vec4(straight * am, am);
+	}
 	vec3 rgb = m.rgb;
 	float a = m.a;
 	if (split > 0.5) {

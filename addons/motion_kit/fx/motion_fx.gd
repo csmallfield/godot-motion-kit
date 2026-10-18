@@ -42,6 +42,12 @@ const MAX_SLICES := 64
 ## One separable Gaussian pass is shared by blur, glow and shadow, so they use
 ## a single radius: blur if set, else glow, else shadow_blur. With blur set,
 ## pixel_size and goo are not applied (the blurred content replaces them).
+## SVG goo / metaballs: after the blur, alpha' = alpha * x + y (the alpha row
+## of an feColorMatrix, e.g. Vector2(26, -11)), then the result is filled with
+## `flood_color` (feFlood + feComposite in). Leave flood_color transparent to
+## keep the content's own colours.
+@export var alpha_matrix := Vector2(1, 0)
+@export var flood_color := Color(0, 0, 0, 0)
 @export_group("Other")
 @export var brightness := 1.0
 ## CSS filter: invert(), 0..1. It applies to the finished group, glow, shadow
@@ -178,6 +184,8 @@ func _apply() -> void:
 	_mat.set_shader_parameter("split", 0.0 if quiet else slice_split)
 	_mat.set_shader_parameter("brightness", brightness)
 	_mat.set_shader_parameter("invert", invert)
+	_mat.set_shader_parameter("alpha_matrix", alpha_matrix)
+	_mat.set_shader_parameter("flood_color", flood_color)
 	_mat.set_shader_parameter("pixel_size", pixel_size)
 	_mat.set_shader_parameter("goo_blur", goo_blur)
 	_mat.set_shader_parameter("goo_sharp", goo_sharp)
