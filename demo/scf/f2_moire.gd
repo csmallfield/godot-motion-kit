@@ -89,17 +89,34 @@ class Comb:
 			if t >= 1.0:
 				c.rect(Rect2(Vector2.ZERO, box), Color.WHITE)
 				return
-			var h := clampf(t * pitch, 0.0, pitch)
-			if h <= 0.0:
-				return
-			# Teeth under a pixel tall draw one pixel high with their height as
-			# coverage, as the browser's rasterized mask does.
-			var col := Color(1, 1, 1, minf(1.0, h))
-			var hh := maxf(h, 1.0)
-			var y := box.y
-			while y > 0.0:
-				c.rect(Rect2(0, maxf(0.0, y - hh), box.x, minf(hh, y)), col)
-				y -= pitch
+			var top := c.global_position.y
+			for row in rows():
+				c.rect(Rect2(0, row - top, box.x, 1.0), Color.WHITE)
+
+	## repeating-linear-gradient(0deg, #000 0 h, transparent h pitch) as a mask:
+	## Chromium samples hard stops at pixel centres, so a pixel row is fully in a
+	## tooth when its centre lies within h of the tooth's base (counted up from
+	## the box bottom, snapped to a pixel), and out otherwise. Returns those
+	## rows (global y).
+	func rows() -> PackedFloat32Array:
+		var out := PackedFloat32Array()
+		var h := clampf(t * pitch, 0.0, pitch)
+		if h <= 0.0:
+			return out
+		# The mask layer is snapped to whole pixels, as Chromium composites it.
+		var top := roundf(global_position.y)
+		var bottom := roundf(global_position.y + box.y)
+		var row := top
+		while row < bottom:
+			var d := bottom - (row + 0.5)
+			if d > 0.0 and fposmod(d, pitch) < h:
+				out.append(row)
+			row += 1.0
+		return out
+
+	## Whether anything shows: an empty clip mask would clip nothing in Godot.
+	func any_teeth() -> bool:
+		return t >= 1.0 or not rows().is_empty()
 
 	func set_t(v: float) -> void:
 		t = v
@@ -280,8 +297,8 @@ func _frame(f: float) -> void:
 		_m.visible = f >= 98
 		var layers: float = sp.call(100, 10, 160)
 		_m.apply(func(i: int): return {tx = (2 - i) * layers * 9.0, ty = (2 - i) * layers * 9.0, o = 1.0 if i == 2 else layers})
-		_comb1.visible = MK.interp(f, [112, 134], [0, 1]) > 0.0    # no teeth: hide it (an empty clip mask clips nothing)
 		_comb1.set_t(MK.interp(f, [112, 134], [0, 1]))
+		_comb1.visible = _comb1.any_teeth()    # no teeth: hide it (an empty clip mask clips nothing)
 		return
 
 	var o := f - OUT
@@ -329,8 +346,8 @@ func _frame(f: float) -> void:
 				return {hide = true} if s <= 0.01 else {s = s}
 			return null)
 	var wm2 := MK.interp(f, [244, 268], [0, 1]) * (1 - MK.map(o, [0, 14], [0, 1]))
-	_comb2.visible = f >= 244 and wm2 > 0.0
 	_comb2.set_t(wm2)
+	_comb2.visible = f >= 244 and wm2 > 0.0 and _comb2.any_teeth()
 	var tag_o := MK.map(f, [272, 284], [0, 1]) * (1 - MK.map(o, [0, 8], [0, 1]))
 	_tags.modulate.a = tag_o
 	_tag_presents.modulate.a = tag_o * 0.75

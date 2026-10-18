@@ -124,3 +124,9 @@ know the handful of places where the browser behaves in ways that aren't obvious
    with seven 1080p blur layers renders at a few seconds a frame (a GPU does it in
    milliseconds). Split long Movie Maker renders with `-- --mk-start=N` and run them
    one at a time; two at once on two cores is slower than one after the other.
+23. **Gradient hard stops are point-sampled.** Chromium evaluates a gradient at pixel
+   centres with no anti-aliasing at a hard stop, and composites a mask layer snapped to
+   whole pixels. A `repeating-linear-gradient` comb mask with 0.5 px teeth therefore shows
+   nothing, and 0.6 px teeth show as whole opaque rows. Drawing the teeth with their
+   coverage as alpha looks plausible but scores far worse; F2's `Comb.rows()` samples the
+   way the browser does.
