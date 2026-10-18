@@ -20,7 +20,8 @@ repo is available.
 
 - Check the project has `addons/motion_kit/` and the plugin is enabled (Project Settings
   → Plugins → Motion Kit; it registers the `MotionTransition` autoload and the Motion SVG
-  importer). If it's missing, copy the folder from the repo.
+  importer). If it's missing, copy the folder from the repo, along with `tools/render.sh`
+  and `tools/sheet/` for rendering and review (section 5).
 - Find the Godot 4 binary (`godot` on PATH, or ask). Rendering needs a display; headless
   machines use Xvfb with software GL (correct, slow for blur-heavy pieces).
 - Look at what the project already has: brand SVGs, fonts, colour constants, shared
