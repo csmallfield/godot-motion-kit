@@ -20,6 +20,7 @@ uniform float goo_blur = 0.0;                       // pixels; 0 = off
 uniform float goo_sharp = 22.0;
 uniform sampler2D blur_tex : filter_linear;          // horizontally blurred content (first pass)
 uniform float blur_sigma = 0.0;                     // sigma of that pass, pixels; 0 = no blurred texture
+uniform bool source_atop = false;                  // feComposite in=SourceGraphic in2=goo operator=atop
 uniform bool blur_main = false;                     // CSS filter: blur() on the content itself
 uniform float glow = 0.0;                           // > 0: blurred copy drawn under the content
 uniform float glow_strength = 1.0;
@@ -105,6 +106,10 @@ void fragment() {
 			straight = flood_color.rgb;
 		}
 		m = vec4(straight * am, am);
+		if (source_atop) {
+			vec4 src = sample_px(TEXTURE, px - vec2(off, 0.0));
+			m = src * m.a + m * (1.0 - src.a);
+		}
 	}
 	vec3 rgb = m.rgb;
 	float a = m.a;

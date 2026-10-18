@@ -2,13 +2,13 @@
 
 importer="font_data_dynamic"
 type="FontFile"
-uid="uid://c6fceix2rg0rq"
-path="res://.godot/imported/carlito-bold-symbols.ttf-ad837ec615aaca78aaf7a98d2fcbf07f.fontdata"
+uid="uid://c8og3fehw5f4p"
+path="res://.godot/imported/fallback-dot-bold.ttf-ae0e404ecf409ded8a3d906027cd25cc.fontdata"
 
 [deps]
 
-source_file="res://demo/assets/fonts/carlito-bold-symbols.ttf"
-dest_files=["res://.godot/imported/carlito-bold-symbols.ttf-ad837ec615aaca78aaf7a98d2fcbf07f.fontdata"]
+source_file="res://demo/assets/fonts/fallback-dot-bold.ttf"
+dest_files=["res://.godot/imported/fallback-dot-bold.ttf-ae0e404ecf409ded8a3d906027cd25cc.fontdata"]
 
 [params]
 

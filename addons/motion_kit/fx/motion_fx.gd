@@ -48,6 +48,10 @@ const MAX_SLICES := 64
 ## keep the content's own colours.
 @export var alpha_matrix := Vector2(1, 0)
 @export var flood_color := Color(0, 0, 0, 0)
+## Then draw the unblurred content over that goo, clipped to it (SVG
+## feComposite in="SourceGraphic" operator="atop"): crisp shapes that melt
+## into each other where the goo bridges them, each keeping its colour.
+@export var source_atop := false
 @export_group("Other")
 @export var brightness := 1.0
 ## CSS filter: invert(), 0..1. It applies to the finished group, glow, shadow
@@ -186,6 +190,7 @@ func _apply() -> void:
 	_mat.set_shader_parameter("invert", invert)
 	_mat.set_shader_parameter("alpha_matrix", alpha_matrix)
 	_mat.set_shader_parameter("flood_color", flood_color)
+	_mat.set_shader_parameter("source_atop", source_atop)
 	_mat.set_shader_parameter("pixel_size", pixel_size)
 	_mat.set_shader_parameter("goo_blur", goo_blur)
 	_mat.set_shader_parameter("goo_sharp", goo_sharp)

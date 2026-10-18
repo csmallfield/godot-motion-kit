@@ -46,6 +46,11 @@ nodes inside a `MotionFX`. A nested composition receives `f - start` and, like a
 | `play(from=-1)`, `play_backwards(to=0)`, `play_segment(a, b)`, `stop()`, `seek(f)`, `render(f)` | |
 | signals `finished`, `segment_finished(name)` | |
 
+Movie Maker renders advance exactly one movie frame per image (`movie_fps`, default the
+composition's `fps`): Godot's process delta wobbles over the first frames. To split or
+resume a long Movie Maker render, pass `-- --mk-start=N` on the command line:
+the top-level composition starts at frame N (the files still count from 0).
+
 ## MotionSvg (Node2D) and MotionSvgData (Resource)
 
 Import an `.svg` as **Motion SVG** (Import dock → Import As), or build one with
@@ -74,7 +79,9 @@ Single-colour parts are rasterized white by Godot's own ThorVG and tinted, so re
 them costs nothing; parts with both a fill and a stroke, or a gradient, keep their own
 colours and `fill` tints them. Rasters are cached in √2 size steps (densities include the
 window stretch), shared between nodes, and evicted least-recently-used beyond
-`MotionSvg.cache_budget` (256 MB). Outlines are live anti-aliased polylines. `modulate.a`
+`MotionSvg.cache_budget` (256 MB); a raster the current frame draws stays alive until the
+next draw even if the cache drops it. A raster is capped at 4096 px a side: past that the
+part is drawn from a lower-density raster rather than cropped. Outlines are live anti-aliased polylines. `modulate.a`
 applies to each part separately, so overlapping parts show through each other while a
 logo fades. For CSS `opacity` on a wrapper (one composited layer), put the `MotionSvg` in
 a `CanvasGroup` and fade the group's `self_modulate.a`. `MotionSvgData.from_file()` needs the raw .svg, so it is for tools;
@@ -86,7 +93,8 @@ games `load()` the file imported as Motion SVG.
 (multiple of the size; 0 = the font's own), `align` with `box_width`, `visible_chars`,
 `uppercase`. Per-glyph overrides via `apply(fn)` / `glyph_fn(i, f)` with
 `tx ty s sx sy rot o color hide`. The origin is the top-left of the line box, as for a CSS block.
-`get_text_size()` gives the width (including tracking after the last character, as CSS
+`stroke_width` / `stroke_color` are CSS `-webkit-text-stroke`: a stroke centred on each
+glyph's outline, painted over the fill. `get_text_size()` gives the width (including tracking after the last character, as CSS
 does) and the line-box height; `get_baseline()` the distance from the top to the first
 baseline, for CSS `align-items: baseline` layouts.
 
@@ -135,6 +143,12 @@ MULTIPLY, SCREEN or OVERLAY blends with what is drawn behind it (CSS `mix-blend-
 `opacity`. Shortcuts: `MotionGradient.linear(size, angle, colors, positions)`,
 `stripes(...)`, `radial(size, colors, positions, at)`.
 
+RINGS draws `ring_count` concentric circle strokes (`ring_width` px wide, radii
+`ring_r0 + i * ring_gap` about `ring_center`, in `colors[0]`), optionally clipped to a
+circle of radius `ring_clip`: a stack of SVG `<circle>`s in one quad, anti-aliased in
+screen space, so a moiré of 90 rings over 90 rings costs two quads.
+`MotionGradient.rings(size, center, col, width, gap, count=90, r0=6)`.
+
 Blend modes read the backdrop of the viewport they draw in. To blend with only part of
 the scene (an isolated CSS stacking context), put the group in a `MotionFX`.
 
@@ -150,6 +164,16 @@ it runs whenever the frame changes. Helpers: `line(a, b, col, w, opacity)`,
 alpha, as a browser rasterizes them. Each call's `opacity` applies to that shape alone;
 for a group's opacity use `modulate.a` on the canvas.
 
+## MotionCells (Node2D)
+
+A grid of palette-coloured cells drawn from one byte per cell in a single quad: cellular
+automata, LED boards, pixel mosaics, minimaps. `columns`, `rows`, `cell_size`, `inset`
+(gap inside each cell edge; fractional insets are anti-aliased exactly, so 1.5 gives the
+half-covered edge pixels of an SVG `<rect x="1.5">`), `palette` (up to 16 colours, index 0
+never drawn), `grid_color` / `grid_width` (lines on every boundary; crossings compound
+like overlapping rects), `cells` (row-major `PackedByteArray`; setting it re-uploads the
+small state texture only), `get_cell(x, y)`.
+
 ## Effects
 
 - `MotionFX`: children placed under it in a scene move into `content` when the game runs
@@ -164,6 +188,12 @@ for a group's opacity use `modulate.a` on the canvas.
     `shadow_color`, `shadow_blur` and `shadow_offset` draw a tinted blurred copy under it,
     with `shadow_blur` a CSS `text-shadow` / `box-shadow` radius (σ = radius / 2). Because
     the pass is shared, set only one of them per `MotionFX`; nest two for both.
+  - SVG goo: `alpha_matrix` (Vector2) is the alpha row of an `feColorMatrix` applied after
+    the blur (alpha · x + y, e.g. `Vector2(26, -11)`); `flood_color` then fills the result
+    (`feFlood` + `feComposite in`), or leave it transparent to keep the blurred colours.
+    `source_atop` draws the unblurred content over that goo, clipped to it
+    (`feComposite in="SourceGraphic" operator="atop"`): crisp shapes that melt into each
+    other where the goo bridges them, each keeping its colour.
   - The content is clipped to `size`, so give blurred content room (CSS doesn't clip).
     `MotionFX` scaled by its parent scales its blur with it, as CSS does for a filter
     under a transform.

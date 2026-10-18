@@ -168,3 +168,27 @@ func test_vertical_text_without_a_legal_break_overflows() -> String:
 	var cols := _columns(t)
 	t.free()
 	return "" if cols == [5] else "columns %s, want [5]" % [cols]
+
+
+func test_svg_capped_density_rounds_down() -> String:
+	# A density past the texture cap takes the √2 step at or below the cap, so
+	# the raster fits whole instead of being clamped (which cropped the part).
+	var r := [Vector2(1, 1), Vector2(10.0, 50.0), false]
+	var b := MotionSvg._part_bucket(Vector2(40.0, 40.0), r)
+	var dens := MotionSvg._bucket_xy(b)
+	if dens.x > 10.0 + 1e-6 or dens.y > 40.0 * 1.4143:
+		return "bucket %s gives density %s past the cap (10, 50)" % [b, dens]
+	return "" if dens.x > 10.0 / 1.4143 else "density %s fell more than a step below the cap" % dens
+
+
+func test_cells_resize_and_read() -> String:
+	var c := MotionCells.new()
+	c.columns = 3
+	c.rows = 2
+	if c.cells.size() != 6:
+		c.free()
+		return "cells %d, want 6" % c.cells.size()
+	c.cells = PackedByteArray([0, 1, 2, 3, 4, 5])
+	var got := [c.get_cell(0, 0), c.get_cell(2, 1), c.get_cell(3, 0), c.get_cell(-1, 0)]
+	c.free()
+	return "" if got == [0, 5, 0, 0] else "get_cell %s, want [0, 5, 0, 0]" % [got]

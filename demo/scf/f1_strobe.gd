@@ -75,7 +75,7 @@ static var _outfit_fb: Font
 static func _outfit() -> Font:
 	if not _outfit_fb:
 		var f := MotionFonts.font("res://demo/assets/fonts/outfit-latin-900-normal.woff2")
-		f.fallbacks = [MotionFonts.font("res://demo/assets/fonts/carlito-bold-symbols.ttf")]
+		f.fallbacks = [MotionFonts.font("res://demo/assets/fonts/fallback-dot-bold.ttf")]
 		_outfit_fb = f
 	return _outfit_fb
 
