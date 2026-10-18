@@ -77,6 +77,7 @@ extends MotionComposition
 
 const INK := Color("#0e0f12")
 const AMBER := Color("#ffb627")
+const TITLE_AT := 10        # beat-sheet frames as constants: picture and cues share them
 const OUT := 150
 
 var _built := false
@@ -88,7 +89,7 @@ func _init() -> void:
 	duration = 180
 	fps = 30
 	markers = {"in": 0.0, "hold": 120.0, "out": float(OUT)}
-	cue(10, &"title", 1.0)          # the beat sheet's moments, for sound (section 6)
+	cue(TITLE_AT, &"title", 1.0)    # the beat sheet's moments, for sound (section 6)
 	cue(OUT, &"whoosh.out", 0.8)
 
 
@@ -117,7 +118,7 @@ func _frame(f: float) -> void:   # set properties from f only
 		return
 	var out := MK.interp(f, [OUT, OUT + 24], [0, 1], MK.ease_in_back)
 	_stage.position = MK.shakes(f, [12, 30], 16, 8)
-	var s := MK.spring(f, 10, 12, 160) * (1.0 - out)
+	var s := MK.spring(f, TITLE_AT, 12, 160) * (1.0 - out)
 	_title.scale = Vector2.ONE * maxf(0.0, s)
 	_title.visible = s > 0.0
 ```
