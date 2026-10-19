@@ -255,6 +255,13 @@ func _init() -> void:
   `f.wav`, so review renders carry their sound (measured 1–10 ms from the frame).
 - A music bed or soundtrack goes on the composition's `audio` (with `clock = AUDIO` to
   lock the picture to it live).
+- For sound made from code, use the **Godot Audio Kit** (`csmallfield/godot-audio-kit`,
+  its own skill: `godot-audio-kit`). Add an `AKCueBridge` child with a cue map of
+  recipes: BAKED renders the cue sheet into one sample-accurate track on `audio` and
+  locks the clock to it; LIVE mixes the same timeline as it plays (native core). It
+  adds music (a song whose sections follow the picture, notes optionally emitted back
+  as cues) and measured review renders. Prefer it to MotionCuePlayer for anything
+  beyond a few stock sounds.
 - For sound design outside Godot, `export_cue_sheet(path)` writes every cue as JSON
   (frames, seconds, names, intensities, data).
 - Playback fires each crossed cue once, in order; seeking fires none (listeners get a
