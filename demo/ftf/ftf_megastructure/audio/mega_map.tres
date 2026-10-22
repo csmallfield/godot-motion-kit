@@ -1,0 +1,28 @@
+[gd_resource type="Resource" script_class="AKCueMap" format=3]
+
+[ext_resource type="Script" path="res://addons/audio_kit/core/cue_map.gd" id="1"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_megastructure/audio/city_ring.tres" id="2"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_megastructure/audio/mh_rise.tres" id="3"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_megastructure/audio/mh_land.tres" id="4"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_megastructure/audio/mh_unfold.tres" id="5"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_megastructure/audio/stamp.tres" id="6"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_megastructure/audio/stamp_small.tres" id="7"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_megastructure/audio/sink.tres" id="8"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_megastructure/audio/whip.tres" id="9"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_megastructure/audio/arrive.tres" id="10"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_megastructure/audio/drain.tres" id="11"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_megastructure/audio/ftf_rise.tres" id="12"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_megastructure/audio/ftf_lock.tres" id="13"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_megastructure/audio/cam_lock.tres" id="14"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_megastructure/audio/cam_back.tres" id="15"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_megastructure/audio/city_sink.tres" id="16"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_megastructure/audio/dive.tres" id="17"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_megastructure/audio/end.tres" id="18"]
+
+[resource]
+script = ExtResource("1")
+sounds = {"city.ring": ExtResource("2"), "mh.rise": ExtResource("3"), "mh.land": ExtResource("4"), "mh.unfold": ExtResource("5"), "stamp": ExtResource("6"), "stamp.small": ExtResource("7"), "sink": ExtResource("8"), "whip": ExtResource("9"), "arrive": ExtResource("10"), "drain": ExtResource("11"), "ftf.rise": ExtResource("12"), "ftf.lock": ExtResource("13"), "cam.lock": ExtResource("14"), "cam.back": ExtResource("15"), "city.sink": ExtResource("16"), "dive": ExtResource("17"), "end": ExtResource("18")}
+master_fx = Array[Dictionary]([{"type": "dcblock"}, {"type": "loudness", "target_lufs": -16.0}, {"type": "limit", "ceiling_db": -2.0}])
+reverb = {"room": 0.55, "damp": 0.35, "width": 1.0, "quality": &"full", "return_db": -3.0}
+end_fade_s = 0.3
+duck = {"depth_db": 8.0, "full_at_db": -20.0, "attack_s": 0.005, "release_s": 0.3}

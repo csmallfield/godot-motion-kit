@@ -16,6 +16,24 @@ neo-futurist. The brief and the frame-by-frame beat sheet are in the header of
 | `audio/bake.gd` | Bakes the soundtrack to `audio/ftf_intro_track.res` and writes `audio/ftf_intro_cues.json` |
 | `audio/ftf_intro_track.res` | The baked soundtrack, so the piece plays its sound without the audio kit |
 
+## Takes
+
+Five more takes, each built around a technique added to the kit for it
+(API in `docs/API.md` under "Added with the FTF intro takes"; each folder's
+`KIT_NOTES.md` has cost and limits). Each has its own sound in `audio/`
+(`make.py`, a bake script and the committed baked track).
+
+| Take | Folder | Tempo | New kit technique | Render cost (software GL) |
+| --- | --- | --- | --- | --- |
+| Slit-Scan | `ftf_slitscan/` | 180 bpm (10 f/beat) | `MotionTimeSlices` (fx/): time displacement, slit-scan, box tunnel, RGB time split | ~0.4 s/frame |
+| Megastructure | `ftf_megastructure/` | 120 bpm (15 f/beat) | `MotionExtrude`, `MotionSolid`, `MotionExtrudeCamera` (extrude/): 2.5D iso extrusion, iso→flat camera | ~0.4 s/frame |
+| Riso | `ftf_riso/` | 100 bpm (18 f/beat) | `MotionPlate`, `MotionPaper` (print/): overprinting colour plates, halftone, registration, ink texture, press roller | ~1 s/frame (up to 15 plates) |
+| Gantry | `ftf_gantry/` | 150 bpm (12 f/beat) | `MotionStage3D`, `MotionSvgMesh`, `MotionPanel3D` (three/): frame-driven 3D in a composition, extruded SVG meshes, 2D on 3D panels | ~0.65 s/frame |
+| Glyph Field | `ftf_glyphfield/` | 90 bpm (20 f/beat) | `MotionGlyphField` (glyph/): shader glyph grid lit by any mask, rain, fall, scan, solidify | ~0.4 s/frame |
+
+All are 1920×1080, 30 fps, 420 frames, first downbeat at frame 0, and end on
+an empty frame (Megastructure on its cream ground, the rest on black).
+
 ## Timing
 
 150 bpm, 4/4, first downbeat at frame 0: a beat is exactly 12 frames, a bar 48.

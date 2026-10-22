@@ -1,0 +1,285 @@
+{
+	"cues": [
+		{
+			"data": {
+
+			},
+			"frame": 0.0,
+			"intensity": 0.6,
+			"name": "slit",
+			"time": 0.0
+		},
+		{
+			"data": {
+
+			},
+			"frame": 40.0,
+			"intensity": 0.9,
+			"name": "rise",
+			"time": 1.33333333333333
+		},
+		{
+			"data": {
+
+			},
+			"frame": 40.0,
+			"intensity": 0.8,
+			"name": "snap",
+			"time": 1.33333333333333
+		},
+		{
+			"data": {
+
+			},
+			"frame": 46.0,
+			"intensity": 0.7,
+			"name": "whip",
+			"time": 1.53333333333333
+		},
+		{
+			"data": {
+
+			},
+			"frame": 54.0,
+			"intensity": 0.5,
+			"name": "type",
+			"time": 1.8
+		},
+		{
+			"data": {
+				"pitch": 1.0
+			},
+			"frame": 60.0,
+			"intensity": 0.6,
+			"name": "ripple",
+			"time": 2.0
+		},
+		{
+			"data": {
+				"pitch": 1.19
+			},
+			"frame": 70.0,
+			"intensity": 0.6,
+			"name": "ripple",
+			"time": 2.33333333333333
+		},
+		{
+			"data": {
+
+			},
+			"frame": 84.0,
+			"intensity": 0.8,
+			"name": "fold",
+			"time": 2.8
+		},
+		{
+			"data": {
+
+			},
+			"frame": 96.0,
+			"intensity": 0.7,
+			"name": "glitch",
+			"time": 3.2
+		},
+		{
+			"data": {
+
+			},
+			"frame": 120.0,
+			"intensity": 1.0,
+			"name": "tunnel",
+			"time": 4.0
+		},
+		{
+			"data": {
+				"pitch": 1.0
+			},
+			"frame": 130.0,
+			"intensity": 0.45,
+			"name": "ring",
+			"time": 4.33333333333333
+		},
+		{
+			"data": {
+				"pitch": 1.12
+			},
+			"frame": 140.0,
+			"intensity": 0.48,
+			"name": "ring",
+			"time": 4.66666666666667
+		},
+		{
+			"data": {
+				"pitch": 1.26
+			},
+			"frame": 150.0,
+			"intensity": 0.51,
+			"name": "ring",
+			"time": 5.0
+		},
+		{
+			"data": {
+				"pitch": 1.995
+			},
+			"frame": 160.0,
+			"intensity": 0.54,
+			"name": "ring",
+			"time": 5.33333333333333
+		},
+		{
+			"data": {
+				"pitch": 1.33
+			},
+			"frame": 165.0,
+			"intensity": 0.57,
+			"name": "ring",
+			"time": 5.5
+		},
+		{
+			"data": {
+				"pitch": 1.4896
+			},
+			"frame": 170.0,
+			"intensity": 0.6,
+			"name": "ring",
+			"time": 5.66666666666667
+		},
+		{
+			"data": {
+				"pitch": 1.6758
+			},
+			"frame": 175.0,
+			"intensity": 0.63,
+			"name": "ring",
+			"time": 5.83333333333333
+		},
+		{
+			"data": {
+				"pitch": 1.995
+			},
+			"frame": 180.0,
+			"intensity": 0.66,
+			"name": "ring",
+			"time": 6.0
+		},
+		{
+			"data": {
+				"pitch": 1.33
+			},
+			"frame": 185.0,
+			"intensity": 0.69,
+			"name": "ring",
+			"time": 6.16666666666667
+		},
+		{
+			"data": {
+
+			},
+			"frame": 200.0,
+			"intensity": 1.0,
+			"name": "riser",
+			"time": 6.66666666666667
+		},
+		{
+			"data": {
+
+			},
+			"frame": 200.0,
+			"intensity": 0.9,
+			"name": "scan",
+			"time": 6.66666666666667
+		},
+		{
+			"data": {
+
+			},
+			"frame": 240.0,
+			"intensity": 1.0,
+			"name": "snap.big",
+			"time": 8.0
+		},
+		{
+			"data": {
+				"pitch": 1.0
+			},
+			"frame": 256.0,
+			"intensity": 0.6,
+			"name": "pass",
+			"time": 8.53333333333333
+		},
+		{
+			"data": {
+				"pitch": 1.0
+			},
+			"frame": 270.0,
+			"intensity": 0.7,
+			"name": "split",
+			"time": 9.0
+		},
+		{
+			"data": {
+				"pitch": 0.89
+			},
+			"frame": 290.0,
+			"intensity": 0.7,
+			"name": "split",
+			"time": 9.66666666666667
+		},
+		{
+			"data": {
+
+			},
+			"frame": 300.0,
+			"intensity": 0.9,
+			"name": "tear",
+			"time": 10.0
+		},
+		{
+			"data": {
+				"pitch": 1.12
+			},
+			"frame": 310.0,
+			"intensity": 0.7,
+			"name": "split",
+			"time": 10.3333333333333
+		},
+		{
+			"data": {
+				"pitch": 1.26
+			},
+			"frame": 316.0,
+			"intensity": 0.6,
+			"name": "pass",
+			"time": 10.5333333333333
+		},
+		{
+			"data": {
+				"pitch": 1.33
+			},
+			"frame": 320.0,
+			"intensity": 0.7,
+			"name": "split",
+			"time": 10.6666666666667
+		},
+		{
+			"data": {
+
+			},
+			"frame": 340.0,
+			"intensity": 1.0,
+			"name": "stretch",
+			"time": 11.3333333333333
+		},
+		{
+			"data": {
+
+			},
+			"frame": 384.0,
+			"intensity": 0.8,
+			"name": "tail",
+			"time": 12.8
+		}
+	],
+	"duration": 420.0,
+	"fps": 30.0
+}

@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="AKCueMap" format=3]
+
+[ext_resource type="Script" path="res://addons/audio_kit/core/cue_map.gd" id="1"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_riso/audio/feed.tres" id="2"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_riso/audio/print.tres" id="3"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_riso/audio/slam.tres" id="4"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_riso/audio/register.tres" id="5"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_riso/audio/sheet.tres" id="6"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_riso/audio/slur.tres" id="7"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_riso/audio/stamp.tres" id="8"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_riso/audio/flood.tres" id="9"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_riso/audio/end.tres" id="10"]
+
+[resource]
+script = ExtResource("1")
+sounds = {"feed": ExtResource("2"), "print": ExtResource("3"), "slam": ExtResource("4"), "register": ExtResource("5"), "sheet": ExtResource("6"), "slur": ExtResource("7"), "stamp": ExtResource("8"), "flood": ExtResource("9"), "end": ExtResource("10")}
+master_fx = Array[Dictionary]([{"type": "dcblock"}, {"type": "loudness", "target_lufs": -16.0}, {"type": "limit", "ceiling_db": -2.0}])
+reverb = {"room": 0.22, "damp": 0.65, "width": 0.8, "quality": &"full", "return_db": -4.0}
+end_fade_s = 0.4
+duck = {"depth_db": 6.0, "full_at_db": -20.0, "attack_s": 0.005, "release_s": 0.3}

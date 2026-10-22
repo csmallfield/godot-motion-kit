@@ -1,0 +1,249 @@
+{
+	"cues": [
+		{
+			"data": {
+				"pitch": 1.0
+			},
+			"frame": 0.0,
+			"intensity": 0.55,
+			"name": "power",
+			"time": 0.0
+		},
+		{
+			"data": {
+				"pitch": 1.12
+			},
+			"frame": 12.0,
+			"intensity": 0.7,
+			"name": "power",
+			"time": 0.4
+		},
+		{
+			"data": {
+
+			},
+			"frame": 14.0,
+			"intensity": 0.5,
+			"name": "hud.type",
+			"time": 0.466666666666667
+		},
+		{
+			"data": {
+				"pitch": 1.26
+			},
+			"frame": 24.0,
+			"intensity": 0.85,
+			"name": "power",
+			"time": 0.8
+		},
+		{
+			"data": {
+				"pitch": 1.5
+			},
+			"frame": 36.0,
+			"intensity": 1.0,
+			"name": "power",
+			"time": 1.2
+		},
+		{
+			"data": {
+
+			},
+			"frame": 38.0,
+			"intensity": 1.0,
+			"name": "launch",
+			"time": 1.26666666666667
+		},
+		{
+			"data": {
+
+			},
+			"frame": 72.0,
+			"intensity": 0.9,
+			"name": "neon",
+			"time": 2.4
+		},
+		{
+			"data": {
+
+			},
+			"frame": 96.0,
+			"intensity": 0.8,
+			"name": "presents",
+			"time": 3.2
+		},
+		{
+			"data": {
+
+			},
+			"frame": 126.0,
+			"intensity": 0.8,
+			"name": "pass",
+			"time": 4.2
+		},
+		{
+			"data": {
+				"pitch": 1.0
+			},
+			"frame": 140.0,
+			"intensity": 0.7,
+			"name": "gate",
+			"time": 4.66666666666667
+		},
+		{
+			"data": {
+				"pitch": 0.94
+			},
+			"frame": 152.0,
+			"intensity": 0.78,
+			"name": "gate",
+			"time": 5.06666666666667
+		},
+		{
+			"data": {
+				"pitch": 1.06
+			},
+			"frame": 164.0,
+			"intensity": 0.86,
+			"name": "gate",
+			"time": 5.46666666666667
+		},
+		{
+			"data": {
+				"pitch": 0.89
+			},
+			"frame": 176.0,
+			"intensity": 0.94,
+			"name": "gate",
+			"time": 5.86666666666667
+		},
+		{
+			"data": {
+
+			},
+			"frame": 179.0,
+			"intensity": 0.9,
+			"name": "tunnel",
+			"time": 5.96666666666667
+		},
+		{
+			"data": {
+
+			},
+			"frame": 192.0,
+			"intensity": 1.0,
+			"name": "drop",
+			"time": 6.4
+		},
+		{
+			"data": {
+
+			},
+			"frame": 216.0,
+			"intensity": 0.9,
+			"name": "brake",
+			"time": 7.2
+		},
+		{
+			"data": {
+
+			},
+			"frame": 240.0,
+			"intensity": 0.8,
+			"name": "settle",
+			"time": 8.0
+		},
+		{
+			"data": {
+				"pitch": 1.0
+			},
+			"frame": 250.0,
+			"intensity": 0.75,
+			"name": "ship",
+			"time": 8.33333333333333
+		},
+		{
+			"data": {
+				"pitch": 1.0
+			},
+			"frame": 252.0,
+			"intensity": 0.6,
+			"name": "callout",
+			"time": 8.4
+		},
+		{
+			"data": {
+				"pitch": 1.19
+			},
+			"frame": 258.0,
+			"intensity": 0.6,
+			"name": "callout",
+			"time": 8.6
+		},
+		{
+			"data": {
+				"pitch": 0.9
+			},
+			"frame": 274.0,
+			"intensity": 0.85,
+			"name": "ship",
+			"time": 9.13333333333333
+		},
+		{
+			"data": {
+				"pitch": 1.1
+			},
+			"frame": 298.0,
+			"intensity": 0.95,
+			"name": "ship",
+			"time": 9.93333333333333
+		},
+		{
+			"data": {
+
+			},
+			"frame": 336.0,
+			"intensity": 0.7,
+			"name": "crane",
+			"time": 11.2
+		},
+		{
+			"data": {
+				"pitch": 1.0
+			},
+			"frame": 348.0,
+			"intensity": 0.6,
+			"name": "cut",
+			"time": 11.6
+		},
+		{
+			"data": {
+				"pitch": 0.84
+			},
+			"frame": 360.0,
+			"intensity": 0.72,
+			"name": "cut",
+			"time": 12.0
+		},
+		{
+			"data": {
+				"pitch": 0.71
+			},
+			"frame": 372.0,
+			"intensity": 0.84,
+			"name": "cut",
+			"time": 12.4
+		},
+		{
+			"data": {
+
+			},
+			"frame": 384.0,
+			"intensity": 1.0,
+			"name": "sign.cut",
+			"time": 12.8
+		}
+	],
+	"duration": 420.0,
+	"fps": 30.0
+}

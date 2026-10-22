@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="AKSong" format=3]
+
+[ext_resource type="Script" path="res://addons/audio_kit/sequencer/song.gd" id="1"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_gantry/audio/music/tempo.tres" id="2"]
+
+[resource]
+script = ExtResource("1")
+sections = Array[Dictionary]([{"name": "power", "bars": 1.0, "patterns": ["res://demo/ftf/ftf_gantry/audio/music/power.tres"], "automation": {"drone.cutoff_hz": [[0.0, 120.0], [1.0, 600.0]]}}, {"name": "run", "bars": 2.75, "patterns": ["res://demo/ftf/ftf_gantry/audio/music/run.tres"], "automation": {"bass.cutoff_hz": [[0.0, 220.0], [1.0, 900.0]]}}, {"name": "roll", "bars": 0.25, "patterns": ["res://demo/ftf/ftf_gantry/audio/music/roll.tres"], "automation": {"bass.cutoff_hz": [[0.0, 900.0], [1.0, 1600.0]]}}, {"name": "drop", "bars": 3.0, "patterns": ["res://demo/ftf/ftf_gantry/audio/music/drop.tres"], "automation": {"bass.cutoff_hz": [[0.0, 700.0], [0.5, 1200.0], [1.0, 800.0]]}}, {"name": "outro", "bars": 1.0, "patterns": ["res://demo/ftf/ftf_gantry/audio/music/outro.tres"], "automation": {"bass.cutoff_hz": [[0.0, 600.0], [1.0, 140.0]], "bass.gain_db": [[0.0, 0.0], [1.0, -12.0]], "kick.gain_db": [[0.0, 0.0], [1.0, -6.0]]}}, {"name": "tail", "bars": 0.75, "patterns": ["res://demo/ftf/ftf_gantry/audio/music/silence.tres"]}])
+gain_db = -4.0
+tempo = ExtResource("2")

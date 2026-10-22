@@ -1,0 +1,222 @@
+{
+	"cues": [
+		{
+			"data": {
+				"pitch": 1.0
+			},
+			"frame": 0.0,
+			"intensity": 0.55,
+			"name": "city.ring",
+			"time": 0.0
+		},
+		{
+			"data": {
+				"pitch": 1.12
+			},
+			"frame": 3.75,
+			"intensity": 0.6,
+			"name": "city.ring",
+			"time": 0.125
+		},
+		{
+			"data": {
+				"pitch": 1.26
+			},
+			"frame": 7.5,
+			"intensity": 0.65,
+			"name": "city.ring",
+			"time": 0.25
+		},
+		{
+			"data": {
+				"pitch": 1.33
+			},
+			"frame": 11.25,
+			"intensity": 0.7,
+			"name": "city.ring",
+			"time": 0.375
+		},
+		{
+			"data": {
+				"pitch": 1.5
+			},
+			"frame": 15.0,
+			"intensity": 0.75,
+			"name": "city.ring",
+			"time": 0.5
+		},
+		{
+			"data": {
+				"pitch": 1.68
+			},
+			"frame": 18.75,
+			"intensity": 0.8,
+			"name": "city.ring",
+			"time": 0.625
+		},
+		{
+			"data": {
+				"pitch": 1.78
+			},
+			"frame": 22.5,
+			"intensity": 0.85,
+			"name": "city.ring",
+			"time": 0.75
+		},
+		{
+			"data": {
+				"pitch": 2.0
+			},
+			"frame": 26.25,
+			"intensity": 0.9,
+			"name": "city.ring",
+			"time": 0.875
+		},
+		{
+			"data": {
+
+			},
+			"frame": 45.0,
+			"intensity": 0.8,
+			"name": "mh.rise",
+			"time": 1.5
+		},
+		{
+			"data": {
+
+			},
+			"frame": 60.0,
+			"intensity": 1.0,
+			"name": "mh.land",
+			"time": 2.0
+		},
+		{
+			"data": {
+
+			},
+			"frame": 75.0,
+			"intensity": 0.9,
+			"name": "mh.unfold",
+			"time": 2.5
+		},
+		{
+			"data": {
+
+			},
+			"frame": 90.0,
+			"intensity": 0.9,
+			"name": "stamp",
+			"time": 3.0
+		},
+		{
+			"data": {
+
+			},
+			"frame": 97.5,
+			"intensity": 0.6,
+			"name": "stamp.small",
+			"time": 3.25
+		},
+		{
+			"data": {
+
+			},
+			"frame": 135.0,
+			"intensity": 0.7,
+			"name": "sink",
+			"time": 4.5
+		},
+		{
+			"data": {
+
+			},
+			"frame": 147.0,
+			"intensity": 0.9,
+			"name": "whip",
+			"time": 4.9
+		},
+		{
+			"data": {
+
+			},
+			"frame": 180.0,
+			"intensity": 0.9,
+			"name": "arrive",
+			"time": 6.0
+		},
+		{
+			"data": {
+
+			},
+			"frame": 183.0,
+			"intensity": 0.8,
+			"name": "drain",
+			"time": 6.1
+		},
+		{
+			"data": {
+
+			},
+			"frame": 195.0,
+			"intensity": 1.0,
+			"name": "ftf.rise",
+			"time": 6.5
+		},
+		{
+			"data": {
+
+			},
+			"frame": 225.0,
+			"intensity": 1.0,
+			"name": "ftf.lock",
+			"time": 7.5
+		},
+		{
+			"data": {
+
+			},
+			"frame": 240.0,
+			"intensity": 0.8,
+			"name": "cam.lock",
+			"time": 8.0
+		},
+		{
+			"data": {
+
+			},
+			"frame": 330.0,
+			"intensity": 0.7,
+			"name": "cam.back",
+			"time": 11.0
+		},
+		{
+			"data": {
+
+			},
+			"frame": 360.0,
+			"intensity": 1.0,
+			"name": "city.sink",
+			"time": 12.0
+		},
+		{
+			"data": {
+
+			},
+			"frame": 390.0,
+			"intensity": 0.8,
+			"name": "dive",
+			"time": 13.0
+		},
+		{
+			"data": {
+
+			},
+			"frame": 405.0,
+			"intensity": 0.9,
+			"name": "end",
+			"time": 13.5
+		}
+	],
+	"duration": 420.0,
+	"fps": 30.0
+}

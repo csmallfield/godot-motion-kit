@@ -275,3 +275,241 @@ editing the array in place. Values past the palette draw nothing.
   `await cover(style)`, `await uncover(style)`. Also `colour`, `bar_colours`, `frames`,
   `busy`, and signals `covered` and `finished`. Styles: `circle`, `bars`, `clock`, `fade`,
   `glitch`, `crt` (an unknown name warns and fades).
+
+## Added with the FTF intro takes
+
+New techniques built for the five Full Throttle Flux intro takes; each has a working example in `demo/ftf/`.
+
+### Time displacement and slit-scan: MotionTimeSlices
+
+From the FTF intro take `demo/ftf/ftf_slitscan/` (notes: `demo/ftf/ftf_slitscan/KIT_NOTES.md`).
+
+`MotionTimeSlices`: the content (a `MotionComposition`, from `scene` or a `builder`
+Callable) is instanced once per band, and each band shows it at `f - delay(band)`.
+
+| Member | Notes |
+| --- | --- |
+| `scene: PackedScene`, `builder: Callable` | The content, instanced once per band (`builder.call()` must return a `MotionComposition`). It draws on the parent's timeline and must accept negative frames. |
+| `size` | Area the bands cover, and the content's reference size (1920×1080). |
+| `layout` | `ROWS`, `COLUMNS`, `BOXES` (nested boxes about the centre, drawn outside in: a square tunnel), `CHANNELS` (three full-frame copies tinted R, G, B and added: a time-split chromatic fringe). Changing it, `bands`, `size` or `scene` rebuilds the bands. |
+| `bands` | Number of bands (CHANNELS is always 3). |
+| `delay` | Frames the most delayed band lags. Animate it to 0 for a sharp picture. |
+| `profile` | How the delay spreads across the bands: `LINEAR`, `REVERSE`, `CENTRE`, `EDGES`, `SINE` (`waves`, `phase`), `RANDOM` (`seed_value`), `CUSTOM` (`profile_fn(u) -> 0..1`, u = 0..1 across the bands). |
+| `step` | Quantise each band's delay to steps of this many frames (stutter). |
+| `slit` | 0 = each band shows its own place (time displacement); 1 = every band shows the slit (slit-scan: streaks). In between the bands unfold from the slit. |
+| `slit_pos`, `slit_width` | Where the slit is across the bands (0..1: COLUMNS x, ROWS y) and how much of the content each band shows at `slit = 1` (pixels; for BOXES the width of the centre box). Narrower than the band, it is stretched: streaks. |
+| `box_power` | BOXES spacing: box k is scaled `(1 - k / bands) ^ box_power`. |
+| `reveal`, `reveal_from` | Show only the bands within `reveal` (0..1 of the bands) of `reveal_from`; hidden bands cost nothing. Opens a streak field out of the slit. |
+| `band_rects()`, `source_rect(k)`, `profile_at(u, k)`, `rebuild()` | Helpers. |
+
+How it stays frame-pure: each band's instance is a nested composition whose `start` is
+set to the band's delay in `_frame(f)`, just before the parent's frame walk reaches it,
+so the walk renders it at `f - delay`. Nothing is kept between frames: seeking renders
+pixel-identical frames to playback (checked on the FTF take), reverse and scrubbing work.
+
+Cost: every band renders into its own SubViewport the size of the band, with the
+content shifted to the band's source rectangle, and a `Sprite2D` draws the band with a
+region (stretched when the slit is narrower than the band). Rows or columns cost one
+frame of fill in total plus the content's script cost once per band; BOXES costs the
+sum of the box areas (about `bands / (2 p + 1)` frames for `box_power` p); CHANNELS
+three frames. Hidden bands and hidden nodes stop rendering, and their instances return
+at once from the frame walk. In the FTF take (160 + 160 columns, 14 boxes, 3 channels
+built; 160 live at a time) a full Movie Maker render runs at about 0.38 s a frame
+under Xvfb software GL on 2 cores.
+
+Limits: the content is instanced per band, so keep it light (one logo, a few canvases);
+`source_rect` is clamped to the band size (a slit wider than its band is not
+compressed); BOXES needs opaque content (inner boxes cover outer ones); CHANNELS needs
+content on an opaque dark background (it adds).
+
+### 2.5D extrusion: MotionExtrude, MotionSolid, MotionExtrudeCamera
+
+From the FTF intro take `demo/ftf/ftf_megastructure/` (notes: `demo/ftf/ftf_megastructure/KIT_NOTES.md`).
+
+#### MotionExtrudeCamera (RefCounted)
+
+An orthographic camera. World axes: x east, y north, z up.
+
+| Member | Notes |
+| --- | --- |
+| `yaw`, `pitch` | Degrees. Yaw 0 looks north from the south; pitch 0 is a flat front elevation, 35.26 with yaw 45 is true isometric, 90 is a plan. Blending both to 0 turns an iso view into a perfectly flat front view. |
+| `target`, `scale`, `centre`, `roll` | The world point drawn at `centre`, pixels per world unit, screen roll in degrees. |
+| `update()` | Recompute the basis (`right`, `up`, `forward`, `forward_h`). `MotionExtrude.prepare()` calls it. |
+| `project(p)`, `vec(v)`, `depth(p)`, `ground_key(p)`, `facing(n)` | World point → screen; world direction → screen vector; distance into the scene; painter's key on the ground plan; whether a normal faces the camera. |
+| `plane_transform(origin, a, b)` | The Transform2D that maps a plane's local (x, y) to the screen: for drawing into a face, or setting on a node (a MotionSvg on a face). |
+
+#### MotionSolid (RefCounted)
+
+A 2D outline in a plane (`origin` + a·`u` + b·`v`) extruded along n = u × v by `depth`.
+
+| Member | Notes |
+| --- | --- |
+| `outline` / `set_outline(pts)` | Outer contour (any winding; made CCW). Holes are not walled. |
+| `origin`, `u`, `v`, `depth` | Floor solids use u = x, v = y (n up); south-facing walls use u = x, v = z (n points at the camera). |
+| `top`, `lit`, `dark`, `cap`, `smooth`, `paint(t, l, d)` | Face colours by normal: up-facing, facing the scene light, facing away; `cap` overrides both caps; `smooth` blends sides by angle (cylinders). |
+| `outline_color`, `outline_width`, `stroke(c, w)`, `opacity` | Edge strokes per face. |
+| `draw_front_cap`, `draw_back_cap`, `visible` | |
+| `clip_z` | Cut everything below this height: solids rise out of (or sink into) the ground by moving `origin.z`. |
+| `sort_key`, `sort_at`, `stack`, `layer` | Painter's key override; the ground point to key on (give a block and its roof tanks the same point); tie-break within one footprint; a free tag for draw filters. |
+| `add_decal(face, fn)` | Draw in a face's plane right after it: `face` = `"front"`, `"back"` or an outward normal (`Vector3(0, -1, 0)` = the south walls). `fn(c, size, solid, xf)` gets the face size in decal units (100 per world unit) and its transform. Decals skip faces cut by `clip_z`, so markings appear once a face is fully out. |
+| `box(pos, size)`, `cylinder(base, r, h)`, `pipe(start, r, length, axis)`, `wedge(pos, length, width, h0, h1)` | Shapes. |
+| `from_svg(data, part, k, at, u, v, depth)` | A slab from an SVG part's largest contour (SVG top-left at `at`, `k` world units per SVG unit, SVG y down along −v). Sets `data.svg_k` for `cap_transform`. |
+
+#### MotionExtrude (RefCounted)
+
+| Member | Notes |
+| --- | --- |
+| `camera`, `solids`, `add(s)`, `light`, `top_threshold`, `min_area` | |
+| `prepare()` | Once per frame after setting camera and solids: updates the camera and sorts. |
+| `draw(canvas, filter = Callable())` | Draw the prepared solids (those `filter(solid)` accepts) into a MotionCanvas. Several canvases with filters interleave solids with other nodes (an SVG on a cap between the city behind and the city in front). |
+| `draw_solid(canvas, s)` | One solid: visible sides far to near, then the visible cap, with decals. |
+| `cap_transform(s)`, `cap_polygon(s)`, `cap_unclipped(s)` | Put a MotionSvg on a `from_svg` solid's cap (set the MotionSvg's `width` to the viewBox width and its `transform` to `cap_transform`); while the solid is cut by the ground, draw `cap_polygon` into a `clip_children` MotionCanvas holding the MotionSvg, and turn the mask off once `cap_unclipped` (the mask edge is aliased). |
+| `draw_text(c, xf, font, pos, text, size, col)` (static) | Text in a face plane rasterized at its on-screen size (sharp at any zoom, no MSDF corner artefacts). |
+| `clip_above(pts, h)` (static) | Sutherland–Hodgman cut of a planar 3D polygon at a height. |
+
+**Frame purity.** Nothing persists between frames: the piece sets every solid's
+position, depth and colours from `f`, `prepare()` re-sorts from scratch, and
+the canvases redraw. Seeking, scrubbing and reversing work.
+
+**Ordering.** Solids sort by their ground key along the camera's horizontal view
+direction (far first), then `stack`, then height; inside a solid the visible
+sides draw far to near and the facing cap last. Exact for solids on a grid that
+don't overlap in plan, seen from above the horizon with the camera on one side
+(yaw within ±90). Solids spanning many cells (signs, walls, a logo slab) go in
+their own canvases between filtered city layers.
+
+**Cost.** Take 2's city is 647 solids (24 × 14 cells plus the monument), about
+2,500 visible faces and up to ~150 text decals a frame. Measured on the shared
+2-core VM: the piece's `_frame` (positions, heights, sort) 8–10 ms; drawing every
+solid 36–76 ms, roughly half of it decal text. Culling (`cull_rect`), skipping
+decals on faces under `min_decal_area` and text under `min_text_px`, and snapping
+text raster sizes to a 6% ladder (so a zooming camera reuses glyphs) took the draw
+from 55–95 ms to that. Offline it renders at ~0.4 s a frame under software GL.
+For a live menu background, use fewer cells or bake the city's far layers.
+
+### Print: MotionPlate, MotionPaper
+
+From the FTF intro take `demo/ftf/ftf_riso/` (notes: `demo/ftf/ftf_riso/KIT_NOTES.md`).
+
+#### MotionPlate (Node2D)
+
+Put what the plate prints under `content`, drawn in **black on transparent**: black prints
+solid ink, greys print a tint (`ink = alpha − luma` of the premultiplied render), and white
+**knocks out** (a white shape over a black one leaves paper). The plate renders offscreen
+and is drawn back with `blend_mul`, so plates **overprint** each other and the paper the way
+transparent inks do. Draw plates over an opaque backdrop (a `MotionPaper`), not inside a
+transparent `MotionFX`.
+
+| Member | Notes |
+| --- | --- |
+| `size` | Plate (content) size in pixels, usually the frame. |
+| `ink`, `density`, `tone_scale` | Ink colour; how much ink is laid (0..1, animate to fade a plate in); a multiplier on the content's ink amount (draw black, set 0.4 for a 40% tint). |
+| `misregister`, `misrotate` | Registration error in pixels and degrees about the plate's centre. The halftone screen moves with the plate. |
+| `cell`, `angle_deg`, `dot` | AM halftone: cell in pixels (0 = solid ink), screen angle, `Dot.ROUND / LINE / SQUARE / DIAMOND`. Dot size comes from the tone at each cell's centre; dots are clipped to the artwork's own edge, so solids keep crisp outlines. |
+| `roughness`, `grain`, `mottle`, `seed` | Ragged edges (pixels), speckles where ink missed (0..1), uneven laydown (0..1), noise seed. All static. |
+| `slur`, `slur_amount` | A doubled ghost image (press slur / second impression). |
+| `roll`, `roll_dir`, `roll_soft`, `roll_shadow` | The press roller: ink only where it has passed (0..1 along `roll_dir`), with a ragged edge `roll_soft` px wide and a shadow band at the roller while it moves. |
+| `content` | Where to add what the plate prints. |
+| `static register(f, settle_at, error, snap=3) -> Vector2` | Holds `error` until `settle_at`, then snaps into register over `snap` frames with a small overshoot. Multiply a rotation by `register(f, at, Vector2(1, 0)).x`. |
+| `static print_in(f, at, frames=10) -> float` | Roller progress for a plate printed at `at`. |
+| `static thunk(f, ats, amp=4, dur=6) -> Vector2` | A press judder (alternating vertical offset) for a parent node. |
+
+A hidden plate stops rendering its content (its SubViewport stops updating).
+
+#### MotionPaper (Node2D)
+
+A `size` rectangle (origin top-left) of paper: seeded mottling, tooth (`grain`), `fibres`,
+`edge_shade`, plus a blurred drop `shadow` under the sheet. Static; move the node to feed
+sheets through a press.
+
+Each plate is one full-frame SubViewport plus one fragment shader pass (two texture
+reads for halftone, a few value-noise lookups). Hidden plates cost nothing. The FTF Riso
+piece has up to 15 plates on screen during the sheet change and renders under Xvfb
+software GL at roughly real-time ÷ 6–8 on two shared cores. Everything is a function of the
+plate's properties, which the piece sets from `f`; all noise is seeded and static, so
+scrubbing, seeking and reverse are exact.
+
+### 3D in compositions: MotionStage3D, MotionSvgMesh, MotionPanel3D
+
+From the FTF intro take `demo/ftf/ftf_gantry/` (notes: `demo/ftf/ftf_gantry/KIT_NOTES.md`).
+
+#### MotionStage3D (Node2D)
+
+| Member | Notes |
+| --- | --- |
+| `size`, `render_scale`, `msaa`, `transparent` | Output size in composition pixels; internal resolution; MSAA for 3D; let 2D drawn earlier show through |
+| `world: Node3D`, `camera: Camera3D`, `environment: Environment`, `viewport: SubViewport` | Put 3D content under `world`; Node3D children authored under the stage in a scene move there at runtime. Nodes with `_frame(f)` under `world` are reached by the composition like any other |
+| `set_camera(xform, fov)` | Place the camera (vertical FOV in degrees) |
+| `night(sky, fog, fog_density, glow)` | Background, exponential fog and HDR glow in one call |
+| `to_screen(p) -> Vector2`, `in_front(p)` | Project a world point into composition pixels (pin 2D callouts to 3D objects) |
+| static `path_frame(curve, s, height, side) -> Transform3D` | The frame of a Curve3D at distance s: -Z along travel, Y = the curve's up vector with tilt (banking); continues straight past the ends |
+| static `ride(curve, s, height, look_ahead, look_height, side)` | A camera riding a curve, looking a set distance ahead |
+| static `look(from, to, up, roll)`, `blend(a, b, t)` | Look-at transform; position-lerp / rotation-slerp between two camera transforms |
+| static `unlit(tint, energy, dim) -> ShaderMaterial` | The kit's flat 3D material. Parameters: `tint`, `energy` (above 1 glows), `lit_from`/`lit_to`/`lit_soft`/`dim` (UV2.x window: a light chase or a moving light trail) |
+
+#### MotionSvgMesh (static)
+
+| Member | Notes |
+| --- | --- |
+| `build(data, width, opts) -> ArrayMesh` | Every part extruded: front cap (+Z), back cap, side walls; one surface. `opts`: `depth`, `tolerance`, `anchor`, `layer` (z step per part), `side_shade`, `only`, `part_fn(i) -> {hide, color, side_color, back_color, depth, z}`, `uv2_x(i, uv) -> float` |
+| `append(st, data, width, opts, xform)` | The same into an open SurfaceTool (merge logos into larger meshes) |
+| Vertex data | COLOR = part colour (sides darker), UV = viewBox position 0..1, UV2 = (UV.x, part index) |
+| Holes | A contour inside an odd number of the part's other contours (majority of its vertices inside) is a hole; caps cut each hole open with a hairline slit so Godot's ear-clipper sees simple polygons; side walls follow the true contours. Triangles are not consistently wound: use a material with culling off (`unlit()` is) |
+
+#### MotionPanel3D (MeshInstance3D)
+
+| Member | Notes |
+| --- | --- |
+| `pixel_size`, `world_size` | Panel resolution and quad size (quad in local XY, facing +Z) |
+| `canvas: Node2D` | Put kit 2D nodes here; (0,0) is the top-left pixel |
+| `energy`, `tint`, `background` | Brightness (above 1 glows), tint, fill behind the content |
+| `animated`, `refresh()` | Re-render every frame, or once (static boards are cheaper) |
+
+- Nothing integrates at runtime: the camera's distance along the circuit is a table
+  built once from a speed profile (integrated on eighths of a frame) and looked up by
+  frame; materials and camera are set from `f` only. Seeking, scrubbing and reverse work.
+- Geometry is built once (about 25 ms for an extruded logo of ~7k vertices); the
+  circuit, gantries, tunnel and skyline are merged into a few ArrayMeshes, one per
+  material, so a frame is about a dozen draw calls plus one viewport per panel.
+- Software GL (llvmpipe, 1920×1080, MSAA 4x, glow, 2 shared cores): about 0.65 s a
+  frame, 4.5 minutes for the 420-frame piece. Static panels use `animated = false`.
+
+### Glyph fields: MotionGlyphField
+
+From the FTF intro take `demo/ftf/ftf_glyphfield/` (notes: `demo/ftf/ftf_glyphfield/KIT_NOTES.md`).
+
+#### MotionGlyphField (Node2D)
+
+A grid of cycling glyphs drawn in one quad. Each cell picks its glyph from a hash of
+(cell, time step) at its own seeded rate; its brightness and colour come from a
+**mask**: anything added under `mask_content` is rendered offscreen and read back per
+cell (five taps for coverage, the centre tap for colour), so logos and type appear as
+dense, bright glyphs. A glyph atlas is drawn once from `font` and `charset` at the cell
+size, so glyphs stay crisp; it stops updating after a few frames.
+
+| Member | Notes |
+| --- | --- |
+| `size`, `cell`, `font`, `charset`, `glyph_scale`, `font_scale`, `seed` | Field size, cell size (px), glyph source, glyph size in its cell, atlas font size as a share of the cell, hash seed. |
+| `dim_range`, `lit_range` | `Vector2i(start, count)` into `charset` for the dim field and for lit cells (count 0 = all). Put thin glyphs in one, dense glyphs and blocks in the other. `glyph_index(ch)` finds a character. |
+| `cycle_min`, `cycle_max`, `lit_cycle` | Glyph changes per frame, per cell, between min and max; lit cells multiply by `lit_cycle`. |
+| `mask_content` | Node2D inside the mask viewport: add logos, text, shapes, a `MotionCanvas`. Its colours become the lit glyphs' colours. `mask_scale` renders it smaller for speed. |
+| `threshold`, `softness` | Cell coverage (0..1) at which a cell lights. Draw a part of the mask at low opacity to keep it out of the glyphs (and still in `solidify`). |
+| `reveal`, `reveal_sweep`, `reveal_angle` | Share of lit cells shown: a seeded dissolve (`reveal_sweep = 0`) or a straight sweep along the angle (1). |
+| `lit_color`, `tint`, `lit_level` | Override the mask colour (`tint` 1) and dim the lit layer. |
+| `lit_fill`, `lit_invert`, `ink_color` | Lit cells get a filled block in their colour; `lit_invert` stencils the glyph out of it in `ink_color` (terminal-highlight look, much more legible). |
+| `base_color`, `base_density`, `base_level`, `base_flicker` | The dim field: colour, share of cells showing a glyph, brightness, seeded blinking. |
+| `base_color_b`, `base_front`, `base_front_jitter` | Cells left of `base_front` (px) take `base_color_b`: a moving colour front. |
+| `scroll`, `rain`, `rain_var` | Grid offset; rain moves columns down at their own speeds while the mask stays put (glyphs pass through the logo). |
+| `fall_t`, `fall_g`, `fall_spread` | Gravity: frames since the fall began (< 0 off), px/frame², per-column delay. Falling cells carry their mask brightness, so a lit logo falls apart column by column. |
+| `hot_color`, `scan_y`, `scan_w`, `scan_gain` | A horizontal band that lights and whitens the glyphs it passes. |
+| `ring_c`, `ring_r`, `ring_w`, `ring_gain` | A ring (radius < 0 = off): a shockwave through the field. |
+| `solidify`, `solidify_noise`, `solidify_sweep` | Cells switch from glyphs to the solid mask (randomly, or outwards from `ring_c`); at 1 the mask is shown whole, so a logo condenses into its real vector form. |
+| `level` | Overall opacity. |
+| `frame` | Set by `_frame(f)`; drives cycling, rain and blinking. |
+
+Frame-pure: every animated value is a uniform written in `_frame(f)`; glyph steps are
+`floor(f * rate + phase)` and every random choice is a hash of the cell index, so
+scrubbing, seeking and reverse are exact. Cost: one quad with ~6 texture taps per pixel,
+one field-sized mask viewport (skipped while the field is hidden), and the atlas drawn
+for its first few frames. Under software GL a 1920×1080 field with an 18 px cell plus a
+second 54 px field renders the FTF take at roughly the same speed as the first intro.

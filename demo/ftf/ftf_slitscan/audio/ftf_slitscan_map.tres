@@ -1,0 +1,29 @@
+[gd_resource type="Resource" script_class="AKCueMap" format=3]
+
+[ext_resource type="Script" path="res://addons/audio_kit/core/cue_map.gd" id="1"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_slitscan/audio/slit.tres" id="2"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_slitscan/audio/rise.tres" id="3"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_slitscan/audio/snap.tres" id="4"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_slitscan/audio/whip.tres" id="5"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_slitscan/audio/type.tres" id="6"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_slitscan/audio/ripple.tres" id="7"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_slitscan/audio/fold.tres" id="8"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_slitscan/audio/glitch.tres" id="9"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_slitscan/audio/tunnel.tres" id="10"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_slitscan/audio/ring.tres" id="11"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_slitscan/audio/riser.tres" id="12"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_slitscan/audio/scan.tres" id="13"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_slitscan/audio/snap_big.tres" id="14"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_slitscan/audio/split.tres" id="15"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_slitscan/audio/pass.tres" id="16"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_slitscan/audio/tear.tres" id="17"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_slitscan/audio/stretch.tres" id="18"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_slitscan/audio/tail.tres" id="19"]
+
+[resource]
+script = ExtResource("1")
+sounds = {"slit": ExtResource("2"), "rise": ExtResource("3"), "snap": ExtResource("4"), "whip": ExtResource("5"), "type": ExtResource("6"), "ripple": ExtResource("7"), "fold": ExtResource("8"), "glitch": ExtResource("9"), "tunnel": ExtResource("10"), "ring": ExtResource("11"), "riser": ExtResource("12"), "scan": ExtResource("13"), "snap.big": ExtResource("14"), "split": ExtResource("15"), "pass": ExtResource("16"), "tear": ExtResource("17"), "stretch": ExtResource("18"), "tail": ExtResource("19")}
+master_fx = Array[Dictionary]([{"type": "dcblock"}, {"type": "loudness", "target_lufs": -16.0}, {"type": "limit", "ceiling_db": -2.0}])
+reverb = {"room": 0.45, "damp": 0.45, "width": 1.0, "quality": &"full", "return_db": -2.0}
+end_fade_s = 0.4
+duck = {"depth_db": 6.0, "full_at_db": -20.0, "attack_s": 0.005, "release_s": 0.22}

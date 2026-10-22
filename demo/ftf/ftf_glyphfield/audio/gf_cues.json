@@ -1,0 +1,285 @@
+{
+	"cues": [
+		{
+			"data": {
+
+			},
+			"frame": 0.0,
+			"intensity": 0.6,
+			"name": "field.in",
+			"time": 0.0
+		},
+		{
+			"data": {
+
+			},
+			"frame": 20.0,
+			"intensity": 1.0,
+			"name": "scan",
+			"time": 0.666666666666667
+		},
+		{
+			"data": {
+
+			},
+			"frame": 40.0,
+			"intensity": 0.9,
+			"name": "resolve",
+			"time": 1.33333333333333
+		},
+		{
+			"data": {
+				"pitch": 1.0
+			},
+			"frame": 60.0,
+			"intensity": 0.55,
+			"name": "type",
+			"time": 2.0
+		},
+		{
+			"data": {
+				"pitch": 1.12
+			},
+			"frame": 65.0,
+			"intensity": 0.59,
+			"name": "type",
+			"time": 2.16666666666667
+		},
+		{
+			"data": {
+				"pitch": 1.26
+			},
+			"frame": 70.0,
+			"intensity": 0.63,
+			"name": "type",
+			"time": 2.33333333333333
+		},
+		{
+			"data": {
+				"pitch": 1.5
+			},
+			"frame": 75.0,
+			"intensity": 0.67,
+			"name": "type",
+			"time": 2.5
+		},
+		{
+			"data": {
+
+			},
+			"frame": 80.0,
+			"intensity": 0.9,
+			"name": "shock",
+			"time": 2.66666666666667
+		},
+		{
+			"data": {
+				"pitch": 1.5
+			},
+			"frame": 85.0,
+			"intensity": 0.75,
+			"name": "type",
+			"time": 2.83333333333333
+		},
+		{
+			"data": {
+				"pitch": 1.26
+			},
+			"frame": 90.0,
+			"intensity": 0.79,
+			"name": "type",
+			"time": 3.0
+		},
+		{
+			"data": {
+				"pitch": 2.0
+			},
+			"frame": 95.0,
+			"intensity": 0.83,
+			"name": "type",
+			"time": 3.16666666666667
+		},
+		{
+			"data": {
+
+			},
+			"frame": 100.0,
+			"intensity": 0.45,
+			"name": "pulse",
+			"time": 3.33333333333333
+		},
+		{
+			"data": {
+
+			},
+			"frame": 120.0,
+			"intensity": 0.8,
+			"name": "decay",
+			"time": 4.0
+		},
+		{
+			"data": {
+
+			},
+			"frame": 120.0,
+			"intensity": 1.0,
+			"name": "storm",
+			"time": 4.0
+		},
+		{
+			"data": {
+
+			},
+			"frame": 156.0,
+			"intensity": 0.8,
+			"name": "cut",
+			"time": 5.2
+		},
+		{
+			"data": {
+				"pitch": 0.75
+			},
+			"frame": 160.0,
+			"intensity": 0.7,
+			"name": "zoom",
+			"time": 5.33333333333333
+		},
+		{
+			"data": {
+				"pitch": 0.84
+			},
+			"frame": 180.0,
+			"intensity": 0.8,
+			"name": "zoom",
+			"time": 6.0
+		},
+		{
+			"data": {
+				"pitch": 0.94
+			},
+			"frame": 200.0,
+			"intensity": 0.9,
+			"name": "zoom",
+			"time": 6.66666666666667
+		},
+		{
+			"data": {
+				"pitch": 1.0
+			},
+			"frame": 220.0,
+			"intensity": 1.0,
+			"name": "zoom",
+			"time": 7.33333333333333
+		},
+		{
+			"data": {
+
+			},
+			"frame": 240.0,
+			"intensity": 1.0,
+			"name": "suck",
+			"time": 8.0
+		},
+		{
+			"data": {
+
+			},
+			"frame": 240.0,
+			"intensity": 1.0,
+			"name": "drop",
+			"time": 8.0
+		},
+		{
+			"data": {
+
+			},
+			"frame": 260.0,
+			"intensity": 0.5,
+			"name": "pulse",
+			"time": 8.66666666666667
+		},
+		{
+			"data": {
+
+			},
+			"frame": 262.0,
+			"intensity": 0.6,
+			"name": "type.run",
+			"time": 8.73333333333333
+		},
+		{
+			"data": {
+
+			},
+			"frame": 280.0,
+			"intensity": 0.6,
+			"name": "scan.small",
+			"time": 9.33333333333333
+		},
+		{
+			"data": {
+
+			},
+			"frame": 300.0,
+			"intensity": 0.6,
+			"name": "scan.small",
+			"time": 10.0
+		},
+		{
+			"data": {
+
+			},
+			"frame": 300.0,
+			"intensity": 0.9,
+			"name": "glitch",
+			"time": 10.0
+		},
+		{
+			"data": {
+
+			},
+			"frame": 320.0,
+			"intensity": 0.9,
+			"name": "decay",
+			"time": 10.6666666666667
+		},
+		{
+			"data": {
+
+			},
+			"frame": 336.0,
+			"intensity": 1.0,
+			"name": "fall",
+			"time": 11.2
+		},
+		{
+			"data": {
+				"pitch": 1.0
+			},
+			"frame": 380.0,
+			"intensity": 0.7,
+			"name": "cursor",
+			"time": 12.6666666666667
+		},
+		{
+			"data": {
+				"pitch": 0.84
+			},
+			"frame": 390.0,
+			"intensity": 0.7,
+			"name": "cursor",
+			"time": 13.0
+		},
+		{
+			"data": {
+
+			},
+			"frame": 400.0,
+			"intensity": 1.0,
+			"name": "blip",
+			"time": 13.3333333333333
+		}
+	],
+	"duration": 420.0,
+	"fps": 30.0
+}

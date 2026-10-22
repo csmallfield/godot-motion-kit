@@ -1,0 +1,29 @@
+[gd_resource type="Resource" script_class="AKCueMap" format=3]
+
+[ext_resource type="Script" path="res://addons/audio_kit/core/cue_map.gd" id="1"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_glyphfield/audio/field_in.tres" id="2"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_glyphfield/audio/scan.tres" id="3"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_glyphfield/audio/resolve.tres" id="4"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_glyphfield/audio/type.tres" id="5"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_glyphfield/audio/shock.tres" id="6"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_glyphfield/audio/decay.tres" id="7"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_glyphfield/audio/storm.tres" id="8"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_glyphfield/audio/cut.tres" id="9"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_glyphfield/audio/zoom.tres" id="10"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_glyphfield/audio/suck.tres" id="11"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_glyphfield/audio/drop.tres" id="12"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_glyphfield/audio/type_run.tres" id="13"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_glyphfield/audio/scan_small.tres" id="14"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_glyphfield/audio/pulse.tres" id="15"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_glyphfield/audio/glitch.tres" id="16"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_glyphfield/audio/fall.tres" id="17"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_glyphfield/audio/cursor.tres" id="18"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_glyphfield/audio/blip.tres" id="19"]
+
+[resource]
+script = ExtResource("1")
+sounds = {"field.in": ExtResource("2"), "scan": ExtResource("3"), "resolve": ExtResource("4"), "type": ExtResource("5"), "shock": ExtResource("6"), "decay": ExtResource("7"), "storm": ExtResource("8"), "cut": ExtResource("9"), "zoom": ExtResource("10"), "suck": ExtResource("11"), "drop": ExtResource("12"), "type.run": ExtResource("13"), "scan.small": ExtResource("14"), "pulse": ExtResource("15"), "glitch": ExtResource("16"), "fall": ExtResource("17"), "cursor": ExtResource("18"), "blip": ExtResource("19")}
+master_fx = Array[Dictionary]([{"type": "dcblock"}, {"type": "loudness", "target_lufs": -16.0}, {"type": "limit", "ceiling_db": -2.0}])
+reverb = {"room": 0.3, "damp": 0.6, "width": 1.0, "quality": &"full", "return_db": -3.0}
+end_fade_s = 0.4
+duck = {"depth_db": 8.0, "full_at_db": -20.0, "attack_s": 0.005, "release_s": 0.3}

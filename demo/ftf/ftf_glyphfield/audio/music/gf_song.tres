@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="AKSong" format=3]
+
+[ext_resource type="Script" path="res://addons/audio_kit/sequencer/song.gd" id="1"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_glyphfield/audio/music/tempo.tres" id="2"]
+
+[resource]
+script = ExtResource("1")
+sections = Array[Dictionary]([{"name": "intro", "bars": 1.5, "patterns": ["res://demo/ftf/ftf_glyphfield/audio/music/intro.tres"]}, {"name": "storm", "bars": 0.45, "patterns": ["res://demo/ftf/ftf_glyphfield/audio/music/storm.tres"], "automation": {"tick.gain_db": [[0.0, -8.0], [1.0, 0.0]]}}, {"name": "gap1", "bars": 0.05, "patterns": ["res://demo/ftf/ftf_glyphfield/audio/music/silence.tres"]}, {"name": "build", "bars": 0.95, "patterns": ["res://demo/ftf/ftf_glyphfield/audio/music/build.tres"], "automation": {"sub.cutoff_hz": [[0.0, 200.0], [1.0, 700.0]]}}, {"name": "gap2", "bars": 0.05, "patterns": ["res://demo/ftf/ftf_glyphfield/audio/music/silence.tres"]}, {"name": "drop", "bars": 1.0, "patterns": ["res://demo/ftf/ftf_glyphfield/audio/music/drop.tres"]}, {"name": "outro", "bars": 0.75, "patterns": ["res://demo/ftf/ftf_glyphfield/audio/music/outro.tres"], "automation": {"sub.gain_db": [[0.0, 0.0], [1.0, -14.0]], "pad.gain_db": [[0.0, 0.0], [1.0, -10.0]], "tick.gain_db": [[0.0, 0.0], [1.0, -10.0]]}}, {"name": "tail", "bars": 0.5, "patterns": ["res://demo/ftf/ftf_glyphfield/audio/music/silence.tres"]}])
+gain_db = -4.0
+tempo = ExtResource("2")

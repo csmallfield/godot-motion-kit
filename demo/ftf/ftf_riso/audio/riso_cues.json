@@ -1,0 +1,159 @@
+{
+	"cues": [
+		{
+			"data": {
+
+			},
+			"frame": 0.0,
+			"intensity": 0.7,
+			"name": "feed",
+			"time": 0.0
+		},
+		{
+			"data": {
+				"pitch": 1.0
+			},
+			"frame": 18.0,
+			"intensity": 0.6,
+			"name": "print",
+			"time": 0.6
+		},
+		{
+			"data": {
+				"pitch": 0.89
+			},
+			"frame": 36.0,
+			"intensity": 0.66,
+			"name": "print",
+			"time": 1.2
+		},
+		{
+			"data": {
+				"pitch": 1.12
+			},
+			"frame": 54.0,
+			"intensity": 0.72,
+			"name": "print",
+			"time": 1.8
+		},
+		{
+			"data": {
+				"pitch": 0.75
+			},
+			"frame": 72.0,
+			"intensity": 0.78,
+			"name": "print",
+			"time": 2.4
+		},
+		{
+			"data": {
+				"pitch": 1.26
+			},
+			"frame": 90.0,
+			"intensity": 0.84,
+			"name": "print",
+			"time": 3.0
+		},
+		{
+			"data": {
+
+			},
+			"frame": 108.0,
+			"intensity": 0.8,
+			"name": "register",
+			"time": 3.6
+		},
+		{
+			"data": {
+
+			},
+			"frame": 126.0,
+			"intensity": 0.9,
+			"name": "sheet",
+			"time": 4.2
+		},
+		{
+			"data": {
+				"pitch": 1.0
+			},
+			"frame": 144.0,
+			"intensity": 0.7,
+			"name": "print",
+			"time": 4.8
+		},
+		{
+			"data": {
+
+			},
+			"frame": 162.0,
+			"intensity": 1.0,
+			"name": "slam",
+			"time": 5.4
+		},
+		{
+			"data": {
+				"pitch": 1.12
+			},
+			"frame": 180.0,
+			"intensity": 0.78,
+			"name": "print",
+			"time": 6.0
+		},
+		{
+			"data": {
+				"pitch": 0.75
+			},
+			"frame": 198.0,
+			"intensity": 0.86,
+			"name": "print",
+			"time": 6.6
+		},
+		{
+			"data": {
+				"pitch": 0.84
+			},
+			"frame": 216.0,
+			"intensity": 1.0,
+			"name": "register",
+			"time": 7.2
+		},
+		{
+			"data": {
+
+			},
+			"frame": 252.0,
+			"intensity": 0.6,
+			"name": "slur",
+			"time": 8.4
+		},
+		{
+			"data": {
+
+			},
+			"frame": 270.0,
+			"intensity": 1.0,
+			"name": "stamp",
+			"time": 9.0
+		},
+		{
+			"data": {
+
+			},
+			"frame": 324.0,
+			"intensity": 1.0,
+			"name": "flood",
+			"time": 10.8
+		},
+		{
+			"data": {
+
+			},
+			"frame": 360.0,
+			"intensity": 1.0,
+			"name": "end",
+			"time": 12.0
+		}
+	],
+	"duration": 420.0,
+	"fps": 30.0
+}

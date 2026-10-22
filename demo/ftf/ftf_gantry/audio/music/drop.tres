@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="AKPattern" format=3]
+
+[ext_resource type="Script" path="res://addons/audio_kit/sequencer/pattern.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+steps = 32
+seed = 11
+lanes = Array[Dictionary]([{"name": "kick", "recipe": "res://demo/ftf/ftf_gantry/audio/music/kick.tres", "steps": "X...x...X...x...", "length": 16}, {"name": "snare", "recipe": "res://demo/ftf/ftf_gantry/audio/music/snare.tres", "steps": "....X.......X...", "length": 16, "gain_db": -3.0}, {"name": "bass", "recipe": "res://demo/ftf/ftf_gantry/audio/music/bass.tres", "steps": "XxoxXxoxXxoxXxoxXxoxXxoxXxoxXxox", "length": 32, "notes": [26, 38, 33, 38, 26, 38, 36, 33, 29, 41, 36, 41, 29, 41, 40, 36, 24, 36, 31, 36, 24, 36, 33, 31, 22, 34, 29, 34, 21, 33, 28, 33], "gate": 0.6, "gain_db": -1.0}, {"name": "hat", "recipe": "res://demo/ftf/ftf_gantry/audio/music/hat.tres", "steps": "o.x.o.x.o.x.o.xo", "length": 16, "gain_db": -12.0, "pan": 0.2}, {"name": "ride", "recipe": "res://demo/ftf/ftf_gantry/audio/music/ride.tres", "steps": "x.o.x.o.x.o.x.o.", "length": 16, "gain_db": -16.0, "pan": -0.25}, {"name": "stab", "recipe": "res://demo/ftf/ftf_gantry/audio/music/stab.tres", "steps": "..x.....x.....x.", "length": 16, "notes": ["D4", "D4", "C4"], "chord": [0, 3, 7], "gate": 1.0, "gain_db": -11.0}, {"name": "pad", "recipe": "res://demo/ftf/ftf_gantry/audio/music/pad.tres", "steps": "x...............................", "length": 32, "notes": ["D3", "A#2"], "chord": [0, 3, 7, 10], "gate": 31.0, "gain_db": -12.0}])

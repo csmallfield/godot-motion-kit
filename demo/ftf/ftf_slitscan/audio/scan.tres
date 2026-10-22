@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="AKRecipe" format=3]
+
+[ext_resource type="Script" path="res://addons/audio_kit/core/recipe.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+voice = &"follow"
+params = {"wave": &"square", "length_s": 1.25, "pitch": [[0.0, 300.0], [0.43333333333333335, 1200.0], [0.8666666666666667, 600.0], [1.25, 600.0]], "level": [[0.0, 0.0], [0.03, 1.0], [0.8666666666666667, 0.8], [1.25, 0.0]], "glide": 0.4}
+layers = Array[Dictionary]([{"voice": &"static", "params": {"length_s": 1.2, "hiss": 0.3, "color_hz": 6000.0, "crackles_per_s": 200.0, "crackle": 0.4, "fade_s": 0.05}, "gain_db": -14.0}])
+fx = Array[Dictionary]([{"type": "lowpass", "cutoff_hz": 3000.0}, {"type": "echo", "time_s": 0.16666666666666666, "feedback": 0.35, "mix": 0.3}])
+bind = {"intensity": {"gain_db": [-18.0, -9.0]}}
+send = 0.25
+seed = 312

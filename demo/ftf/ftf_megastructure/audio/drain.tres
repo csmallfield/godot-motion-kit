@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="AKRecipe" format=3]
+
+[ext_resource type="Script" path="res://addons/audio_kit/core/recipe.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+voice = &"ratchet"
+params = {"length_s": 0.42, "start_rate_hz": 28.0, "end_rate_hz": 10.0, "click_hz": 1400.0, "q": 4.0, "fade": 0.5, "accent_every": 2.0}
+layers = Array[Dictionary]([{"voice": &"tone", "params": {"wave": &"triangle", "freq_hz": 300.0, "end_hz": 70.0, "glide_s": 0.15, "decay_s": 0.35, "gate_s": 0.35, "length_s": 0.42}, "gain_db": -10.0}])
+bind = {"intensity": {"gain_db": [-12.0, -4.0]}}
+send = 0.25
+seed = 310

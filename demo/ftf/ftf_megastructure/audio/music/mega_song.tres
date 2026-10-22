@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="AKSong" format=3]
+
+[ext_resource type="Script" path="res://addons/audio_kit/sequencer/song.gd" id="1"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_megastructure/audio/music/tempo.tres" id="2"]
+
+[resource]
+script = ExtResource("1")
+sections = Array[Dictionary]([{"name": "build", "bars": 1.0, "patterns": ["res://demo/ftf/ftf_megastructure/audio/music/build.tres"], "automation": {"bass.cutoff_hz": [[0.0, 200.0], [1.0, 380.0]]}}, {"name": "mh", "bars": 1.5, "patterns": ["res://demo/ftf/ftf_megastructure/audio/music/mh.tres"]}, {"name": "fill", "bars": 0.5, "patterns": ["res://demo/ftf/ftf_megastructure/audio/music/fill.tres"]}, {"name": "drive", "bars": 2.5, "patterns": ["res://demo/ftf/ftf_megastructure/audio/music/drive.tres"], "automation": {"arp.cutoff_hz": [[0.0, 900.0], [0.6, 2600.0], [1.0, 1800.0]], "bass.cutoff_hz": [[0.0, 380.0], [1.0, 620.0]]}}, {"name": "outro", "bars": 1.25, "patterns": ["res://demo/ftf/ftf_megastructure/audio/music/outro.tres"], "automation": {"bass.gain_db": [[0.0, 0.0], [1.0, -14.0]], "kick.gain_db": [[0.0, 0.0], [1.0, -10.0]], "bass.cutoff_hz": [[0.0, 500.0], [1.0, 160.0]]}}, {"name": "tail", "bars": 0.25, "patterns": ["res://demo/ftf/ftf_megastructure/audio/music/silence.tres"]}])
+gain_db = -4.0
+tempo = ExtResource("2")

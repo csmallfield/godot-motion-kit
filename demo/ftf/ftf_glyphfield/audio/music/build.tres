@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="AKPattern" format=3]
+
+[ext_resource type="Script" path="res://addons/audio_kit/sequencer/pattern.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+steps = 16
+seed = 45
+humanize_ms = 3.0
+lanes = Array[Dictionary]([{"name": "sub", "recipe": "res://demo/ftf/ftf_glyphfield/audio/music/sub.tres", "steps": "x...x...x...x...", "length": 16, "notes": ["D1", "F1", "G1", "A1"], "gate": 3.5, "gain_db": -5.0}, {"name": "tick", "recipe": "res://demo/ftf/ftf_glyphfield/audio/music/tick.tres", "steps": "x.o.x.oox.o.x.oo", "length": 16, "gain_db": -12.0, "pan": 0.2}, {"name": "grain", "recipe": "res://demo/ftf/ftf_glyphfield/audio/music/grain.tres", "steps": "x?x?x?x?x?x?x?x?", "length": 16, "gain_db": -16.0, "pan": -0.25}])

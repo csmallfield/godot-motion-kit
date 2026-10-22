@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="AKRecipe" format=3]
+
+[ext_resource type="Script" path="res://addons/audio_kit/core/recipe.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+voice = &"static"
+params = {"length_s": 0.5, "hiss": 0.4, "color_hz": 2500.0, "q": 0.8, "crackles_per_s": 1600.0, "crackle": 1.0, "fade_s": 0.02}
+fx = Array[Dictionary]([{"type": "bitcrush", "bits": 5.0}])
+transforms = Array[Dictionary]([{"type": "varispeed", "from": 1.0, "to": 0.4}])
+bind = {"intensity": {"gain_db": [-14.0, -6.0]}}
+seed = 506

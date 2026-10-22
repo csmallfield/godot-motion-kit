@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="AKSong" format=3]
+
+[ext_resource type="Script" path="res://addons/audio_kit/sequencer/song.gd" id="1"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_riso/audio/music/tempo.tres" id="2"]
+
+[resource]
+script = ExtResource("1")
+sections = Array[Dictionary]([{"name": "intro", "bars": 1.0, "patterns": ["res://demo/ftf/ftf_riso/audio/music/intro.tres"]}, {"name": "groove", "bars": 0.75, "patterns": ["res://demo/ftf/ftf_riso/audio/music/groove.tres"]}, {"name": "break", "bars": 0.25, "patterns": ["res://demo/ftf/ftf_riso/audio/music/brk.tres"]}, {"name": "build", "bars": 1.0, "patterns": ["res://demo/ftf/ftf_riso/audio/music/build.tres"], "automation": {"bass.cutoff_hz": [[0.0, 300.0], [1.0, 900.0]]}}, {"name": "full", "bars": 1.5, "patterns": ["res://demo/ftf/ftf_riso/audio/music/full.tres"]}, {"name": "flood", "bars": 0.5, "patterns": ["res://demo/ftf/ftf_riso/audio/music/flood.tres"], "automation": {"bass.cutoff_hz": [[0.0, 600.0], [1.0, 150.0]], "bass.gain_db": [[0.0, 0.0], [1.0, -10.0]], "kick.gain_db": [[0.0, 0.0], [1.0, -8.0]]}}, {"name": "tail", "bars": 0.8334, "patterns": ["res://demo/ftf/ftf_riso/audio/music/silence.tres"]}])
+gain_db = -4.0
+tempo = ExtResource("2")
