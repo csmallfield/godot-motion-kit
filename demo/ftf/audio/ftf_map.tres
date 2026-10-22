@@ -1,0 +1,35 @@
+[gd_resource type="Resource" script_class="AKCueMap" format=3]
+
+[ext_resource type="Script" path="res://addons/audio_kit/core/cue_map.gd" id="1"]
+[ext_resource type="Resource" path="res://demo/ftf/audio/boot_rule.tres" id="2"]
+[ext_resource type="Resource" path="res://demo/ftf/audio/mh_layer.tres" id="3"]
+[ext_resource type="Resource" path="res://demo/ftf/audio/mh_letters.tres" id="4"]
+[ext_resource type="Resource" path="res://demo/ftf/audio/mh_disc.tres" id="5"]
+[ext_resource type="Resource" path="res://demo/ftf/audio/mh_presents.tres" id="6"]
+[ext_resource type="Resource" path="res://demo/ftf/audio/glitch.tres" id="7"]
+[ext_resource type="Resource" path="res://demo/ftf/audio/glitch_tear.tres" id="8"]
+[ext_resource type="Resource" path="res://demo/ftf/audio/sweep.tres" id="9"]
+[ext_resource type="Resource" path="res://demo/ftf/audio/panel.tres" id="10"]
+[ext_resource type="Resource" path="res://demo/ftf/audio/wall.tres" id="11"]
+[ext_resource type="Resource" path="res://demo/ftf/audio/tile.tres" id="12"]
+[ext_resource type="Resource" path="res://demo/ftf/audio/iris.tres" id="13"]
+[ext_resource type="Resource" path="res://demo/ftf/audio/riser.tres" id="14"]
+[ext_resource type="Resource" path="res://demo/ftf/audio/drop.tres" id="15"]
+[ext_resource type="Resource" path="res://demo/ftf/audio/letters.tres" id="16"]
+[ext_resource type="Resource" path="res://demo/ftf/audio/tab.tres" id="17"]
+[ext_resource type="Resource" path="res://demo/ftf/audio/flux.tres" id="18"]
+[ext_resource type="Resource" path="res://demo/ftf/audio/check.tres" id="19"]
+[ext_resource type="Resource" path="res://demo/ftf/audio/type.tres" id="20"]
+[ext_resource type="Resource" path="res://demo/ftf/audio/hud.tres" id="21"]
+[ext_resource type="Resource" path="res://demo/ftf/audio/hud_out.tres" id="22"]
+[ext_resource type="Resource" path="res://demo/ftf/audio/collapse.tres" id="23"]
+[ext_resource type="Resource" path="res://demo/ftf/audio/zip.tres" id="24"]
+[ext_resource type="Resource" path="res://demo/ftf/audio/blip.tres" id="25"]
+
+[resource]
+script = ExtResource("1")
+sounds = {"boot.rule": ExtResource("2"), "mh.layer": ExtResource("3"), "mh.letters": ExtResource("4"), "mh.disc": ExtResource("5"), "mh.presents": ExtResource("6"), "glitch": ExtResource("7"), "glitch.tear": ExtResource("8"), "sweep": ExtResource("9"), "panel": ExtResource("10"), "wall": ExtResource("11"), "tile": ExtResource("12"), "iris": ExtResource("13"), "riser": ExtResource("14"), "drop": ExtResource("15"), "letters": ExtResource("16"), "tab": ExtResource("17"), "flux": ExtResource("18"), "check": ExtResource("19"), "type": ExtResource("20"), "hud": ExtResource("21"), "hud.out": ExtResource("22"), "collapse": ExtResource("23"), "zip": ExtResource("24"), "blip": ExtResource("25")}
+master_fx = Array[Dictionary]([{"type": "dcblock"}, {"type": "loudness", "target_lufs": -16.0}, {"type": "limit", "ceiling_db": -2.0}])
+reverb = {"room": 0.35, "damp": 0.5, "width": 1.0, "quality": &"full", "return_db": -2.0}
+end_fade_s = 0.4
+duck = {"depth_db": 7.0, "full_at_db": -20.0, "attack_s": 0.005, "release_s": 0.25}

@@ -1,0 +1,15 @@
+[remap]
+
+importer="motion_kit.svg"
+importer_version=2
+type="Resource"
+uid="uid://das621m8y4d5x"
+path="res://.godot/imported/ftf_logo.svg-e00d75095d276d4e6089e66f5cdffda1.res"
+
+[deps]
+
+source_file="res://demo/ftf/assets/ftf_logo.svg"
+dest_files=["res://.godot/imported/ftf_logo.svg-e00d75095d276d4e6089e66f5cdffda1.res"]
+
+[params]
+

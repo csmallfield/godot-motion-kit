@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="AKPattern" format=3]
+
+[ext_resource type="Script" path="res://addons/audio_kit/sequencer/pattern.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+steps = 32
+seed = 4
+swing = 0.5
+lanes = Array[Dictionary]([{"name": "kick", "recipe": "res://demo/ftf/audio/music/kick.tres", "steps": "X.........X.....X.X.......X..x..", "length": 32}, {"name": "snare", "recipe": "res://demo/ftf/audio/music/snare.tres", "steps": "....X..o.o..X..o....X..o.o..X.oo", "length": 32, "gain_db": -2.0}, {"name": "hat", "recipe": "res://demo/ftf/audio/music/hat.tres", "steps": "x.o.x.o.x.o.x.oo", "length": 16, "gain_db": -11.0, "pan": 0.15}, {"name": "ohat", "recipe": "res://demo/ftf/audio/music/ohat.tres", "steps": "..............x.", "length": 16, "gain_db": -13.0, "pan": -0.15}, {"name": "acid", "recipe": "res://demo/ftf/audio/music/acid.tres", "steps": "X.xxX.x.xX.xx.Xx", "length": 16, "notes": [28, 40, 28, 31, 28, 38, 40, 28, 43, 28, 35], "gate": 0.7, "gain_db": -3.0}, {"name": "stab", "recipe": "res://demo/ftf/audio/music/stab.tres", "steps": "...x.....x....x.", "length": 16, "notes": ["E4", "E4", "D4"], "chord": [0, 3, 7, 10], "gate": 1.0, "gain_db": -10.0}])

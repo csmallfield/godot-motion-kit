@@ -3,3 +3,6 @@
 /compare/
 node_modules/
 *.tmp
+/addons/audio_kit
+/audio_kit/baked/
+/audio_kit/auditions/
