@@ -1,0 +1,375 @@
+{
+	"cues": [
+		{
+			"data": {
+
+			},
+			"frame": 0.0,
+			"intensity": 0.6,
+			"name": "snake",
+			"time": 0.0
+		},
+		{
+			"data": {
+				"pitch": 1.0
+			},
+			"frame": 4.0,
+			"intensity": 0.5,
+			"name": "snake",
+			"time": 0.133333333333333
+		},
+		{
+			"data": {
+				"pitch": 0.9
+			},
+			"frame": 18.0,
+			"intensity": 0.6,
+			"name": "snake",
+			"time": 0.6
+		},
+		{
+			"data": {
+				"pitch": 0.89
+			},
+			"frame": 20.0,
+			"intensity": 0.7,
+			"name": "plug.in",
+			"time": 0.666666666666667
+		},
+		{
+			"data": {
+				"pitch": 1.1
+			},
+			"frame": 38.0,
+			"intensity": 0.7,
+			"name": "snake",
+			"time": 1.26666666666667
+		},
+		{
+			"data": {
+				"pitch": 1.0
+			},
+			"frame": 40.0,
+			"intensity": 0.8,
+			"name": "plug.in",
+			"time": 1.33333333333333
+		},
+		{
+			"data": {
+				"pitch": 1.12
+			},
+			"frame": 60.0,
+			"intensity": 0.9,
+			"name": "plug.in",
+			"time": 2.0
+		},
+		{
+			"data": {
+
+			},
+			"frame": 80.0,
+			"intensity": 0.9,
+			"name": "power.on",
+			"time": 2.66666666666667
+		},
+		{
+			"data": {
+
+			},
+			"frame": 80.0,
+			"intensity": 0.8,
+			"name": "taut",
+			"time": 2.66666666666667
+		},
+		{
+			"data": {
+
+			},
+			"frame": 100.0,
+			"intensity": 0.8,
+			"name": "presents",
+			"time": 3.33333333333333
+		},
+		{
+			"data": {
+
+			},
+			"frame": 120.0,
+			"intensity": 0.5,
+			"name": "pulse",
+			"time": 4.0
+		},
+		{
+			"data": {
+				"pitch": 1.12
+			},
+			"frame": 140.0,
+			"intensity": 0.6,
+			"name": "plug.out",
+			"time": 4.66666666666667
+		},
+		{
+			"data": {
+				"pitch": 1.0
+			},
+			"frame": 145.0,
+			"intensity": 0.7,
+			"name": "plug.out",
+			"time": 4.83333333333333
+		},
+		{
+			"data": {
+				"pitch": 0.89
+			},
+			"frame": 150.0,
+			"intensity": 0.8,
+			"name": "plug.out",
+			"time": 5.0
+		},
+		{
+			"data": {
+
+			},
+			"frame": 152.0,
+			"intensity": 0.7,
+			"name": "power.down",
+			"time": 5.06666666666667
+		},
+		{
+			"data": {
+				"pitch": 0.85
+			},
+			"frame": 160.0,
+			"intensity": 0.5,
+			"name": "wrap",
+			"time": 5.33333333333333
+		},
+		{
+			"data": {
+				"pitch": 0.91
+			},
+			"frame": 165.0,
+			"intensity": 0.55,
+			"name": "wrap",
+			"time": 5.5
+		},
+		{
+			"data": {
+				"pitch": 0.97
+			},
+			"frame": 170.0,
+			"intensity": 0.6,
+			"name": "wrap",
+			"time": 5.66666666666667
+		},
+		{
+			"data": {
+				"pitch": 1.03
+			},
+			"frame": 175.0,
+			"intensity": 0.65,
+			"name": "wrap",
+			"time": 5.83333333333333
+		},
+		{
+			"data": {
+				"pitch": 1.09
+			},
+			"frame": 180.0,
+			"intensity": 0.7,
+			"name": "wrap",
+			"time": 6.0
+		},
+		{
+			"data": {
+				"pitch": 1.15
+			},
+			"frame": 185.0,
+			"intensity": 0.75,
+			"name": "wrap",
+			"time": 6.16666666666667
+		},
+		{
+			"data": {
+
+			},
+			"frame": 200.0,
+			"intensity": 0.7,
+			"name": "squeeze",
+			"time": 6.66666666666667
+		},
+		{
+			"data": {
+
+			},
+			"frame": 220.0,
+			"intensity": 0.85,
+			"name": "squeeze",
+			"time": 7.33333333333333
+		},
+		{
+			"data": {
+
+			},
+			"frame": 228.0,
+			"intensity": 0.9,
+			"name": "rip",
+			"time": 7.6
+		},
+		{
+			"data": {
+
+			},
+			"frame": 240.0,
+			"intensity": 1.0,
+			"name": "riser",
+			"time": 8.0
+		},
+		{
+			"data": {
+
+			},
+			"frame": 240.0,
+			"intensity": 1.0,
+			"name": "drop",
+			"time": 8.0
+		},
+		{
+			"data": {
+				"pitch": 1.1
+			},
+			"frame": 260.0,
+			"intensity": 0.5,
+			"name": "taut",
+			"time": 8.66666666666667
+		},
+		{
+			"data": {
+				"pitch": 1.0
+			},
+			"frame": 260.0,
+			"intensity": 0.6,
+			"name": "pulse",
+			"time": 8.66666666666667
+		},
+		{
+			"data": {
+				"pitch": 1.06
+			},
+			"frame": 280.0,
+			"intensity": 0.6,
+			"name": "pulse",
+			"time": 9.33333333333333
+		},
+		{
+			"data": {
+				"pitch": 1.1
+			},
+			"frame": 280.0,
+			"intensity": 0.5,
+			"name": "taut",
+			"time": 9.33333333333333
+		},
+		{
+			"data": {
+				"pitch": 1.12
+			},
+			"frame": 300.0,
+			"intensity": 0.6,
+			"name": "pulse",
+			"time": 10.0
+		},
+		{
+			"data": {
+
+			},
+			"frame": 300.0,
+			"intensity": 0.8,
+			"name": "surge",
+			"time": 10.0
+		},
+		{
+			"data": {
+				"pitch": 1.18
+			},
+			"frame": 320.0,
+			"intensity": 0.6,
+			"name": "pulse",
+			"time": 10.6666666666667
+		},
+		{
+			"data": {
+				"pitch": 1.1
+			},
+			"frame": 320.0,
+			"intensity": 0.8,
+			"name": "taut",
+			"time": 10.6666666666667
+		},
+		{
+			"data": {
+				"pitch": 1.12
+			},
+			"frame": 336.0,
+			"intensity": 0.75,
+			"name": "plug.out",
+			"time": 11.2
+		},
+		{
+			"data": {
+				"pitch": 1.0
+			},
+			"frame": 344.0,
+			"intensity": 0.81,
+			"name": "plug.out",
+			"time": 11.4666666666667
+		},
+		{
+			"data": {
+				"pitch": 0.94
+			},
+			"frame": 352.0,
+			"intensity": 0.87,
+			"name": "plug.out",
+			"time": 11.7333333333333
+		},
+		{
+			"data": {
+				"pitch": 0.84
+			},
+			"frame": 360.0,
+			"intensity": 0.93,
+			"name": "plug.out",
+			"time": 12.0
+		},
+		{
+			"data": {
+
+			},
+			"frame": 362.0,
+			"intensity": 0.9,
+			"name": "power.down",
+			"time": 12.0666666666667
+		},
+		{
+			"data": {
+
+			},
+			"frame": 364.0,
+			"intensity": 0.8,
+			"name": "fall",
+			"time": 12.1333333333333
+		},
+		{
+			"data": {
+
+			},
+			"frame": 378.0,
+			"intensity": 1.0,
+			"name": "crash",
+			"time": 12.6
+		}
+	],
+	"duration": 420.0,
+	"fps": 30.0
+}

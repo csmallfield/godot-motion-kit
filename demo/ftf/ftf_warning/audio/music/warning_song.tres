@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="AKSong" format=3]
+
+[ext_resource type="Script" path="res://addons/audio_kit/sequencer/song.gd" id="1"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_warning/audio/music/tempo.tres" id="2"]
+
+[resource]
+script = ExtResource("1")
+sections = Array[Dictionary]([{"name": "intro", "bars": 1.0, "patterns": ["res://demo/ftf/ftf_warning/audio/music/intro.tres"]}, {"name": "mh", "bars": 2.0, "patterns": ["res://demo/ftf/ftf_warning/audio/music/mh.tres"]}, {"name": "barrage", "bars": 1.0, "patterns": ["res://demo/ftf/ftf_warning/audio/music/barrage.tres"]}, {"name": "count", "bars": 1.0, "patterns": ["res://demo/ftf/ftf_warning/audio/music/count.tres"], "automation": {"hoover.cutoff_hz": [[0.0, 400.0], [1.0, 5000.0]]}}, {"name": "drop", "bars": 3.0, "patterns": ["res://demo/ftf/ftf_warning/audio/music/drop.tres"]}, {"name": "alert", "bars": 2.0, "patterns": ["res://demo/ftf/ftf_warning/audio/music/alert.tres"]}, {"name": "outro", "bars": 0.5, "patterns": ["res://demo/ftf/ftf_warning/audio/music/outro.tres"]}, {"name": "tail", "bars": 1.1667, "patterns": ["res://demo/ftf/ftf_warning/audio/music/silence.tres"]}])
+gain_db = -4.0
+tempo = ExtResource("2")

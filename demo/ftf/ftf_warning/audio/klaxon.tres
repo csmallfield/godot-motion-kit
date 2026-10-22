@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="AKRecipe" format=3]
+
+[ext_resource type="Script" path="res://addons/audio_kit/core/recipe.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+voice = &"tone"
+params = {"wave": &"saw", "freq_hz": 330.0, "end_hz": 300.0, "glide_s": 0.3, "vibrato_hz": 32.0, "vibrato_semitones": 0.5, "attack_s": 0.01, "decay_s": 0.2, "sustain": 0.8, "gate_s": 0.42, "release_s": 0.05, "length_s": 0.55}
+layers = Array[Dictionary]([{"voice": &"tone", "params": {"wave": &"saw", "freq_hz": 415.0, "end_hz": 380.0, "glide_s": 0.3, "vibrato_hz": 32.0, "vibrato_semitones": 0.5, "attack_s": 0.01, "decay_s": 0.2, "sustain": 0.8, "gate_s": 0.42, "release_s": 0.05, "length_s": 0.55}, "gain_db": -2.0}])
+fx = Array[Dictionary]([{"type": "lowpass", "cutoff_hz": 2600.0}, {"type": "drive", "amount": 0.4}])
+bind = {"intensity": {"gain_db": [-12.0, -5.0]}}
+send = 0.25
+seed = 315

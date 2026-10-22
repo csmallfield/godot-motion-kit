@@ -1,0 +1,200 @@
+{
+	"cues": [
+		{
+			"data": {
+
+			},
+			"frame": 0.0,
+			"intensity": 0.8,
+			"name": "air",
+			"time": 0.0
+		},
+		{
+			"data": {
+				"pitch": 1.0
+			},
+			"frame": 24.0,
+			"intensity": 0.7,
+			"name": "clank",
+			"time": 0.8
+		},
+		{
+			"data": {
+				"pitch": 1.19
+			},
+			"frame": 48.0,
+			"intensity": 0.85,
+			"name": "clank",
+			"time": 1.6
+		},
+		{
+			"data": {
+
+			},
+			"frame": 72.0,
+			"intensity": 0.9,
+			"name": "settle",
+			"time": 2.4
+		},
+		{
+			"data": {
+
+			},
+			"frame": 96.0,
+			"intensity": 0.7,
+			"name": "servo",
+			"time": 3.2
+		},
+		{
+			"data": {
+
+			},
+			"frame": 104.0,
+			"intensity": 0.7,
+			"name": "lamp",
+			"time": 3.46666666666667
+		},
+		{
+			"data": {
+				"pan": -0.5,
+				"pitch": 1.12
+			},
+			"frame": 110.0,
+			"intensity": 0.45,
+			"name": "drone",
+			"time": 3.66666666666667
+		},
+		{
+			"data": {
+				"pan": 0.5,
+				"pitch": 0.94
+			},
+			"frame": 124.0,
+			"intensity": 0.45,
+			"name": "drone",
+			"time": 4.13333333333333
+		},
+		{
+			"data": {
+				"pitch": 1.0
+			},
+			"frame": 182.0,
+			"intensity": 0.6,
+			"name": "alarm",
+			"time": 6.06666666666667
+		},
+		{
+			"data": {
+				"pitch": 0.84
+			},
+			"frame": 187.0,
+			"intensity": 0.6,
+			"name": "alarm",
+			"time": 6.23333333333333
+		},
+		{
+			"data": {
+
+			},
+			"frame": 192.0,
+			"intensity": 1.0,
+			"name": "riser",
+			"time": 6.4
+		},
+		{
+			"data": {
+
+			},
+			"frame": 192.0,
+			"intensity": 1.0,
+			"name": "slam",
+			"time": 6.4
+		},
+		{
+			"data": {
+
+			},
+			"frame": 198.0,
+			"intensity": 0.7,
+			"name": "cascade",
+			"time": 6.6
+		},
+		{
+			"data": {
+
+			},
+			"frame": 240.0,
+			"intensity": 0.6,
+			"name": "hud",
+			"time": 8.0
+		},
+		{
+			"data": {
+				"pan": -0.6,
+				"pitch": 1.0
+			},
+			"frame": 248.0,
+			"intensity": 0.6,
+			"name": "drone",
+			"time": 8.26666666666667
+		},
+		{
+			"data": {
+				"pan": 0.6,
+				"pitch": 0.84
+			},
+			"frame": 276.0,
+			"intensity": 0.7,
+			"name": "drone",
+			"time": 9.2
+		},
+		{
+			"data": {
+
+			},
+			"frame": 288.0,
+			"intensity": 1.0,
+			"name": "clamp",
+			"time": 9.6
+		},
+		{
+			"data": {
+
+			},
+			"frame": 290.0,
+			"intensity": 0.7,
+			"name": "steam",
+			"time": 9.66666666666667
+		},
+		{
+			"data": {
+				"pan": -0.3,
+				"pitch": 1.19
+			},
+			"frame": 300.0,
+			"intensity": 0.8,
+			"name": "drone",
+			"time": 10.0
+		},
+		{
+			"data": {
+
+			},
+			"frame": 336.0,
+			"intensity": 0.9,
+			"name": "pullout",
+			"time": 11.2
+		},
+		{
+			"data": {
+
+			},
+			"frame": 384.0,
+			"intensity": 1.0,
+			"name": "cut",
+			"time": 12.8
+		}
+	],
+	"duration": 420.0,
+	"fps": 30.0
+}

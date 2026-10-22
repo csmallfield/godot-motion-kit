@@ -1,0 +1,393 @@
+{
+	"cues": [
+		{
+			"data": {
+
+			},
+			"frame": 0.0,
+			"intensity": 0.6,
+			"name": "pump.start",
+			"time": 0.0
+		},
+		{
+			"data": {
+
+			},
+			"frame": 4.0,
+			"intensity": 0.4,
+			"name": "trace",
+			"time": 0.133333333333333
+		},
+		{
+			"data": {
+				"pitch": 0.9
+			},
+			"frame": 20.0,
+			"intensity": 0.7,
+			"name": "valve",
+			"time": 0.666666666666667
+		},
+		{
+			"data": {
+
+			},
+			"frame": 34.0,
+			"intensity": 0.7,
+			"name": "pour",
+			"time": 1.13333333333333
+		},
+		{
+			"data": {
+				"pitch": 0.84
+			},
+			"frame": 80.0,
+			"intensity": 0.85,
+			"name": "full",
+			"time": 2.66666666666667
+		},
+		{
+			"data": {
+
+			},
+			"frame": 84.0,
+			"intensity": 0.7,
+			"name": "placard",
+			"time": 2.8
+		},
+		{
+			"data": {
+				"pitch": 1.0
+			},
+			"frame": 90.0,
+			"intensity": 0.5,
+			"name": "gauge",
+			"time": 3.0
+		},
+		{
+			"data": {
+				"pitch": 1.12
+			},
+			"frame": 100.0,
+			"intensity": 0.6,
+			"name": "gauge",
+			"time": 3.33333333333333
+		},
+		{
+			"data": {
+				"pitch": 1.26
+			},
+			"frame": 110.0,
+			"intensity": 0.7,
+			"name": "gauge",
+			"time": 3.66666666666667
+		},
+		{
+			"data": {
+
+			},
+			"frame": 124.0,
+			"intensity": 0.8,
+			"name": "drain",
+			"time": 4.13333333333333
+		},
+		{
+			"data": {
+
+			},
+			"frame": 128.0,
+			"intensity": 0.6,
+			"name": "trace",
+			"time": 4.26666666666667
+		},
+		{
+			"data": {
+				"pitch": 1.2
+			},
+			"frame": 130.0,
+			"intensity": 0.8,
+			"name": "pump.start",
+			"time": 4.33333333333333
+		},
+		{
+			"data": {
+				"pitch": 0.8
+			},
+			"frame": 140.0,
+			"intensity": 0.9,
+			"name": "valve",
+			"time": 4.66666666666667
+		},
+		{
+			"data": {
+
+			},
+			"frame": 142.0,
+			"intensity": 0.8,
+			"name": "surge",
+			"time": 4.73333333333333
+		},
+		{
+			"data": {
+
+			},
+			"frame": 150.0,
+			"intensity": 0.7,
+			"name": "rim",
+			"time": 5.0
+		},
+		{
+			"data": {
+				"pitch": 1.0
+			},
+			"frame": 160.0,
+			"intensity": 0.8,
+			"name": "valve",
+			"time": 5.33333333333333
+		},
+		{
+			"data": {
+				"pitch": 1.12
+			},
+			"frame": 170.0,
+			"intensity": 0.8,
+			"name": "valve",
+			"time": 5.66666666666667
+		},
+		{
+			"data": {
+				"pitch": 1.26
+			},
+			"frame": 175.0,
+			"intensity": 0.85,
+			"name": "valve",
+			"time": 5.83333333333333
+		},
+		{
+			"data": {
+				"pitch": 1.5
+			},
+			"frame": 180.0,
+			"intensity": 0.9,
+			"name": "valve",
+			"time": 6.0
+		},
+		{
+			"data": {
+
+			},
+			"frame": 200.0,
+			"intensity": 1.0,
+			"name": "riser",
+			"time": 6.66666666666667
+		},
+		{
+			"data": {
+
+			},
+			"frame": 200.0,
+			"intensity": 1.0,
+			"name": "drop",
+			"time": 6.66666666666667
+		},
+		{
+			"data": {
+				"pitch": 1.0
+			},
+			"frame": 210.0,
+			"intensity": 0.45,
+			"name": "slap",
+			"time": 7.0
+		},
+		{
+			"data": {
+				"pitch": 1.12
+			},
+			"frame": 220.0,
+			"intensity": 0.55,
+			"name": "slap",
+			"time": 7.33333333333333
+		},
+		{
+			"data": {
+				"pitch": 0.94
+			},
+			"frame": 230.0,
+			"intensity": 0.45,
+			"name": "slap",
+			"time": 7.66666666666667
+		},
+		{
+			"data": {
+
+			},
+			"frame": 240.0,
+			"intensity": 0.8,
+			"name": "sweep",
+			"time": 8.0
+		},
+		{
+			"data": {
+				"pitch": 1.0
+			},
+			"frame": 250.0,
+			"intensity": 0.45,
+			"name": "slap",
+			"time": 8.33333333333333
+		},
+		{
+			"data": {
+				"pitch": 1.12
+			},
+			"frame": 260.0,
+			"intensity": 0.55,
+			"name": "slap",
+			"time": 8.66666666666667
+		},
+		{
+			"data": {
+				"pitch": 0.94
+			},
+			"frame": 270.0,
+			"intensity": 0.45,
+			"name": "slap",
+			"time": 9.0
+		},
+		{
+			"data": {
+
+			},
+			"frame": 280.0,
+			"intensity": 0.8,
+			"name": "sweep",
+			"time": 9.33333333333333
+		},
+		{
+			"data": {
+
+			},
+			"frame": 282.0,
+			"intensity": 0.8,
+			"name": "purge",
+			"time": 9.4
+		},
+		{
+			"data": {
+				"pitch": 1.0
+			},
+			"frame": 290.0,
+			"intensity": 0.45,
+			"name": "slap",
+			"time": 9.66666666666667
+		},
+		{
+			"data": {
+				"pitch": 1.12
+			},
+			"frame": 300.0,
+			"intensity": 0.55,
+			"name": "slap",
+			"time": 10.0
+		},
+		{
+			"data": {
+				"pitch": 0.94
+			},
+			"frame": 310.0,
+			"intensity": 0.45,
+			"name": "slap",
+			"time": 10.3333333333333
+		},
+		{
+			"data": {
+
+			},
+			"frame": 320.0,
+			"intensity": 0.8,
+			"name": "sweep",
+			"time": 10.6666666666667
+		},
+		{
+			"data": {
+				"pitch": 1.0
+			},
+			"frame": 330.0,
+			"intensity": 0.45,
+			"name": "slap",
+			"time": 11.0
+		},
+		{
+			"data": {
+				"pitch": 1.5
+			},
+			"frame": 340.0,
+			"intensity": 0.7,
+			"name": "valve.close",
+			"time": 11.3333333333333
+		},
+		{
+			"data": {
+				"pitch": 1.26
+			},
+			"frame": 345.0,
+			"intensity": 0.75,
+			"name": "valve.close",
+			"time": 11.5
+		},
+		{
+			"data": {
+				"pitch": 1.12
+			},
+			"frame": 350.0,
+			"intensity": 0.8,
+			"name": "valve.close",
+			"time": 11.6666666666667
+		},
+		{
+			"data": {
+				"pitch": 0.8
+			},
+			"frame": 352.0,
+			"intensity": 1.0,
+			"name": "drain",
+			"time": 11.7333333333333
+		},
+		{
+			"data": {
+				"pitch": 1.0
+			},
+			"frame": 355.0,
+			"intensity": 0.85,
+			"name": "valve.close",
+			"time": 11.8333333333333
+		},
+		{
+			"data": {
+				"pitch": 0.8
+			},
+			"frame": 360.0,
+			"intensity": 0.9,
+			"name": "valve.close",
+			"time": 12.0
+		},
+		{
+			"data": {
+
+			},
+			"frame": 372.0,
+			"intensity": 0.6,
+			"name": "trace.out",
+			"time": 12.4
+		},
+		{
+			"data": {
+
+			},
+			"frame": 400.0,
+			"intensity": 1.0,
+			"name": "clunk",
+			"time": 13.3333333333333
+		}
+	],
+	"duration": 420.0,
+	"fps": 30.0
+}

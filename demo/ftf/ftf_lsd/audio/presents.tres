@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="AKRecipe" format=3]
+
+[ext_resource type="Script" path="res://addons/audio_kit/core/recipe.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+voice = &"pluck"
+params = {"freq_hz": 659.25, "brightness": 0.45, "decay_s": 0.35, "tone_hz": 4000.0}
+layers = Array[Dictionary]([{"voice": &"pluck", "params": {"freq_hz": 783.99, "brightness": 0.45, "decay_s": 0.35}, "gain_db": -2.0, "offset_s": 0.09}, {"voice": &"pluck", "params": {"freq_hz": 987.77, "brightness": 0.45, "decay_s": 0.35}, "gain_db": -3.0, "offset_s": 0.18}, {"voice": &"pluck", "params": {"freq_hz": 1174.66, "brightness": 0.45, "decay_s": 0.5}, "gain_db": -4.0, "offset_s": 0.27}])
+bind = {"intensity": {"gain_db": [-16.0, -9.0]}}
+send = 0.5
+seed = 305

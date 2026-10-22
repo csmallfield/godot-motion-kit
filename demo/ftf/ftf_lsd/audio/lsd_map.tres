@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="AKCueMap" format=3]
+
+[ext_resource type="Script" path="res://addons/audio_kit/core/cue_map.gd" id="1"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_lsd/audio/dawn.tres" id="2"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_lsd/audio/sun_peek.tres" id="3"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_lsd/audio/rise.tres" id="4"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_lsd/audio/set.tres" id="5"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_lsd/audio/presents.tres" id="6"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_lsd/audio/melt.tres" id="7"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_lsd/audio/kaleido.tres" id="8"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_lsd/audio/segment.tres" id="9"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_lsd/audio/pour.tres" id="10"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_lsd/audio/drop.tres" id="11"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_lsd/audio/kana.tres" id="12"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_lsd/audio/bloom.tres" id="13"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_lsd/audio/ripple.tres" id="14"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_lsd/audio/melt_out.tres" id="15"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_lsd/audio/sink.tres" id="16"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_lsd/audio/last.tres" id="17"]
+
+[resource]
+script = ExtResource("1")
+sounds = {"dawn": ExtResource("2"), "sun.peek": ExtResource("3"), "rise": ExtResource("4"), "set": ExtResource("5"), "presents": ExtResource("6"), "melt": ExtResource("7"), "kaleido": ExtResource("8"), "segment": ExtResource("9"), "pour": ExtResource("10"), "drop": ExtResource("11"), "kana": ExtResource("12"), "bloom": ExtResource("13"), "ripple": ExtResource("14"), "melt.out": ExtResource("15"), "sink": ExtResource("16"), "last": ExtResource("17")}
+master_fx = Array[Dictionary]([{"type": "dcblock"}, {"type": "loudness", "target_lufs": -16.0}, {"type": "limit", "ceiling_db": -2.0}])
+reverb = {"room": 0.7, "damp": 0.45, "width": 1.0, "quality": &"full", "return_db": -1.0}
+end_fade_s = 0.5
+duck = {"depth_db": 6.0, "full_at_db": -20.0, "attack_s": 0.01, "release_s": 0.35}

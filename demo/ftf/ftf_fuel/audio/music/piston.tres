@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="AKRecipe" format=3]
+
+[ext_resource type="Script" path="res://addons/audio_kit/core/recipe.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+voice = &"fm"
+seed = 402
+send = 0.2
+params = {"freq_hz": 330.0, "ratio": 3.5, "index": 6.0, "index_end": 0.5, "index_decay_s": 0.04, "decay_s": 0.09, "gate_s": 0.05, "release_s": 0.04}
+layers = Array[Dictionary]([{"voice": &"snare", "params": {"tone_hz": 240.0, "tone": 0.2, "noise": 0.7, "noise_hz": 6500.0, "noise_decay_s": 0.07}, "gain_db": -4.0}])
+vary = {"index": 0.2}
+vary_variants = 4
+bind = {"intensity": {"gain_db": [-14.0, 0.0]}}

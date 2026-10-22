@@ -1,0 +1,294 @@
+{
+	"cues": [
+		{
+			"data": {
+				"pitch": 1.0
+			},
+			"frame": 0.0,
+			"intensity": 0.5,
+			"name": "line",
+			"time": 0.0
+		},
+		{
+			"data": {
+				"pitch": 1.12
+			},
+			"frame": 12.0,
+			"intensity": 0.6,
+			"name": "line",
+			"time": 0.4
+		},
+		{
+			"data": {
+				"pitch": 1.26
+			},
+			"frame": 24.0,
+			"intensity": 0.7,
+			"name": "line",
+			"time": 0.8
+		},
+		{
+			"data": {
+				"pitch": 1.5
+			},
+			"frame": 36.0,
+			"intensity": 0.8,
+			"name": "line",
+			"time": 1.2
+		},
+		{
+			"data": {
+
+			},
+			"frame": 48.0,
+			"intensity": 0.8,
+			"name": "mh.draw",
+			"time": 1.6
+		},
+		{
+			"data": {
+
+			},
+			"frame": 96.0,
+			"intensity": 0.9,
+			"name": "chime",
+			"time": 3.2
+		},
+		{
+			"data": {
+
+			},
+			"frame": 108.0,
+			"intensity": 0.8,
+			"name": "presents",
+			"time": 3.6
+		},
+		{
+			"data": {
+				"pitch": 1.68
+			},
+			"frame": 114.0,
+			"intensity": 0.45,
+			"name": "line",
+			"time": 3.8
+		},
+		{
+			"data": {
+				"pitch": 1.5
+			},
+			"frame": 120.0,
+			"intensity": 0.45,
+			"name": "line",
+			"time": 4.0
+		},
+		{
+			"data": {
+				"pitch": 1.26
+			},
+			"frame": 126.0,
+			"intensity": 0.45,
+			"name": "line",
+			"time": 4.2
+		},
+		{
+			"data": {
+				"pitch": 2.0
+			},
+			"frame": 138.0,
+			"intensity": 0.45,
+			"name": "line",
+			"time": 4.6
+		},
+		{
+			"data": {
+
+			},
+			"frame": 144.0,
+			"intensity": 1.0,
+			"name": "explode",
+			"time": 4.8
+		},
+		{
+			"data": {
+
+			},
+			"frame": 146.0,
+			"intensity": 0.9,
+			"name": "pink",
+			"time": 4.86666666666667
+		},
+		{
+			"data": {
+				"pitch": 1.0
+			},
+			"frame": 150.0,
+			"intensity": 0.5,
+			"name": "burst",
+			"time": 5.0
+		},
+		{
+			"data": {
+				"pitch": 1.12
+			},
+			"frame": 156.0,
+			"intensity": 0.56,
+			"name": "burst",
+			"time": 5.2
+		},
+		{
+			"data": {
+				"pitch": 1.26
+			},
+			"frame": 162.0,
+			"intensity": 0.62,
+			"name": "burst",
+			"time": 5.4
+		},
+		{
+			"data": {
+
+			},
+			"frame": 166.0,
+			"intensity": 0.6,
+			"name": "box",
+			"time": 5.53333333333333
+		},
+		{
+			"data": {
+				"pitch": 1.5
+			},
+			"frame": 168.0,
+			"intensity": 0.68,
+			"name": "burst",
+			"time": 5.6
+		},
+		{
+			"data": {
+				"pitch": 1.68
+			},
+			"frame": 174.0,
+			"intensity": 0.74,
+			"name": "burst",
+			"time": 5.8
+		},
+		{
+			"data": {
+				"pitch": 2.0
+			},
+			"frame": 180.0,
+			"intensity": 0.8,
+			"name": "burst",
+			"time": 6.0
+		},
+		{
+			"data": {
+				"pitch": 2.24
+			},
+			"frame": 186.0,
+			"intensity": 0.86,
+			"name": "burst",
+			"time": 6.2
+		},
+		{
+			"data": {
+
+			},
+			"frame": 192.0,
+			"intensity": 1.0,
+			"name": "riser",
+			"time": 6.4
+		},
+		{
+			"data": {
+
+			},
+			"frame": 192.0,
+			"intensity": 1.0,
+			"name": "drop",
+			"time": 6.4
+		},
+		{
+			"data": {
+
+			},
+			"frame": 216.0,
+			"intensity": 0.6,
+			"name": "label",
+			"time": 7.2
+		},
+		{
+			"data": {
+				"pitch": 1.0
+			},
+			"frame": 240.0,
+			"intensity": 0.9,
+			"name": "express",
+			"time": 8.0
+		},
+		{
+			"data": {
+				"pitch": 1.12
+			},
+			"frame": 288.0,
+			"intensity": 0.8,
+			"name": "express",
+			"time": 9.6
+		},
+		{
+			"data": {
+
+			},
+			"frame": 324.0,
+			"intensity": 0.7,
+			"name": "door",
+			"time": 10.8
+		},
+		{
+			"data": {
+
+			},
+			"frame": 327.0,
+			"intensity": 0.7,
+			"name": "door",
+			"time": 10.9
+		},
+		{
+			"data": {
+
+			},
+			"frame": 330.0,
+			"intensity": 0.7,
+			"name": "door",
+			"time": 11.0
+		},
+		{
+			"data": {
+
+			},
+			"frame": 336.0,
+			"intensity": 0.9,
+			"name": "retract",
+			"time": 11.2
+		},
+		{
+			"data": {
+
+			},
+			"frame": 344.0,
+			"intensity": 0.8,
+			"name": "zoomout",
+			"time": 11.4666666666667
+		},
+		{
+			"data": {
+
+			},
+			"frame": 384.0,
+			"intensity": 1.0,
+			"name": "blip",
+			"time": 12.8
+		}
+	],
+	"duration": 420.0,
+	"fps": 30.0
+}

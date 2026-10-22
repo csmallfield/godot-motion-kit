@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="AKCueMap" format=3]
+
+[ext_resource type="Script" path="res://addons/audio_kit/core/cue_map.gd" id="1"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_cables/audio/snake.tres" id="2"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_cables/audio/plug_in.tres" id="3"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_cables/audio/power_on.tres" id="4"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_cables/audio/taut.tres" id="5"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_cables/audio/presents.tres" id="6"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_cables/audio/pulse.tres" id="7"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_cables/audio/plug_out.tres" id="8"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_cables/audio/power_down.tres" id="9"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_cables/audio/wrap.tres" id="10"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_cables/audio/squeeze.tres" id="11"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_cables/audio/riser.tres" id="12"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_cables/audio/rip.tres" id="13"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_cables/audio/drop.tres" id="14"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_cables/audio/surge.tres" id="15"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_cables/audio/fall.tres" id="16"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_cables/audio/crash.tres" id="17"]
+
+[resource]
+script = ExtResource("1")
+sounds = {"snake": ExtResource("2"), "plug.in": ExtResource("3"), "power.on": ExtResource("4"), "taut": ExtResource("5"), "presents": ExtResource("6"), "pulse": ExtResource("7"), "plug.out": ExtResource("8"), "power.down": ExtResource("9"), "wrap": ExtResource("10"), "squeeze": ExtResource("11"), "riser": ExtResource("12"), "rip": ExtResource("13"), "drop": ExtResource("14"), "surge": ExtResource("15"), "fall": ExtResource("16"), "crash": ExtResource("17")}
+master_fx = Array[Dictionary]([{"type": "dcblock"}, {"type": "loudness", "target_lufs": -16.0}, {"type": "limit", "ceiling_db": -2.0}])
+reverb = {"room": 0.6, "damp": 0.45, "width": 1.0, "quality": &"full", "return_db": -3.0}
+end_fade_s = 0.4
+duck = {"depth_db": 8.0, "full_at_db": -20.0, "attack_s": 0.005, "release_s": 0.3}

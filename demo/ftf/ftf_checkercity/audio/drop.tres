@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="AKRecipe" format=3]
+
+[ext_resource type="Script" path="res://addons/audio_kit/core/recipe.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+voice = &"kick"
+params = {"tune_hz": 46.0, "punch": 5.0, "drop_s": 0.04, "decay_s": 0.55, "click": 0.7, "drive": 0.45}
+layers = Array[Dictionary]([{"voice": &"boing", "params": {"start_hz": 130.0, "end_hz": 36.0, "drop_s": 0.14, "decay_s": 0.5, "sub": 1.0, "click": 0.0}, "gain_db": -4.0}, {"voice": &"snare", "params": {"tone_hz": 180.0, "tone": 0.4, "noise": 1.0, "noise_hz": 7000.0, "noise_decay_s": 0.3}, "gain_db": -5.0}])
+transforms = Array[Dictionary]([{"type": "trim", "length_s": 0.65}, {"type": "fade", "out_s": 0.1}])
+bind = {"intensity": {"gain_db": [-4.0, 0.0]}}
+send = 0.4
+seed = 312

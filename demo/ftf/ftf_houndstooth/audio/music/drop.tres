@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="AKPattern" format=3]
+
+[ext_resource type="Script" path="res://addons/audio_kit/sequencer/pattern.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+steps = 16
+seed = 7
+swing = 0.56
+lanes = Array[Dictionary]([{"name": "kick", "recipe": "res://demo/ftf/ftf_houndstooth/audio/music/kick.tres", "steps": "X...x...X...x...", "length": 16}, {"name": "clap", "recipe": "res://demo/ftf/ftf_houndstooth/audio/music/clap.tres", "steps": "....X.......X...", "length": 16, "gain_db": -4.0}, {"name": "ohat", "recipe": "res://demo/ftf/ftf_houndstooth/audio/music/ohat.tres", "steps": "..x...x...x...x.", "length": 16, "gain_db": -12.0, "pan": -0.15}, {"name": "shaker", "recipe": "res://demo/ftf/ftf_houndstooth/audio/music/shaker.tres", "steps": "xoxoxoxoxoxoxoxo", "length": 16, "gain_db": -15.0, "pan": 0.2}, {"name": "organ", "recipe": "res://demo/ftf/ftf_houndstooth/audio/music/organ.tres", "steps": "X..x..x.X..x.x..", "length": 16, "notes": [33, 45, 33, 36, 33, 45, 31], "gate": 0.8, "gain_db": -2.0}, {"name": "stab", "recipe": "res://demo/ftf/ftf_houndstooth/audio/music/stab.tres", "steps": "..x...x...x..x..", "length": 16, "notes": ["A3", "A3", "A3", "G3"], "chord": [0, 3, 7, 10], "gate": 1.0, "gain_db": -9.0}])

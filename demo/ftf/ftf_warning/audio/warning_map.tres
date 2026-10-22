@@ -1,0 +1,29 @@
+[gd_resource type="Resource" script_class="AKCueMap" format=3]
+
+[ext_resource type="Script" path="res://addons/audio_kit/core/cue_map.gd" id="1"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_warning/audio/alarm.tres" id="2"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_warning/audio/whip.tres" id="3"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_warning/audio/chain.tres" id="4"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_warning/audio/slam.tres" id="5"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_warning/audio/stamp.tres" id="6"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_warning/audio/stamp_small.tres" id="7"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_warning/audio/snap.tres" id="8"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_warning/audio/sign.tres" id="9"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_warning/audio/count.tres" id="10"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_warning/audio/gate.tres" id="11"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_warning/audio/wall.tres" id="12"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_warning/audio/drop.tres" id="13"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_warning/audio/tear.tres" id="14"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_warning/audio/clamp.tres" id="15"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_warning/audio/bite.tres" id="16"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_warning/audio/klaxon.tres" id="17"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_warning/audio/close.tres" id="18"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_warning/audio/yank.tres" id="19"]
+
+[resource]
+script = ExtResource("1")
+sounds = {"alarm": ExtResource("2"), "whip": ExtResource("3"), "chain": ExtResource("4"), "slam": ExtResource("5"), "stamp": ExtResource("6"), "stamp.small": ExtResource("7"), "snap": ExtResource("8"), "sign": ExtResource("9"), "count": ExtResource("10"), "gate": ExtResource("11"), "wall": ExtResource("12"), "drop": ExtResource("13"), "tear": ExtResource("14"), "clamp": ExtResource("15"), "bite": ExtResource("16"), "klaxon": ExtResource("17"), "close": ExtResource("18"), "yank": ExtResource("19")}
+master_fx = Array[Dictionary]([{"type": "dcblock"}, {"type": "loudness", "target_lufs": -16.0}, {"type": "limit", "ceiling_db": -2.0}])
+reverb = {"room": 0.25, "damp": 0.6, "width": 1.0, "quality": &"full", "return_db": -4.0}
+end_fade_s = 0.4
+duck = {"depth_db": 6.0, "full_at_db": -18.0, "attack_s": 0.004, "release_s": 0.2}

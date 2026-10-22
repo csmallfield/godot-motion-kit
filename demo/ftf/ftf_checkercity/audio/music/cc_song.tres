@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="AKSong" format=3]
+
+[ext_resource type="Script" path="res://addons/audio_kit/sequencer/song.gd" id="1"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_checkercity/audio/music/tempo.tres" id="2"]
+
+[resource]
+script = ExtResource("1")
+sections = Array[Dictionary]([{"name": "intro", "bars": 1.0, "patterns": ["res://demo/ftf/ftf_checkercity/audio/music/intro.tres"]}, {"name": "mh", "bars": 1.0, "patterns": ["res://demo/ftf/ftf_checkercity/audio/music/mh.tres"], "automation": {"bass.cutoff_hz": [[0.0, 400.0], [1.0, 800.0]]}}, {"name": "tube", "bars": 0.75, "patterns": ["res://demo/ftf/ftf_checkercity/audio/music/tube.tres"], "automation": {"bass.cutoff_hz": [[0.0, 900.0], [1.0, 1600.0]]}}, {"name": "build", "bars": 0.25, "patterns": ["res://demo/ftf/ftf_checkercity/audio/music/build.tres"]}, {"name": "drop", "bars": 2.0, "patterns": ["res://demo/ftf/ftf_checkercity/audio/music/drop.tres"], "automation": {"bass.cutoff_hz": [[0.0, 1200.0], [0.5, 1800.0], [1.0, 1000.0]]}}, {"name": "outro", "bars": 1.0, "patterns": ["res://demo/ftf/ftf_checkercity/audio/music/outro.tres"], "automation": {"bass.cutoff_hz": [[0.0, 900.0], [1.0, 180.0]], "bass.gain_db": [[0.0, 0.0], [1.0, -12.0]], "kick.gain_db": [[0.0, 0.0], [1.0, -8.0]]}}, {"name": "tail", "bars": 0.5625, "patterns": ["res://demo/ftf/ftf_checkercity/audio/music/silence.tres"]}])
+gain_db = -4.0
+tempo = ExtResource("2")

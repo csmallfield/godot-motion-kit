@@ -1,0 +1,29 @@
+[gd_resource type="Resource" script_class="AKCueMap" format=3]
+
+[ext_resource type="Script" path="res://addons/audio_kit/core/cue_map.gd" id="1"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_fuel/audio/pump_start.tres" id="2"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_fuel/audio/trace.tres" id="3"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_fuel/audio/trace_out.tres" id="4"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_fuel/audio/valve.tres" id="5"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_fuel/audio/valve_close.tres" id="6"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_fuel/audio/pour.tres" id="7"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_fuel/audio/full.tres" id="8"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_fuel/audio/gauge.tres" id="9"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_fuel/audio/placard.tres" id="10"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_fuel/audio/drain.tres" id="11"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_fuel/audio/surge.tres" id="12"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_fuel/audio/rim.tres" id="13"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_fuel/audio/riser.tres" id="14"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_fuel/audio/drop.tres" id="15"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_fuel/audio/slap.tres" id="16"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_fuel/audio/sweep.tres" id="17"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_fuel/audio/purge.tres" id="18"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_fuel/audio/clunk.tres" id="19"]
+
+[resource]
+script = ExtResource("1")
+sounds = {"pump.start": ExtResource("2"), "trace": ExtResource("3"), "trace.out": ExtResource("4"), "valve": ExtResource("5"), "valve.close": ExtResource("6"), "pour": ExtResource("7"), "full": ExtResource("8"), "gauge": ExtResource("9"), "placard": ExtResource("10"), "drain": ExtResource("11"), "surge": ExtResource("12"), "rim": ExtResource("13"), "riser": ExtResource("14"), "drop": ExtResource("15"), "slap": ExtResource("16"), "sweep": ExtResource("17"), "purge": ExtResource("18"), "clunk": ExtResource("19")}
+master_fx = Array[Dictionary]([{"type": "dcblock"}, {"type": "loudness", "target_lufs": -16.0}, {"type": "limit", "ceiling_db": -2.0}])
+reverb = {"room": 0.3, "damp": 0.55, "width": 1.0, "quality": &"full", "return_db": -2.0}
+end_fade_s = 0.4
+duck = {"depth_db": 7.0, "full_at_db": -20.0, "attack_s": 0.005, "release_s": 0.2}

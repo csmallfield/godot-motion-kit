@@ -31,6 +31,20 @@ Five more takes, each built around a technique added to the kit for it
 | Gantry | `ftf_gantry/` | 150 bpm (12 f/beat) | `MotionStage3D`, `MotionSvgMesh`, `MotionPanel3D` (three/): frame-driven 3D in a composition, extruded SVG meshes, 2D on 3D panels | ~0.65 s/frame |
 | Glyph Field | `ftf_glyphfield/` | 90 bpm (20 f/beat) | `MotionGlyphField` (glyph/): shader glyph grid lit by any mask, rain, fall, scan, solidify | ~0.4 s/frame |
 
+Eight more takes from titles (API in `docs/API.md` under "Added with the FTF
+title takes"):
+
+| Take | Folder | Tempo | New kit technique | Render cost (software GL) |
+| --- | --- | --- | --- | --- |
+| LSD Sunrise | `ftf_lsd/` | 100 bpm (18 f/beat) | `MotionWarpField` (warp/): banded fields, domain warp, kaleidoscope, mirror water, melting content | ~0.45 s/frame |
+| Insane Subway Map | `ftf_subway/` | 150 bpm (12 f/beat) | `MotionMetroMap` (metro/): octilinear routing, bundled corridors, draw-on, chases, trains, stations | ~0.23 s/frame |
+| Greebles | `ftf_greebles/` | 75 bpm (24 f/beat) | `MotionGreebler` (greeble/): recursive panels and greebles with level of detail by on-screen size | ~0.7 s/frame |
+| Cables | `ftf_cables/` | 90 bpm (20 f/beat) | `MotionCable`, `MotionCableSet` (cable/): sagging shaded cables, tugs, pulses, connectors, over/under weaving | ~0.4 s/frame |
+| Fuel Lines | `ftf_fuel/` | 180 bpm (10 f/beat) | `MotionFlow`, `MotionLiquidFill` (flow/): pipe networks with flow, liquid fill with analytic slosh | ~0.28 s/frame |
+| Warning | `ftf_warning/` | 200 bpm (9 f/beat) | `MotionTextPath` (text/), `MotionBeacon` (fx/): text along paths, rotating beacon lights | ~0.4 s/frame |
+| Checkerboard City | `ftf_checkercity/` | 112.5 bpm (16 f/beat) | `MotionPatternPlane` (plane/): ray-cast pattern plane with curve, tube, fold, motion blur | ~0.37 s/frame |
+| Houndstooth | `ftf_houndstooth/` | 120 bpm (15 f/beat) | `MotionTiling` (tiling/): woven houndstooth and other motifs, per-cell transforms driven by a logo mask | ~0.33 s/frame |
+
 All are 1920×1080, 30 fps, 420 frames, first downbeat at frame 0, and end on
 an empty frame (Megastructure on its cream ground, the rest on black).
 

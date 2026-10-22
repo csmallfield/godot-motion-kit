@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="AKRecipe" format=3]
+
+[ext_resource type="Script" path="res://addons/audio_kit/core/recipe.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+voice = &"wavetable"
+params = {"freq_hz": 164.81, "position": 0.5, "unison": 5, "detune_cents": 20.0, "cutoff_hz": 1200.0, "env_octaves": 0.0, "attack_s": 0.05, "sustain": 0.8, "gate_s": 1.0, "release_s": 0.4}
+layers = Array[Dictionary]([{"voice": &"tone", "params": {"wave": &"sine", "freq_hz": 164.81, "end_hz": 41.2, "glide_s": 0.6, "decay_s": 1.0, "sustain": 0.5, "gate_s": 1.0, "release_s": 0.3}, "gain_db": -3.0}, {"voice": &"whoosh", "params": {"length_s": 1.2, "low_hz": 100.0, "high_hz": 1200.0, "peak": 0.15, "noise": &"brown"}, "gain_db": -8.0}])
+transforms = Array[Dictionary]([{"type": "varispeed", "from": 1.0, "to": 0.45}])
+bind = {"intensity": {"gain_db": [-10.0, -4.0]}}
+send = 0.5
+seed = 315

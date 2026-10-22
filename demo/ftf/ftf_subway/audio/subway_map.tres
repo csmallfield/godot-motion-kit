@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="AKCueMap" format=3]
+
+[ext_resource type="Script" path="res://addons/audio_kit/core/cue_map.gd" id="1"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_subway/audio/line.tres" id="2"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_subway/audio/mh_draw.tres" id="3"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_subway/audio/chime.tres" id="4"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_subway/audio/presents.tres" id="5"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_subway/audio/explode.tres" id="6"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_subway/audio/burst.tres" id="7"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_subway/audio/pink.tres" id="8"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_subway/audio/box.tres" id="9"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_subway/audio/riser.tres" id="10"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_subway/audio/drop.tres" id="11"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_subway/audio/label.tres" id="12"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_subway/audio/express.tres" id="13"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_subway/audio/door.tres" id="14"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_subway/audio/retract.tres" id="15"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_subway/audio/zoomout.tres" id="16"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_subway/audio/blip.tres" id="17"]
+
+[resource]
+script = ExtResource("1")
+sounds = {"line": ExtResource("2"), "mh.draw": ExtResource("3"), "chime": ExtResource("4"), "presents": ExtResource("5"), "explode": ExtResource("6"), "burst": ExtResource("7"), "pink": ExtResource("8"), "box": ExtResource("9"), "riser": ExtResource("10"), "drop": ExtResource("11"), "label": ExtResource("12"), "express": ExtResource("13"), "door": ExtResource("14"), "retract": ExtResource("15"), "zoomout": ExtResource("16"), "blip": ExtResource("17")}
+master_fx = Array[Dictionary]([{"type": "dcblock"}, {"type": "loudness", "target_lufs": -16.0}, {"type": "limit", "ceiling_db": -2.0}])
+reverb = {"room": 0.4, "damp": 0.45, "width": 1.0, "quality": &"full", "return_db": -2.0}
+end_fade_s = 0.4
+duck = {"depth_db": 6.0, "full_at_db": -20.0, "attack_s": 0.005, "release_s": 0.25}

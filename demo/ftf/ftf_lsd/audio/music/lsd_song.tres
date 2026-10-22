@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="AKSong" format=3]
+
+[ext_resource type="Script" path="res://addons/audio_kit/sequencer/song.gd" id="1"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_lsd/audio/music/tempo.tres" id="2"]
+
+[resource]
+script = ExtResource("1")
+sections = Array[Dictionary]([{"name": "dawn", "bars": 1.0, "patterns": ["res://demo/ftf/ftf_lsd/audio/music/dawn.tres"], "automation": {"pad.gain_db": [[0.0, -12.0], [1.0, 0.0]]}}, {"name": "groove", "bars": 1.0, "patterns": ["res://demo/ftf/ftf_lsd/audio/music/groove.tres"]}, {"name": "trip", "bars": 0.75, "patterns": ["res://demo/ftf/ftf_lsd/audio/music/trip.tres"], "automation": {"acid.cutoff_hz": [[0.0, 260.0], [1.0, 1300.0]], "acid.q": [[0.0, 4.0], [1.0, 9.0]]}}, {"name": "break", "bars": 0.25, "patterns": ["res://demo/ftf/ftf_lsd/audio/music/silence.tres"]}, {"name": "full", "bars": 1.6666666666666667, "patterns": ["res://demo/ftf/ftf_lsd/audio/music/full.tres"], "automation": {"acid.cutoff_hz": [[0.0, 700.0], [0.5, 1700.0], [1.0, 900.0]]}}, {"name": "outro", "bars": 0.8333333333333334, "patterns": ["res://demo/ftf/ftf_lsd/audio/music/outro.tres"], "automation": {"acid.cutoff_hz": [[0.0, 800.0], [1.0, 200.0]], "acid.gain_db": [[0.0, 0.0], [1.0, -14.0]], "arp.gain_db": [[0.0, 0.0], [1.0, -12.0]], "pad.gain_db": [[0.0, 0.0], [1.0, -10.0]]}}, {"name": "tail", "bars": 0.25, "patterns": ["res://demo/ftf/ftf_lsd/audio/music/silence.tres"]}])
+gain_db = -4.0
+tempo = ExtResource("2")

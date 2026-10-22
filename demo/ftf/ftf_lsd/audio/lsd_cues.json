@@ -1,0 +1,168 @@
+{
+	"cues": [
+		{
+			"data": {
+
+			},
+			"frame": 0.0,
+			"intensity": 0.6,
+			"name": "dawn",
+			"time": 0.0
+		},
+		{
+			"data": {
+
+			},
+			"frame": 18.0,
+			"intensity": 0.8,
+			"name": "sun.peek",
+			"time": 0.6
+		},
+		{
+			"data": {
+
+			},
+			"frame": 30.0,
+			"intensity": 0.8,
+			"name": "rise",
+			"time": 1.0
+		},
+		{
+			"data": {
+				"pitch": 1.0
+			},
+			"frame": 72.0,
+			"intensity": 0.9,
+			"name": "set",
+			"time": 2.4
+		},
+		{
+			"data": {
+
+			},
+			"frame": 90.0,
+			"intensity": 0.6,
+			"name": "presents",
+			"time": 3.0
+		},
+		{
+			"data": {
+
+			},
+			"frame": 126.0,
+			"intensity": 0.8,
+			"name": "melt",
+			"time": 4.2
+		},
+		{
+			"data": {
+
+			},
+			"frame": 144.0,
+			"intensity": 0.9,
+			"name": "kaleido",
+			"time": 4.8
+		},
+		{
+			"data": {
+				"pitch": 1.0
+			},
+			"frame": 162.0,
+			"intensity": 0.6,
+			"name": "segment",
+			"time": 5.4
+		},
+		{
+			"data": {
+				"pitch": 1.335
+			},
+			"frame": 180.0,
+			"intensity": 0.75,
+			"name": "segment",
+			"time": 6.0
+		},
+		{
+			"data": {
+
+			},
+			"frame": 198.0,
+			"intensity": 0.9,
+			"name": "pour",
+			"time": 6.6
+		},
+		{
+			"data": {
+
+			},
+			"frame": 216.0,
+			"intensity": 1.0,
+			"name": "drop",
+			"time": 7.2
+		},
+		{
+			"data": {
+
+			},
+			"frame": 234.0,
+			"intensity": 0.5,
+			"name": "kana",
+			"time": 7.8
+		},
+		{
+			"data": {
+
+			},
+			"frame": 252.0,
+			"intensity": 0.6,
+			"name": "bloom",
+			"time": 8.4
+		},
+		{
+			"data": {
+				"pitch": 1.0
+			},
+			"frame": 288.0,
+			"intensity": 0.7,
+			"name": "ripple",
+			"time": 9.6
+		},
+		{
+			"data": {
+				"pitch": 0.89
+			},
+			"frame": 324.0,
+			"intensity": 0.7,
+			"name": "ripple",
+			"time": 10.8
+		},
+		{
+			"data": {
+
+			},
+			"frame": 336.0,
+			"intensity": 0.9,
+			"name": "melt.out",
+			"time": 11.2
+		},
+		{
+			"data": {
+
+			},
+			"frame": 360.0,
+			"intensity": 1.0,
+			"name": "sink",
+			"time": 12.0
+		},
+		{
+			"data": {
+
+			},
+			"frame": 396.0,
+			"intensity": 0.9,
+			"name": "last",
+			"time": 13.2
+		}
+	],
+	"duration": 420.0,
+	"fps": 30.0
+}

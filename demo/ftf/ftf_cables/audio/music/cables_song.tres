@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="AKSong" format=3]
+
+[ext_resource type="Script" path="res://addons/audio_kit/sequencer/song.gd" id="1"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_cables/audio/music/tempo.tres" id="2"]
+
+[resource]
+script = ExtResource("1")
+sections = Array[Dictionary]([{"name": "intro", "bars": 1.0, "patterns": ["res://demo/ftf/ftf_cables/audio/music/intro.tres"]}, {"name": "mh", "bars": 1.0, "patterns": ["res://demo/ftf/ftf_cables/audio/music/mh.tres"]}, {"name": "build", "bars": 0.9, "patterns": ["res://demo/ftf/ftf_cables/audio/music/build.tres"], "automation": {"sub.cutoff_hz": [[0.0, 200.0], [1.0, 900.0]], "hat.gain_db": [[0.0, -6.0], [1.0, 0.0]]}}, {"name": "gap", "bars": 0.1, "patterns": ["res://demo/ftf/ftf_cables/audio/music/silence.tres"]}, {"name": "drop", "bars": 1.2, "patterns": ["res://demo/ftf/ftf_cables/audio/music/drop.tres"], "automation": {"sub.cutoff_hz": [[0.0, 500.0], [1.0, 320.0]]}}, {"name": "outro", "bars": 0.8, "patterns": ["res://demo/ftf/ftf_cables/audio/music/outro.tres"], "automation": {"sub.cutoff_hz": [[0.0, 300.0], [1.0, 120.0]], "sub.gain_db": [[0.0, 0.0], [1.0, -12.0]], "kick.gain_db": [[0.0, 0.0], [1.0, -9.0]]}}, {"name": "tail", "bars": 0.25, "patterns": ["res://demo/ftf/ftf_cables/audio/music/silence.tres"]}])
+gain_db = -4.0
+tempo = ExtResource("2")

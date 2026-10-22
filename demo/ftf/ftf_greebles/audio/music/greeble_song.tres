@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="AKSong" format=3]
+
+[ext_resource type="Script" path="res://addons/audio_kit/sequencer/song.gd" id="1"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_greebles/audio/music/tempo.tres" id="2"]
+
+[resource]
+script = ExtResource("1")
+sections = Array[Dictionary]([{"name": "intro", "bars": 1.5, "patterns": ["res://demo/ftf/ftf_greebles/audio/music/intro.tres"]}, {"name": "dive", "bars": 0.5, "patterns": ["res://demo/ftf/ftf_greebles/audio/music/dive.tres"], "automation": {"pad.cutoff_hz": [[0.0, 1100.0], [1.0, 4500.0]], "snare.gain_db": [[0.0, -10.0], [1.0, 0.0]]}}, {"name": "drop", "bars": 1.5, "patterns": ["res://demo/ftf/ftf_greebles/audio/music/drop.tres"]}, {"name": "thin", "bars": 0.5, "patterns": ["res://demo/ftf/ftf_greebles/audio/music/thin.tres"], "automation": {"pad.gain_db": [[0.0, 0.0], [1.0, -6.0]]}}, {"name": "tail", "bars": 0.375, "patterns": ["res://demo/ftf/ftf_greebles/audio/music/silence.tres"]}])
+gain_db = -4.0
+tempo = ExtResource("2")

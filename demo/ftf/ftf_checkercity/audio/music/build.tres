@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="AKPattern" format=3]
+
+[ext_resource type="Script" path="res://addons/audio_kit/sequencer/pattern.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+steps = 16
+seed = 5
+lanes = Array[Dictionary]([{"name": "snare", "recipe": "res://demo/ftf/ftf_checkercity/audio/music/snare.tres", "steps": "o.o.x.x.xxxxXXXX", "length": 16, "gain_db": -6.0}, {"name": "bass", "recipe": "res://demo/ftf/ftf_checkercity/audio/music/bass.tres", "steps": "x.x.x.x.x.x.x.x.x.x.x.x.x.x.x.x.x.x.x.x.x.x.x.x.x.x.x.x.x.x.x.x.", "notes": [33, 33, 33, 33, 33, 33, 33, 33, 29, 29, 29, 29, 29, 29, 29, 29, 36, 36, 36, 36, 36, 36, 36, 36, 31, 31, 31, 31, 31, 31, 31, 31], "gate": 0.8, "gain_db": -2.0}, {"name": "arp", "recipe": "res://demo/ftf/ftf_checkercity/audio/music/arp.tres", "steps": "xxxxxxxxxxxxxxxx", "length": 16, "notes": [57, 64, 69, 72, 69, 64, 76, 69, 57, 64, 69, 72, 69, 64, 76, 69, 57, 64, 69, 72, 69, 64, 76, 69, 57, 64, 69, 72, 69, 64, 76, 69, 57, 64, 69, 72, 69, 64, 76, 69, 57, 64, 69, 72, 69, 64, 76, 69, 57, 64, 69, 72, 69, 64, 76, 69, 57, 64, 69, 72, 69, 64, 76, 69], "gate": 0.7, "gain_db": -11.0, "pan": 0.2}])

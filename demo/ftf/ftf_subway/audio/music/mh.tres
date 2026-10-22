@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="AKPattern" format=3]
+
+[ext_resource type="Script" path="res://addons/audio_kit/sequencer/pattern.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+steps = 32
+seed = 2
+swing = 0.5
+lanes = Array[Dictionary]([{"name": "chime", "recipe": "res://demo/ftf/ftf_subway/audio/music/chime.tres", "steps": "x.x.x...x.x.x...", "length": 16, "notes": [81, 78, 74, 76, 83, 81], "gain_db": -8.0}, {"name": "clack", "recipe": "res://demo/ftf/ftf_subway/audio/music/clack.tres", "steps": "x..x.x......x..x", "length": 16, "gain_db": -8.0}, {"name": "hat", "recipe": "res://demo/ftf/ftf_subway/audio/music/hat.tres", "steps": "..x...x...x...xo", "length": 16, "gain_db": -12.0, "pan": 0.15}, {"name": "kick", "recipe": "res://demo/ftf/ftf_subway/audio/music/kick.tres", "steps": "o.......o.......", "length": 16, "gain_db": -6.0}, {"name": "bass", "recipe": "res://demo/ftf/ftf_subway/audio/music/bass.tres", "steps": "x.......x.......", "length": 16, "notes": [38, 38, 50, 38, 45, 38, 48, 50], "gate": 0.7, "gain_db": -6.0}])

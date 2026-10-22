@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="AKSong" format=3]
+
+[ext_resource type="Script" path="res://addons/audio_kit/sequencer/song.gd" id="1"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_houndstooth/audio/music/tempo.tres" id="2"]
+
+[resource]
+script = ExtResource("1")
+sections = Array[Dictionary]([{"name": "intro", "bars": 1.0, "patterns": ["res://demo/ftf/ftf_houndstooth/audio/music/intro.tres"]}, {"name": "mh", "bars": 1.0, "patterns": ["res://demo/ftf/ftf_houndstooth/audio/music/mh.tres"], "automation": {"organ.cutoff_hz": [[0.0, 400.0], [1.0, 650.0]]}}, {"name": "build", "bars": 1.75, "patterns": ["res://demo/ftf/ftf_houndstooth/audio/music/build.tres"], "automation": {"organ.cutoff_hz": [[0.0, 500.0], [1.0, 1800.0]], "organ.q": [[0.0, 1.5], [1.0, 4.0]]}}, {"name": "break", "bars": 0.25, "patterns": ["res://demo/ftf/ftf_houndstooth/audio/music/break.tres"]}, {"name": "drop", "bars": 1.6, "patterns": ["res://demo/ftf/ftf_houndstooth/audio/music/drop.tres"], "automation": {"organ.cutoff_hz": [[0.0, 1100.0], [0.5, 1600.0], [1.0, 1000.0]]}}, {"name": "outro", "bars": 0.8, "patterns": ["res://demo/ftf/ftf_houndstooth/audio/music/outro.tres"], "automation": {"organ.cutoff_hz": [[0.0, 900.0], [1.0, 200.0]], "organ.gain_db": [[0.0, 0.0], [1.0, -12.0]], "kick.gain_db": [[0.0, 0.0], [1.0, -8.0]]}}, {"name": "tail", "bars": 0.6, "patterns": ["res://demo/ftf/ftf_houndstooth/audio/music/silence.tres"]}])
+gain_db = -4.0
+tempo = ExtResource("2")

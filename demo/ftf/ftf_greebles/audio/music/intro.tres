@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="AKPattern" format=3]
+
+[ext_resource type="Script" path="res://addons/audio_kit/sequencer/pattern.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+steps = 16
+seed = 5
+lanes = Array[Dictionary]([{"name": "pad", "recipe": "res://demo/ftf/ftf_greebles/audio/music/pad.tres", "steps": "x...............", "length": 16, "notes": ["D3", "D3", "A#2", "C3"], "chord": [0, 3, 7, 10], "gate": 15.5, "gain_db": -10.0}, {"name": "sub", "recipe": "res://demo/ftf/ftf_greebles/audio/music/sub.tres", "steps": "X.......x.......", "length": 16, "notes": ["D1", "D1", "A#0", "C1"], "gate": 7.0, "gain_db": -4.0}, {"name": "bell", "recipe": "res://demo/ftf/ftf_greebles/audio/music/bell.tres", "steps": "x.....x...x.....", "length": 16, "notes": ["D5", "A5", "F5", "C6", "A5", "E5"], "gain_db": -13.0, "pan": 0.25}, {"name": "kick", "recipe": "res://demo/ftf/ftf_greebles/audio/music/kick.tres", "steps": "o...............", "length": 16, "gain_db": -6.0}])

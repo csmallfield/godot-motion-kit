@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="AKCueMap" format=3]
+
+[ext_resource type="Script" path="res://addons/audio_kit/core/cue_map.gd" id="1"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_greebles/audio/air.tres" id="2"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_greebles/audio/clank.tres" id="3"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_greebles/audio/settle.tres" id="4"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_greebles/audio/servo.tres" id="5"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_greebles/audio/lamp.tres" id="6"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_greebles/audio/riser.tres" id="7"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_greebles/audio/alarm.tres" id="8"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_greebles/audio/slam.tres" id="9"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_greebles/audio/cascade.tres" id="10"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_greebles/audio/hud.tres" id="11"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_greebles/audio/drone.tres" id="12"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_greebles/audio/clamp.tres" id="13"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_greebles/audio/steam.tres" id="14"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_greebles/audio/pullout.tres" id="15"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_greebles/audio/cut.tres" id="16"]
+
+[resource]
+script = ExtResource("1")
+sounds = {"air": ExtResource("2"), "clank": ExtResource("3"), "settle": ExtResource("4"), "servo": ExtResource("5"), "lamp": ExtResource("6"), "riser": ExtResource("7"), "alarm": ExtResource("8"), "slam": ExtResource("9"), "cascade": ExtResource("10"), "hud": ExtResource("11"), "drone": ExtResource("12"), "clamp": ExtResource("13"), "steam": ExtResource("14"), "pullout": ExtResource("15"), "cut": ExtResource("16")}
+master_fx = Array[Dictionary]([{"type": "dcblock"}, {"type": "loudness", "target_lufs": -16.0}, {"type": "limit", "ceiling_db": -2.0}])
+reverb = {"room": 0.78, "damp": 0.45, "width": 1.0, "quality": &"full", "return_db": -4.0}
+end_fade_s = 0.4
+duck = {"depth_db": 7.0, "full_at_db": -20.0, "attack_s": 0.005, "release_s": 0.35}

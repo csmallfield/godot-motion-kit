@@ -1,0 +1,29 @@
+[gd_resource type="Resource" script_class="AKCueMap" format=3]
+
+[ext_resource type="Script" path="res://addons/audio_kit/core/cue_map.gd" id="1"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_checkercity/audio/dive.tres" id="2"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_checkercity/audio/sprout.tres" id="3"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_checkercity/audio/mh_rise.tres" id="4"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_checkercity/audio/mh_land.tres" id="5"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_checkercity/audio/presents.tres" id="6"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_checkercity/audio/pulse.tres" id="7"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_checkercity/audio/mh_sink.tres" id="8"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_checkercity/audio/tube_in.tres" id="9"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_checkercity/audio/flip.tres" id="10"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_checkercity/audio/tube_out.tres" id="11"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_checkercity/audio/rise.tres" id="12"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_checkercity/audio/drop.tres" id="13"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_checkercity/audio/ring.tres" id="14"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_checkercity/audio/halve.tres" id="15"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_checkercity/audio/swerve.tres" id="16"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_checkercity/audio/sink.tres" id="17"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_checkercity/audio/fold.tres" id="18"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_checkercity/audio/close.tres" id="19"]
+
+[resource]
+script = ExtResource("1")
+sounds = {"dive": ExtResource("2"), "sprout": ExtResource("3"), "mh.rise": ExtResource("4"), "mh.land": ExtResource("5"), "presents": ExtResource("6"), "pulse": ExtResource("7"), "mh.sink": ExtResource("8"), "tube.in": ExtResource("9"), "flip": ExtResource("10"), "tube.out": ExtResource("11"), "rise": ExtResource("12"), "drop": ExtResource("13"), "ring": ExtResource("14"), "halve": ExtResource("15"), "swerve": ExtResource("16"), "sink": ExtResource("17"), "fold": ExtResource("18"), "close": ExtResource("19")}
+master_fx = Array[Dictionary]([{"type": "dcblock"}, {"type": "loudness", "target_lufs": -16.0}, {"type": "limit", "ceiling_db": -2.0}])
+reverb = {"room": 0.5, "damp": 0.45, "width": 1.0, "quality": &"full", "return_db": -2.0}
+end_fade_s = 0.9
+duck = {"depth_db": 6.0, "full_at_db": -20.0, "attack_s": 0.005, "release_s": 0.25}

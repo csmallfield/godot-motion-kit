@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="AKPattern" format=3]
+
+[ext_resource type="Script" path="res://addons/audio_kit/sequencer/pattern.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+steps = 16
+seed = 5
+lanes = Array[Dictionary]([{"name": "kick", "recipe": "res://demo/ftf/ftf_warning/audio/music/kick.tres", "steps": "X...X...X...X...", "length": 16}, {"name": "hat", "recipe": "res://demo/ftf/ftf_warning/audio/music/hat.tres", "steps": "..x...x...x...x.", "length": 16, "gain_db": -9.0, "pan": 0.15}, {"name": "clap", "recipe": "res://demo/ftf/ftf_warning/audio/music/clap.tres", "steps": "....x.......x...", "length": 16, "gain_db": -8.0}, {"name": "hoover", "recipe": "res://demo/ftf/ftf_warning/audio/music/hoover.tres", "steps": "X..x..x.x..x..x.", "length": 16, "notes": ["A3", "A3", "C4", "A3", "E4", "D4", "C4", "A3"], "gate": 0.9, "gain_db": -7.0}, {"name": "arp", "recipe": "res://demo/ftf/ftf_warning/audio/music/arp.tres", "steps": "xxxxxxxxxxxxxxxx", "length": 16, "notes": ["A5", "E5", "C5", "E5", "A5", "E5", "D5", "E5"], "gain_db": -16.0, "pan": -0.2}])

@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="AKRecipe" format=3]
+
+[ext_resource type="Script" path="res://addons/audio_kit/core/recipe.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+voice = &"tone"
+params = {"wave": &"sine", "freq_hz": 330.0, "end_hz": 250.0, "glide_s": 0.2, "decay_s": 0.5, "gate_s": 0.4, "release_s": 0.2, "vibrato_hz": 9.0, "vibrato_semitones": 1.5}
+bind = {"intensity": {"gain_db": [-14.0, -6.0]}, "data.pitch": "pitch_scale"}
+send = 0.45
+seed = 313

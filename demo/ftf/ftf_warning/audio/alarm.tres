@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="AKRecipe" format=3]
+
+[ext_resource type="Script" path="res://addons/audio_kit/core/recipe.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+voice = &"follow"
+params = {"wave": &"square", "length_s": 1.05, "pitch": [[0.0, 640.0], [0.17, 980.0], [0.35, 640.0], [0.52, 980.0], [0.7, 640.0], [0.87, 980.0], [1.05, 640.0]], "level": [[0.0, 0.0], [0.04, 0.9], [0.9, 0.9], [1.05, 0.0]], "glide": 0.4}
+fx = Array[Dictionary]([{"type": "lowpass", "cutoff_hz": 3200.0, "slope_db": 24.0}, {"type": "drive", "amount": 0.3}])
+bind = {"intensity": {"gain_db": [-16.0, -8.0]}}
+send = 0.2
+seed = 301

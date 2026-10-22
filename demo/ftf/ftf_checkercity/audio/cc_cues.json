@@ -1,0 +1,195 @@
+{
+	"cues": [
+		{
+			"data": {
+
+			},
+			"frame": 0.0,
+			"intensity": 0.8,
+			"name": "dive",
+			"time": 0.0
+		},
+		{
+			"data": {
+
+			},
+			"frame": 16.0,
+			"intensity": 0.6,
+			"name": "sprout",
+			"time": 0.533333333333333
+		},
+		{
+			"data": {
+
+			},
+			"frame": 40.0,
+			"intensity": 0.8,
+			"name": "mh.rise",
+			"time": 1.33333333333333
+		},
+		{
+			"data": {
+
+			},
+			"frame": 64.0,
+			"intensity": 1.0,
+			"name": "mh.land",
+			"time": 2.13333333333333
+		},
+		{
+			"data": {
+
+			},
+			"frame": 80.0,
+			"intensity": 0.8,
+			"name": "presents",
+			"time": 2.66666666666667
+		},
+		{
+			"data": {
+				"pitch": 1.0
+			},
+			"frame": 96.0,
+			"intensity": 0.5,
+			"name": "pulse",
+			"time": 3.2
+		},
+		{
+			"data": {
+				"pitch": 1.19
+			},
+			"frame": 104.0,
+			"intensity": 0.5,
+			"name": "pulse",
+			"time": 3.46666666666667
+		},
+		{
+			"data": {
+
+			},
+			"frame": 112.0,
+			"intensity": 0.7,
+			"name": "mh.sink",
+			"time": 3.73333333333333
+		},
+		{
+			"data": {
+
+			},
+			"frame": 116.0,
+			"intensity": 0.9,
+			"name": "tube.in",
+			"time": 3.86666666666667
+		},
+		{
+			"data": {
+				"pitch": 1.0
+			},
+			"frame": 128.0,
+			"intensity": 0.6,
+			"name": "flip",
+			"time": 4.26666666666667
+		},
+		{
+			"data": {
+				"pitch": 1.19
+			},
+			"frame": 144.0,
+			"intensity": 0.7,
+			"name": "flip",
+			"time": 4.8
+		},
+		{
+			"data": {
+
+			},
+			"frame": 160.0,
+			"intensity": 0.8,
+			"name": "tube.out",
+			"time": 5.33333333333333
+		},
+		{
+			"data": {
+
+			},
+			"frame": 176.0,
+			"intensity": 1.0,
+			"name": "rise",
+			"time": 5.86666666666667
+		},
+		{
+			"data": {
+
+			},
+			"frame": 192.0,
+			"intensity": 1.0,
+			"name": "drop",
+			"time": 6.4
+		},
+		{
+			"data": {
+
+			},
+			"frame": 224.0,
+			"intensity": 0.6,
+			"name": "swerve",
+			"time": 7.46666666666667
+		},
+		{
+			"data": {
+
+			},
+			"frame": 256.0,
+			"intensity": 0.7,
+			"name": "halve",
+			"time": 8.53333333333333
+		},
+		{
+			"data": {
+
+			},
+			"frame": 288.0,
+			"intensity": 0.6,
+			"name": "ring",
+			"time": 9.6
+		},
+		{
+			"data": {
+
+			},
+			"frame": 304.0,
+			"intensity": 0.6,
+			"name": "swerve",
+			"time": 10.1333333333333
+		},
+		{
+			"data": {
+
+			},
+			"frame": 320.0,
+			"intensity": 0.8,
+			"name": "sink",
+			"time": 10.6666666666667
+		},
+		{
+			"data": {
+
+			},
+			"frame": 326.0,
+			"intensity": 1.0,
+			"name": "fold",
+			"time": 10.8666666666667
+		},
+		{
+			"data": {
+
+			},
+			"frame": 384.0,
+			"intensity": 1.0,
+			"name": "close",
+			"time": 12.8
+		}
+	],
+	"duration": 420.0,
+	"fps": 30.0
+}

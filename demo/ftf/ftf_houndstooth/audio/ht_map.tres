@@ -1,0 +1,29 @@
+[gd_resource type="Resource" script_class="AKCueMap" format=3]
+
+[ext_resource type="Script" path="res://addons/audio_kit/core/cue_map.gd" id="1"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_houndstooth/audio/open.tres" id="2"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_houndstooth/audio/weave.tres" id="3"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_houndstooth/audio/turn.tres" id="4"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_houndstooth/audio/colour.tres" id="5"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_houndstooth/audio/part.tres" id="6"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_houndstooth/audio/label.tres" id="7"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_houndstooth/audio/bulge.tres" id="8"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_houndstooth/audio/pull.tres" id="9"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_houndstooth/audio/sweep.tres" id="10"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_houndstooth/audio/tighten.tres" id="11"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_houndstooth/audio/riser.tres" id="12"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_houndstooth/audio/snip.tres" id="13"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_houndstooth/audio/drop.tres" id="14"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_houndstooth/audio/tag.tres" id="15"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_houndstooth/audio/ripple.tres" id="16"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_houndstooth/audio/zip.tres" id="17"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_houndstooth/audio/collapse.tres" id="18"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_houndstooth/audio/blip.tres" id="19"]
+
+[resource]
+script = ExtResource("1")
+sounds = {"open": ExtResource("2"), "weave": ExtResource("3"), "turn": ExtResource("4"), "colour": ExtResource("5"), "part": ExtResource("6"), "label": ExtResource("7"), "bulge": ExtResource("8"), "pull": ExtResource("9"), "sweep": ExtResource("10"), "tighten": ExtResource("11"), "riser": ExtResource("12"), "snip": ExtResource("13"), "drop": ExtResource("14"), "tag": ExtResource("15"), "ripple": ExtResource("16"), "zip": ExtResource("17"), "collapse": ExtResource("18"), "blip": ExtResource("19")}
+master_fx = Array[Dictionary]([{"type": "dcblock"}, {"type": "loudness", "target_lufs": -16.0}, {"type": "limit", "ceiling_db": -2.0}])
+reverb = {"room": 0.4, "damp": 0.5, "width": 1.0, "quality": &"full", "return_db": -3.0}
+end_fade_s = 0.4
+duck = {"depth_db": 6.0, "full_at_db": -20.0, "attack_s": 0.005, "release_s": 0.25}

@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="AKRecipe" format=3]
+
+[ext_resource type="Script" path="res://addons/audio_kit/core/recipe.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+voice = &"ratchet"
+params = {"length_s": 0.5, "start_rate_hz": 60.0, "end_rate_hz": 40.0, "click_hz": 7000.0, "q": 5.0, "fade": 0.5, "jitter": 0.3}
+bind = {"intensity": {"gain_db": [-24.0, -14.0]}}
+seed = 302
