@@ -487,12 +487,9 @@ func _build_logo() -> void:
 		var conts := _contours(data, part, k, tl)
 		var outers: Array[PackedVector2Array] = []
 		var holes: Array[PackedVector2Array] = []
+		var is_hole := MotionPoly.hole_flags(conts, false)
 		for ci in conts.size():
-			var inside := 0
-			for cj in conts.size():
-				if ci != cj and Geometry2D.is_point_in_polygon(conts[ci][0], conts[cj]):
-					inside += 1
-			if inside % 2 == 1:
+			if is_hole[ci]:
 				holes.append(conts[ci])
 			else:
 				outers.append(conts[ci])
@@ -518,7 +515,7 @@ func _build_logo() -> void:
 			if shapes.is_empty():
 				break
 			for s in shapes:
-				if s.size() < 3 or absf(_area(s)) < 30.0:
+				if s.size() < 3 or absf(MotionPoly.signed_area(s)) < 30.0:
 					continue
 				var li := _logo.add_path(StringName("r%d_%d" % [part, depth]), col, s, {closed = true})
 				var start := minf(LOGO_ON + x_frac * 9.0 + depth * 0.9, DROP - 9.0)
@@ -564,12 +561,9 @@ func _contours(data: MotionSvgData, part: int, k: float, tl: Vector2) -> Array[P
 	return out
 
 
+## Deprecated: use MotionPoly.signed_area.
 static func _area(p: PackedVector2Array) -> float:
-	var a := 0.0
-	for i in p.size():
-		var q := p[(i + 1) % p.size()]
-		a += p[i].x * q.y - q.x * p[i].y
-	return a * 0.5
+	return MotionPoly.signed_area(p)
 
 
 # ================================================================== camera

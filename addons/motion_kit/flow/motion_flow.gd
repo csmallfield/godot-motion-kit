@@ -61,9 +61,11 @@ func add_pipe(points: PackedVector2Array, opts := {}) -> int:
 	var p := PIPE_DEFAULTS.duplicate()
 	p.merge(opts, true)
 	var pts: PackedVector2Array = rounded(points, float(p.radius), int(p.segments)) if float(p.radius) > 0.0 else points
+	var path := MotionPath.new(pts)
 	p.points = pts
-	p.cum = _cumulative(pts)
-	p.length = (p.cum as PackedFloat32Array)[pts.size() - 1]
+	p.path = path
+	p.cum = path.lengths
+	p.length = path.lengths[pts.size() - 1]
 	_pipes.append(p)
 	_state.append(STATE_DEFAULTS.duplicate())
 	queue_redraw()
@@ -89,15 +91,23 @@ func points(i: int) -> PackedVector2Array:
 	return _pipes[i].points
 
 
+## Pipe i's centreline as a measured MotionPath (rounded corners included).
+func path(i: int) -> MotionPath:
+	return _pipes[i].path
+
+
 ## Point at arc length `s` px along pipe i (clamped).
 func point_at(i: int, s: float) -> Vector2:
-	return _point(_pipes[i], s)
+	return (_pipes[i].path as MotionPath).point_at(s)
 
 
-## Unit tangent at arc length `s` px.
+## Unit tangent at arc length `s` px (the chord over ±1 px; zero past the ends).
 func tangent_at(i: int, s: float) -> Vector2:
-	var p: Dictionary = _pipes[i]
-	return (_point(p, s + 1.0) - _point(p, s - 1.0)).normalized()
+	return _tangent(_pipes[i].path, s)
+
+
+static func _tangent(mp: MotionPath, s: float) -> Vector2:
+	return (mp.point_at(s + 1.0) - mp.point_at(s - 1.0)).normalized()
 
 
 ## Set pipe i's state for this frame (keys of STATE_DEFAULTS); unset keys reset to defaults.
@@ -158,13 +168,14 @@ func _draw_wall(p: Dictionary, s: Dictionary) -> void:
 			draw_circle(e, w * 0.5, Color(wall, wall.a * o))
 			draw_circle(e, w * 0.5 - float(p.wall_width), Color(core, core.a * o))
 	var sp: float = p.arrows
+	var mp: MotionPath = p.path
 	if sp > 0.0:
 		var ac: Color = p.arrow_color
 		var k := sp * 0.5
 		while k < b:
 			if k > a:
-				var c := _point(p, k)
-				var t := (_point(p, k + 1.0) - _point(p, k - 1.0)).normalized()
+				var c := mp.point_at(k)
+				var t := _tangent(mp, k)
 				var nrm := Vector2(-t.y, t.x)
 				var h := (w - 2.0 * float(p.wall_width)) * 0.32
 				draw_colored_polygon(PackedVector2Array([c + t * h, c - t * h + nrm * h, c - t * h - nrm * h]), Color(ac, ac.a * o * 0.6))
@@ -205,21 +216,22 @@ func _draw_fluid(p: Dictionary, s: Dictionary) -> void:
 			x += gap
 	# bubbles
 	var nb: int = s.bubbles
+	var mp: MotionPath = p.path
 	if nb > 0:
 		var bc: Color = s.bubble_color
 		var span := maxf(1.0, b - a)
 		for k in nb:
 			var r0 := MK.rand(k * 7.31 + L)
 			var pos := a + fposmod(r0 * span + float(s.flow) * float(s.bubble_speed) * (0.7 + 0.6 * MK.rand(k * 3.7)), span)
-			var c := _point(p, pos)
-			var t := (_point(p, pos + 1.0) - _point(p, pos - 1.0)).normalized()
+			var c := mp.point_at(pos)
+			var t := _tangent(mp, pos)
 			var off := Vector2(-t.y, t.x) * (MK.rand(k * 1.9 + 4.0) - 0.5) * inner * 0.5
 			var rad := inner * (0.10 + 0.12 * MK.rand(k * 5.3))
 			draw_arc(c + off, rad, 0.0, TAU, 12, Color(bc, bc.a * o), maxf(1.0, rad * 0.45), true)
 	# a bright bead at the travelling front
 	var fg: float = s.front_glow
 	if fg > 0.0 and b < L - 0.5:
-		var c2 := _point(p, b)
+		var c2 := mp.point_at(b)
 		draw_circle(c2, inner * 1.2, Color(fluid, 0.25 * fg * o))
 		draw_circle(c2, inner * 0.55, Color(Color.WHITE, 0.9 * fg * o))
 
@@ -228,71 +240,13 @@ func _draw_fluid(p: Dictionary, s: Dictionary) -> void:
 
 ## A path through `pts` with each corner replaced by a smooth arc of radius `r`
 ## (clamped to half the shorter neighbouring leg), sampled with `seg` points.
+## Deprecated: use MotionPath.rounded.
 static func rounded(pts: PackedVector2Array, r: float, seg := 10) -> PackedVector2Array:
-	if pts.size() < 3 or r <= 0.0:
-		return pts
-	var out := PackedVector2Array([pts[0]])
-	for i in range(1, pts.size() - 1):
-		var a := pts[i - 1]
-		var b := pts[i]
-		var c := pts[i + 1]
-		var d1 := (a - b).normalized()
-		var d2 := (c - b).normalized()
-		var ang := absf(d1.angle_to(d2))
-		if ang > PI - 0.01:   # straight through
-			out.append(b)
-			continue
-		var t := minf(r / tan(ang * 0.5), minf(a.distance_to(b), b.distance_to(c)) * 0.5)
-		var p1 := b + d1 * t
-		var p2 := b + d2 * t
-		for k in seg + 1:
-			var u := float(k) / seg
-			out.append(p1.lerp(b, u).lerp(b.lerp(p2, u), u))
-	out.append(pts[pts.size() - 1])
-	return out
-
-
-static func _cumulative(pts: PackedVector2Array) -> PackedFloat32Array:
-	var cum := PackedFloat32Array()
-	cum.resize(pts.size())
-	var acc := 0.0
-	cum[0] = 0.0
-	for i in range(1, pts.size()):
-		acc += pts[i - 1].distance_to(pts[i])
-		cum[i] = acc
-	return cum
-
-
-static func _index(cum: PackedFloat32Array, s: float) -> int:
-	var i := cum.bsearch(s, true) - 1
-	return clampi(i, 0, cum.size() - 2)
-
-
-static func _point(p: Dictionary, s: float) -> Vector2:
-	var pts: PackedVector2Array = p.points
-	var cum: PackedFloat32Array = p.cum
-	if pts.size() == 1:
-		return pts[0]
-	s = clampf(s, 0.0, float(p.length))
-	var i := _index(cum, s)
-	var seg := cum[i + 1] - cum[i]
-	var u := (s - cum[i]) / seg if seg > 0.0 else 0.0
-	return pts[i].lerp(pts[i + 1], u)
+	return MotionPath.rounded(pts, r, seg)
 
 
 ## The piece of pipe `p` (an internal record) between arc lengths a and b px.
+## Deprecated: use path(i).sub(a, b, true).
 static func sub_path(p: Dictionary, a: float, b: float) -> PackedVector2Array:
-	var pts: PackedVector2Array = p.points
-	var cum: PackedFloat32Array = p.cum
-	var out := PackedVector2Array()
-	a = clampf(a, 0.0, float(p.length))
-	b = clampf(b, 0.0, float(p.length))
-	if b <= a:
-		return out
-	var ia := _index(cum, a)
-	var ib := _index(cum, b)
-	out.append(_point(p, a))
-	for k in range(ia + 1, ib + 1):
-		out.append(pts[k])
-	out.append(_point(p, b))
-	return out
+	var mp: MotionPath = p.path if p.has("path") else MotionPath.new(p.points)
+	return mp.sub(clampf(a, 0.0, float(p.length)), clampf(b, 0.0, float(p.length)), true)

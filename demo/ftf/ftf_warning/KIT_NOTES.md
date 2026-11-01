@@ -7,8 +7,9 @@ New files (no existing kit file was changed):
 | `addons/motion_kit/text/motion_text_path.gd` | `MotionTextPath` (Node2D): text set along any polyline, like SVG `<textPath>` |
 | `addons/motion_kit/fx/motion_beacon.gd` | `MotionBeacon` (Node2D): a rotating beacon light (shader inside the script) |
 
-The hazard tape itself (stripes in path space, torn ends, whip wave) is a take helper,
-`demo/ftf/ftf_warning/warning_tape.gd`, built on `MotionTextPath`'s static path maths.
+The hazard tape itself (stripes in path space, torn ends, whip wave) started as a take
+helper and is now the kit's `MotionTape` (`addons/motion_kit/shapes/motion_tape.gd`), built
+on `MotionPath` in `MotionTextPath`'s arc-length model.
 
 ## API rows (for docs/API.md)
 
@@ -29,7 +30,8 @@ each is placed at its own arc length on the path and turned to the path's direct
 | `show_from`, `show_to`, `edge_fade` | Only glyphs whose centre lies between these arc lengths are drawn (`show_to` < 0 = the end), fading over `edge_fade` px: text that appears with a tape being laid |
 | `glyph_fn(i, s) -> Dictionary` | Per-glyph overrides `tx` (along), `ty` (across), `s`, `rot`, `o`, `color`, `hide`; `i` = character index, `s` = arc length |
 | `get_text_width()`, `path_length()`, `point_at(s)`, `tangent_at(s)` | Measurements |
-| static `path_lengths(pts, closed)`, `path_point(pts, lengths, closed, s)`, `path_tangent(pts, lengths, closed, s, window)` | The arc-length model, shared with anything else that follows the path (ribbons, tapes, markers). Open paths extend straight past their ends; tangents are chords over ±window so corners don't snap |
+| `measured()` | The path as a `MotionPath` (closed paths wrap, open ones run straight on past their ends) |
+| static `path_lengths(pts, closed)`, `path_point(pts, lengths, closed, s)`, `path_tangent(pts, lengths, closed, s, window)` | Deprecated: `MotionPath.cumulative(pts, closed, true)`, `MotionPath.point_on`, `MotionPath.tangent_on`. Open paths extend straight past their ends; tangents are chords over ±window so corners don't snap |
 
 ### MotionBeacon (Node2D)
 
@@ -52,7 +54,7 @@ One quad over `size`, drawn additively, so the beams light whatever is under the
 | --- | --- | --- |
 | Text on a path | `MotionTextPath` with `points` (and `closed`), `repeat` to tile, animate `offset` to scroll; `show_from`/`show_to` reveal it with whatever draws the path; `glyph_fn` for waves along the path | The Warning take: multilingual warnings (WARNING / ACHTUNG / 警告 / ВНИМАНИЕ) running along thrown hazard tape that whips as it lands; the logo's name crawling round a closed tape frame; ticker tapes along the top and bottom |
 | Rotating beacons | `MotionBeacon` over the scene, `angle = MotionBeacon.spin(f, period)`; two lamps turning in opposite directions; speed them up for an escalation by continuing the angle from the switch frame | Two warning lamps sweeping amber and pink beams across the placard, the signs and the logo, the lens flaring each time a beam faces the viewer |
-| Hazard tape (take helper) | `warning_tape.gd`: a ribbon along a path with stripes laid out in path space (they bend with it), square or torn ends, a decaying whip wave, and exits (follow, back, tear) | Tape thrown across on the beats, a wall of tape that tears open on the logo at the drop, nine tapes snapping closed over the screen and yanked away |
+| Hazard tape | `MotionTape` (was the take's `warning_tape.gd`): a ribbon along a path with stripes laid out in path space (they bend with it), square or torn ends, a decaying whip wave, and exits (follow, back, tear) | Tape thrown across on the beats, a wall of tape that tears open on the logo at the drop, nine tapes snapping closed over the screen and yanked away |
 
 ## Frame purity
 

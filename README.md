@@ -76,6 +76,8 @@ and rendered offline frame-exactly with Movie Maker.
 | `MotionShape` | SDF circle, rect, pill, ring, arc, with dashes, borders and exact Gaussian blur (box-shadow) |
 | `MotionGradient` | CSS linear, radial, conic and repeating gradients (hazard stripes), concentric ring stacks (moiré), scrollable, with add / multiply / screen / overlay blending |
 | `MotionCanvas` | Immediate-mode lines, dashes, polygons, circles, ellipses for loop-built SVG (wireframes, track floors, particle dust) |
+| `MotionMarks`, `MotionTape` | Loop-built marks for any CanvasItem (chevrons, arrows, checker, hatch, barcodes, crosshairs, warning triangles, hazard clamps, ribbons and stripe bundles along paths); hazard tape along a path with stripes in path space, torn ends and a whip wave |
+| `MotionPath`, `MotionPoly` | Measured polylines (point, tangent and sub-path by arc length or fraction, rounded corners, true arcs, offsets); signed area, bounds, nonzero / even-odd point-in-polygon and hole detection |
 | `MotionCells` | Palette-indexed byte grid in one quad with exact sub-pixel coverage: cellular automata, LED boards, pixel mosaics, minimaps |
 | `MotionFX`, `MotionOverlay`, `MotionPixelGrid` | Offscreen group: Gaussian blur, glow, drop/text shadow, slice glitch with RGB split, pixelate, brightness, invert, SVG-exact goo (metaballs, flood fill, colour-keeping atop); TV static, CRT; pixel builds from an SVG |
 | `MotionSpring`, `MotionReactive` | Stateful springs for input; drop-in hover, focus and press feedback for any Control |

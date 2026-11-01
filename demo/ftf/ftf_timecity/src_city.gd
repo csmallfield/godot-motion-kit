@@ -175,9 +175,9 @@ func _place_cap(mask: MotionCanvas, svg: MotionSvg, list: Array[MotionSolid], po
 		var poly := sc.cap_polygon(q)
 		if not sc.cap_unclipped(q):
 			whole = false
-		if poly.size() >= 3 and absf(MotionExtrude._area2(poly)) > 2.0:
+		if poly.size() >= 3 and absf(MotionPoly.area2(poly)) > 2.0:
 			polys.append(poly)
-			var b := MotionExtrude._bounds(poly)
+			var b := MotionPoly.bounds(poly)
 			box = b if not box.has_area() else box.merge(b)
 	if polys.is_empty() or not vis.intersects(box):
 		mask.visible = false

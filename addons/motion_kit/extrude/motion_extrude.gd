@@ -165,7 +165,7 @@ func _face(c: MotionCanvas, s: MotionSolid, pts: PackedVector3Array, col: Color)
 	sp.resize(poly.size())
 	for i in poly.size():
 		sp[i] = camera.project(poly[i])
-	if absf(_area2(sp)) * 0.5 < min_area:
+	if absf(MotionPoly.area2(sp)) * 0.5 < min_area:
 		return 0
 	var fill := Color(col, col.a * s.opacity)
 	if sp.size() == 4 or Geometry2D.triangulate_polygon(sp).size() > 0:
@@ -180,7 +180,7 @@ func _cap_decals(c: MotionCanvas, s: MotionSolid, which: String) -> void:
 		return
 	for d in s.decals:
 		if typeof(d.face) == TYPE_STRING and d.face == which:
-			var bb := _bounds(s.outline)
+			var bb := MotionPoly.bounds(s.outline)
 			var t := s.depth if which == "front" else 0.0
 			# Decal space: x along u, y down (against v), origin at the outline's top-left.
 			var o := s.point(bb.position.x, bb.end.y, t)
@@ -291,17 +291,11 @@ static func clip_above(pts: PackedVector3Array, h: float) -> PackedVector3Array:
 	return out
 
 
+## Deprecated: use MotionPoly.area2.
 static func _area2(p: PackedVector2Array) -> float:
-	var a := 0.0
-	for i in p.size():
-		var q := p[i]
-		var r := p[(i + 1) % p.size()]
-		a += q.x * r.y - r.x * q.y
-	return a
+	return MotionPoly.area2(p)
 
 
+## Deprecated: use MotionPoly.bounds.
 static func _bounds(p: PackedVector2Array) -> Rect2:
-	var r := Rect2(p[0], Vector2.ZERO)
-	for q in p:
-		r = r.expand(q)
-	return r
+	return MotionPoly.bounds(p)

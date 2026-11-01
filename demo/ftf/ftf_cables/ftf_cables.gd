@@ -564,8 +564,8 @@ func _draw_panel(c: MotionCanvas, f: float) -> void:
 		for y in range(0, 1081, 270):
 			for o in [Vector2(14, 14), Vector2(-14, 14), Vector2(14, -14), Vector2(-14, -14)]:
 				c.circle(Vector2(x, y) + o, 3.5, Color("#26272d"))
-	FTFKit.hatch(c, FTFKit.rect_pts(Rect2(1680, 990, 200, 40)), 18, 7, Color("#222328"), 45.0, 0.0)
-	FTFKit.hatch(c, FTFKit.rect_pts(Rect2(40, 40, 200, 40)), 18, 7, Color("#222328"), 45.0, 0.0)
+	MotionMarks.hatch(c, MotionPoly.rect(Rect2(1680, 990, 200, 40)), 18, 7, Color("#222328"), 45.0, 0.0)
+	MotionMarks.hatch(c, MotionPoly.rect(Rect2(40, 40, 200, 40)), 18, 7, Color("#222328"), 45.0, 0.0)
 
 
 func _draw_strip(c: MotionCanvas, f: float) -> void:

@@ -278,7 +278,7 @@ func _make_size_tag() -> Node2D:
 		cv.polygon(body, FTFKit.PINK, Color(0, 0, 0, 0), 0.0)
 		cv.circle(Vector2(0, 92), 9, FTFKit.INK)
 		cv.ring(Vector2(0, 92), 13, FTFKit.CREAM, 2.0)
-		FTFKit.checker(cv, Vector2(-100, 300), 10, 1, 20, FTFKit.INK)
+		MotionMarks.checker(cv, Vector2(-100, 300), 10, 1, 20, FTFKit.INK)
 	n.add_child(c)
 	var s := _text(n, "mono", 20, FTFKit.WHITE, "SIZE / CLASS", 0.12)
 	s.position = Vector2(-s.get_text_size().x * 0.5, 124)

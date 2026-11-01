@@ -56,7 +56,7 @@ static func from_svg(data: MotionSvgData, c: int, r: int, parts: Array = [], are
 			var q: Vector2 = pt - (s.off as Vector2)
 			if not (s.bbox as Rect2).has_point(q):
 				continue
-			if inside(s.contours, q, s.evenodd):
+			if MotionPoly.contains(s.contours, q, s.evenodd):
 				return s.part
 		return -1)
 	return v
@@ -123,25 +123,9 @@ func _sample(ss: int, hit: Callable) -> void:
 
 
 ## Point in a multi-contour shape (nonzero winding, or even-odd).
+## Deprecated: use MotionPoly.contains.
 static func inside(contours: Array, pt: Vector2, evenodd := false) -> bool:
-	var wn := 0
-	var crossings := 0
-	for cv in contours:
-		var poly: PackedVector2Array = cv
-		var n := poly.size()
-		if n < 3:
-			continue
-		for i in n:
-			var a := poly[i]
-			var b := poly[(i + 1) % n]
-			if a.y <= pt.y:
-				if b.y > pt.y and (b - a).cross(pt - a) > 0.0:
-					wn += 1
-					crossings += 1
-			elif b.y <= pt.y and (b - a).cross(pt - a) < 0.0:
-				wn -= 1
-				crossings += 1
-	return (crossings % 2) == 1 if evenodd else wn != 0
+	return MotionPoly.contains(contours, pt, evenodd)
 
 
 func filled(c: int, r: int) -> bool:

@@ -87,6 +87,7 @@ var _glyphs: Array = []          # {font_rid, size, index, x, adv, char_i, k}
 var _width := 0.0
 var _lengths := PackedFloat32Array()
 var _total := 0.0
+var _path := MotionPath.new()
 
 
 func _frame(_f: float) -> void:
@@ -109,81 +110,50 @@ func path_length() -> float:
 ## The point on the path at arc length s (px), and its unit tangent.
 func point_at(s: float) -> Vector2:
 	_update_path()
-	return MotionTextPath.path_point(points, _lengths, closed, s)
+	return _path.point_at(s)
 
 
 func tangent_at(s: float, window := 8.0) -> Vector2:
 	_update_path()
-	return MotionTextPath.path_tangent(points, _lengths, closed, s, window)
+	return _path.tangent_at(s, window)
+
+
+## The path as a measured MotionPath (closed paths wrap, open ones run on past their ends).
+func measured() -> MotionPath:
+	_update_path()
+	return _path
 
 
 # ---------------------------------------------------------------- path maths
-# Static so other drawing (tapes, ribbons) can share one arc-length model.
+# The arc-length model is MotionPath's (single-precision sums, run on past the
+# ends); these statics are kept for older callers.
 
 ## Cumulative arc lengths of a polyline (closed adds the closing segment).
+## Deprecated: use MotionPath.cumulative(pts, is_closed, true).
 static func path_lengths(pts: PackedVector2Array, is_closed := false) -> PackedFloat32Array:
-	var out := PackedFloat32Array()
-	var n := pts.size()
-	if n == 0:
-		return out
-	out.resize(n + (1 if is_closed else 0))
-	out[0] = 0.0
-	for i in range(1, n):
-		out[i] = out[i - 1] + pts[i - 1].distance_to(pts[i])
-	if is_closed:
-		out[n] = out[n - 1] + pts[n - 1].distance_to(pts[0])
-	return out
+	return MotionPath.cumulative(pts, is_closed, true)
 
 
 ## Point at arc length s. Open paths extend straight past their ends; closed
-## paths wrap.
+## paths wrap. Deprecated: use MotionPath.point_on.
 static func path_point(pts: PackedVector2Array, lengths: PackedFloat32Array, is_closed: bool, s: float) -> Vector2:
-	var n := pts.size()
-	if n == 0:
-		return Vector2.ZERO
-	if n == 1:
-		return pts[0]
-	var total: float = lengths[lengths.size() - 1]
-	if is_closed and total > 0.0:
-		s = fposmod(s, total)
-	var segs := lengths.size() - 1
-	# binary search for the segment holding s
-	var lo := 0
-	var hi := segs - 1
-	if s <= 0.0:
-		lo = 0
-	elif s >= total:
-		lo = segs - 1
-	else:
-		while lo < hi:
-			var mid := (lo + hi + 1) >> 1
-			if lengths[mid] <= s:
-				lo = mid
-			else:
-				hi = mid - 1
-	var a := pts[lo]
-	var b := pts[(lo + 1) % n]
-	var l0: float = lengths[lo]
-	var seg: float = lengths[lo + 1] - l0
-	if seg <= 0.0:
-		return a
-	return a.lerp(b, (s - l0) / seg) if s >= 0.0 and s <= total else a + (b - a).normalized() * (s - l0)
+	return MotionPath.point_on(pts, lengths, is_closed, s)
 
 
 ## Unit tangent at s, as the chord over ±window px (smooths polyline corners).
+## Deprecated: use MotionPath.tangent_on.
 static func path_tangent(pts: PackedVector2Array, lengths: PackedFloat32Array, is_closed: bool, s: float, window := 8.0) -> Vector2:
-	var d := path_point(pts, lengths, is_closed, s + window) - path_point(pts, lengths, is_closed, s - window)
-	if d.length_squared() < 1e-9:
-		return Vector2.RIGHT
-	return d.normalized()
+	return MotionPath.tangent_on(pts, lengths, is_closed, s, window)
 
 
 func _update_path() -> void:
 	if not _path_dirty:
 		return
 	_path_dirty = false
-	_lengths = MotionTextPath.path_lengths(points, closed)
-	_total = _lengths[_lengths.size() - 1] if _lengths.size() > 0 else 0.0
+	_path = MotionPath.new(points, closed, true)
+	_path.extend = true
+	_lengths = _path.lengths
+	_total = _path.length
 
 
 func _layout() -> void:
@@ -270,9 +240,9 @@ func _draw() -> void:
 			if col.a <= 0.0:
 				continue
 			s += float(o.get("tx", 0.0))
-			var t := MotionTextPath.path_tangent(points, _lengths, closed, s, maxf(2.0, adv * 0.5))
+			var t := _path.tangent_at(s, maxf(2.0, adv * 0.5))
 			var nrm := Vector2(-t.y, t.x)
-			var p := MotionTextPath.path_point(points, _lengths, closed, s) + nrm * (shift + float(o.get("ty", 0.0)))
+			var p := _path.point_at(s) + nrm * (shift + float(o.get("ty", 0.0)))
 			var ang := 0.0 if upright else t.angle()
 			if flip:
 				ang += PI

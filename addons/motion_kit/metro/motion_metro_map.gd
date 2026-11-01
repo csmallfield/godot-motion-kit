@@ -252,58 +252,16 @@ func _build_route(li: int) -> void:
 
 ## Round each corner with a circular arc of its radius (clamped to fit).
 func _round(pts: PackedVector2Array, radii: PackedFloat32Array) -> PackedVector2Array:
-	# drop duplicate and collinear points first
-	var p := PackedVector2Array()
-	var r := PackedFloat32Array()
-	for i in pts.size():
-		if p.size() > 0 and pts[i].distance_to(p[p.size() - 1]) < 0.01:
-			continue
-		p.append(pts[i])
-		r.append(radii[i])
-	var out := PackedVector2Array()
-	if p.size() < 3:
-		return p
-	out.append(p[0])
-	for i in range(1, p.size() - 1):
-		var a := p[i - 1]
-		var b := p[i]
-		var c := p[i + 1]
-		var d1 := (b - a).normalized()
-		var d2 := (c - b).normalized()
-		var turn := d1.angle_to(d2)
-		# straight on, no radius, or a reversal (a spike can't be rounded)
-		if absf(turn) < 0.01 or absf(turn) > 3.0 or r[i] <= 0.0:
-			out.append(b)
-			continue
-		var th := absf(turn)
-		var t := r[i] * tan(th * 0.5)
-		var t_max := minf(a.distance_to(b), b.distance_to(c)) * 0.5
-		var rr := r[i]
-		if t > t_max:
-			t = t_max
-			rr = t / tan(th * 0.5)
-		var p1 := b - d1 * t
-		var u_in := d1.rotated(signf(turn) * PI * 0.5)
-		var ctr := p1 + u_in * rr
-		var a0 := (p1 - ctr).angle()
-		var segs := clampi(int(ceil(th * rr / 5.0)), 2, 24)
-		for k in segs + 1:
-			out.append(ctr + Vector2.from_angle(a0 + turn * float(k) / segs) * rr)
-	out.append(p[p.size() - 1])
-	return out
+	return MotionPath.arc_corners(pts, radii)
 
 
 func _measure(L: Dictionary) -> void:
-	var path: PackedVector2Array = L.path
-	var cum := PackedFloat32Array()
-	cum.resize(path.size())
-	var acc := 0.0
-	for i in path.size():
-		if i > 0:
-			acc += path[i - 1].distance_to(path[i])
-		cum[i] = acc
-	L.cum = cum
-	L.length = acc
+	var mp := MotionPath.new(L.path)
+	mp.wrap = L.closed
+	mp.length = MotionPath.polyline_length(L.path)   # the double-precision sum
+	L.measured = mp
+	L.cum = mp.lengths
+	L.length = mp.length
 
 
 static func _ekey(a: Vector2i, b: Vector2i) -> Vector4i:
@@ -364,79 +322,29 @@ func points_at(n: Vector2i) -> PackedVector2Array:
 	return _at_node.get(n, PackedVector2Array())
 
 
-func _index_at(L: Dictionary, s: float) -> int:
-	var cum: PackedFloat32Array = L.cum
-	var lo := 0
-	var hi := cum.size() - 1
-	while hi - lo > 1:
-		var mid := (lo + hi) >> 1
-		if cum[mid] <= s:
-			lo = mid
-		else:
-			hi = mid
-	return lo
+## Line i's path as a measured MotionPath (built by build()).
+func measured(i: int) -> MotionPath:
+	return lines[i].measured
 
 
 ## Point at arc length s (pixels) along line i (clamped; wraps on closed lines).
 func point_at(i: int, s: float) -> Vector2:
-	var L := lines[i]
-	var path: PackedVector2Array = L.path
-	if path.size() < 2:
-		return path[0] if path.size() == 1 else Vector2.ZERO
-	var total: float = L.length
-	s = fposmod(s, total) if L.closed else clampf(s, 0.0, total)
-	var k := _index_at(L, s)
-	var cum: PackedFloat32Array = L.cum
-	var seg := cum[k + 1] - cum[k]
-	return path[k].lerp(path[k + 1], 0.0 if seg <= 0.0 else (s - cum[k]) / seg)
+	return (lines[i].measured as MotionPath).point_at(s)
 
 
 ## Unit direction of travel at arc length s.
 func dir_at(i: int, s: float) -> Vector2:
-	var L := lines[i]
-	var path: PackedVector2Array = L.path
-	if path.size() < 2:
-		return Vector2.RIGHT
-	var total: float = L.length
-	s = fposmod(s, total) if L.closed else clampf(s, 0.0, total)
-	var k := _index_at(L, s)
-	return (path[k + 1] - path[k]).normalized()
+	return (lines[i].measured as MotionPath).direction_at(s)
 
 
 ## Arc length of the path point nearest to p (for stations on a line).
 func s_near(i: int, p: Vector2) -> float:
-	var L := lines[i]
-	var path: PackedVector2Array = L.path
-	var cum: PackedFloat32Array = L.cum
-	var best := INF
-	var best_s := 0.0
-	for k in path.size() - 1:
-		var q := Geometry2D.get_closest_point_to_segment(p, path[k], path[k + 1])
-		var d := q.distance_squared_to(p)
-		if d < best:
-			best = d
-			best_s = cum[k] + path[k].distance_to(q)
-	return best_s
+	return (lines[i].measured as MotionPath).nearest(p)
 
 
 ## The part of line i between arc lengths a and b (pixels).
 func sub_path(i: int, a: float, b: float) -> PackedVector2Array:
-	var L := lines[i]
-	var path: PackedVector2Array = L.path
-	var total: float = L.length
-	a = clampf(a, 0.0, total)
-	b = clampf(b, 0.0, total)
-	var out := PackedVector2Array()
-	if b - a <= 0.0 or path.size() < 2:
-		return out
-	var cum: PackedFloat32Array = L.cum
-	var ka := _index_at(L, a)
-	var kb := _index_at(L, b)
-	out.append(point_at(i, a))
-	for k in range(ka + 1, kb + 1):
-		out.append(path[k])
-	out.append(point_at(i, b))
-	return out
+	return (lines[i].measured as MotionPath).sub(a, b)
 
 
 # ------------------------------------------------------------------ drawing

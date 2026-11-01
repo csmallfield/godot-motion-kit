@@ -54,7 +54,7 @@ func _paint(c: MotionCanvas, f: float) -> void:
 		0:   # chevrons streaming outward
 			c.rect(r, L.INK)
 			for i in 6:
-				FTFKit.chevrons(c, Vector2(-240, -150 + i * 60), 10, 40, a, fmod(f / 3.0, 1.0))
+				MotionMarks.chevrons(c, Vector2(-240, -150 + i * 60), 10, 40, a, fmod(f / 3.0, 1.0))
 		1:   # checker
 			c.rect(r, L.INK)
 			for y in 10:
@@ -65,24 +65,24 @@ func _paint(c: MotionCanvas, f: float) -> void:
 			c.rect(r, a)
 			for i in 6:
 				var s := 30.0 + i * 40.0
-				c.polyline(FTFKit.rect_pts(Rect2(-s, -s, s * 2, s * 2)), L.INK, 12.0, 1.0, true)
+				c.polyline(MotionPoly.rect(Rect2(-s, -s, s * 2, s * 2)), L.INK, 12.0, 1.0, true)
 		3:   # split field
 			c.rect(Rect2(-260, -260, 260, 520), a)
 			c.rect(Rect2(0, -260, 260, 520), bcol)
 			c.circle(Vector2.ZERO, 50, L.INK)
 		4:   # diagonal stripes
 			c.rect(r, L.INK)
-			FTFKit.hatch(c, FTFKit.rect_pts(r), 46, 20, a, 45.0, f * 3.0)
+			MotionMarks.hatch(c, MotionPoly.rect(r), 46, 20, a, 45.0, f * 3.0)
 		5:   # X box on chrome
 			c.rect(r, L.CHROME)
-			FTFKit.xbox(c, Vector2.ZERO, 200, L.INK, 16.0)
+			MotionMarks.xbox(c, Vector2.ZERO, 200, L.INK, 16.0)
 		6:   # rings
 			c.rect(r, L.INK)
 			for i in 7:
 				c.ring(Vector2.ZERO, 20.0 + i * 34.0, a if i % 2 == 0 else bcol, 10.0)
 		7:   # crosshair on magenta
 			c.rect(r, a)
-			FTFKit.crosshair(c, Vector2.ZERO, 60, L.INK, 12.0)
+			MotionMarks.crosshair(c, Vector2.ZERO, 60, L.INK, 12.0)
 	c.draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 	if white > 0.0:
 		c.rect(Rect2(C - Vector2(300, 300), Vector2(600, 600)), L.CHROME, white)

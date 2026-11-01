@@ -440,8 +440,8 @@ func _build_boards() -> void:
 		var bc := MotionCanvas.new()
 		var fgc: Color = bl[4]
 		bc.draw_fn = func(cv: MotionCanvas, _f: float) -> void:
-			FTFKit.checker(cv, Vector2(24, 664), 10, 2, 46.0, fgc, 1.0, 3.0 + i, 1.0)
-			FTFKit.xbox(cv, Vector2(460, 52), 56, fgc, 4.0)
+			MotionMarks.checker(cv, Vector2(24, 664), 10, 2, 46.0, fgc, 1.0, 3.0 + i, 1.0)
+			MotionMarks.xbox(cv, Vector2(460, 52), 56, fgc, 4.0)
 		bp.canvas.add_child(bc)
 		_billboards.append(bp)
 
@@ -837,7 +837,7 @@ func _draw_hud(c: MotionCanvas, f: float) -> void:
 		var p := clampf(s_at(f) / s_at(SIGN_CUT), 0.0, 1.0)
 		var mx := lerpf(x0, x1, p)
 		c.polygon(PackedVector2Array([Vector2(mx, 972), Vector2(mx + 12, 960), Vector2(mx - 12, 960)]), FTFKit.PINK, Color(0, 0, 0, 0))
-	FTFKit.chevrons(c, Vector2(1640, 230), 6, 26, FTFKit.LIME, fposmod(f / 4.0, 1.0), 1.0, on, 0.9)
+	MotionMarks.chevrons(c, Vector2(1640, 230), 6, 26, FTFKit.LIME, fposmod(f / 4.0, 1.0), 1.0, on, 0.9)
 	# checker tick under the speed readout, stepping on the beat
 	var k0 := int(floorf(f / BEAT))
 	for i in 8:
@@ -856,10 +856,10 @@ func _draw_callouts(c: MotionCanvas, f: float) -> void:
 		var e := a - Vector2(0, 60) * ca
 		c.line(a, e, FTFKit.WHITE, 2.0, ca)
 		c.line(e, e + Vector2(-20 + 440.0 * ca, 0), FTFKit.WHITE, 2.0, ca)
-		FTFKit.crosshair(c, a, 9, FTFKit.WHITE, 2.0, ca)
+		MotionMarks.crosshair(c, a, 9, FTFKit.WHITE, 2.0, ca)
 	if cb > 0.0:
 		var b := _stage.to_screen(b3)
 		var e := b - Vector2(0, 110) * cb
 		c.line(b, e, FTFKit.LIME, 2.0, cb)
 		c.line(e, e + Vector2(20 - 380.0 * cb, 0), FTFKit.LIME, 2.0, cb)
-		FTFKit.crosshair(c, b, 9, FTFKit.LIME, 2.0, cb)
+		MotionMarks.crosshair(c, b, 9, FTFKit.LIME, 2.0, cb)

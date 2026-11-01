@@ -859,4 +859,4 @@ func _draw_grid(c: MotionCanvas, f: float) -> void:
 		c.line(Vector2(0, y), Vector2(1920, y), GRID, 1.0, o)
 	for x in range(120, 1920, 240):
 		for y in range(120, 1080, 240):
-			FTFKit.plus(c, Vector2(x, y), 6.0, Color(CYAN, 0.25), 1.0, o)
+			MotionMarks.plus(c, Vector2(x, y), 6.0, Color(CYAN, 0.25), 1.0, o)

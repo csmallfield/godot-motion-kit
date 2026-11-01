@@ -132,41 +132,25 @@ static func _contours(raw: Array[PackedVector2Array]) -> Array[PackedVector2Arra
 				pts.append(v)
 		if pts.size() > 2 and pts[0].distance_squared_to(pts[pts.size() - 1]) < 1e-8:
 			pts.remove_at(pts.size() - 1)
-		if pts.size() >= 3 and absf(_area(pts)) > 1e-6:
+		if pts.size() >= 3 and absf(MotionPoly.signed_area(pts)) > 1e-6:
 			out.append(pts)
 	return out
 
 
+## Deprecated: use MotionPoly.signed_area.
 static func _area(c: PackedVector2Array) -> float:
-	var s := 0.0
-	for j in c.size():
-		var p := c[j]
-		var q := c[(j + 1) % c.size()]
-		s += p.x * q.y - q.x * p.y
-	return s * 0.5
+	return MotionPoly.signed_area(c)
 
 
-## A contour is a hole when it lies inside an odd number of the others.
+## A contour is a hole when it lies inside an odd number of the others
+## (MotionPoly.hole_flags, most-vertices rule).
 static func _hole_flags(contours: Array[PackedVector2Array]) -> Array[bool]:
-	var out: Array[bool] = []
-	for i in contours.size():
-		var n := 0
-		for j in contours.size():
-			if i != j and _inside(contours[i], contours[j]):
-				n += 1
-		out.append(n % 2 == 1)
-	return out
+	return MotionPoly.hole_flags(contours)
 
 
-## Contour a lies inside contour b: most of a's vertices are inside b (a few
-## can sit on b's edge where the shapes touch). A point probe like the
-## centroid would fail for a ring, whose centroid lies in its own hole.
+## Deprecated: use MotionPoly.contour_inside.
 static func _inside(a: PackedVector2Array, b: PackedVector2Array) -> bool:
-	var n := 0
-	for v in a:
-		if Geometry2D.is_point_in_polygon(v, b):
-			n += 1
-	return n * 2 > a.size()
+	return MotionPoly.contour_inside(a, b)
 
 
 ## Simple polygons covering the filled area: each outer contour with every
@@ -185,7 +169,7 @@ static func _cap_polygons(contours: Array[PackedVector2Array], holes: Array[bool
 			outer = _reversed(outer)
 		var polys: Array[PackedVector2Array] = [outer]
 		for j in contours.size():
-			if not holes[j] or not _inside(contours[j], outer):
+			if not holes[j] or not MotionPoly.contour_inside(contours[j], outer):
 				continue
 			var cutter := _slit_hole(contours[j], right + 10.0)
 			var next: Array[PackedVector2Array] = []
@@ -210,7 +194,7 @@ static func _slit_hole(hole: PackedVector2Array, to_x: float) -> PackedVector2Ar
 	var best := hole
 	var best_a := 0.0
 	for r in Geometry2D.merge_polygons(hole, slit):
-		var ar := absf(_area(r))
+		var ar := absf(MotionPoly.signed_area(r))
 		if ar > best_a:
 			best = r
 			best_a = ar

@@ -232,7 +232,7 @@ func _build_cell(cx: int, cy: int) -> void:
 	elif r < 0.88:
 		var w := _mat(MotionSolid.wedge(o + Vector3(0.08, 0.1, 0), 0.84, 0.8, 0.15, 1.1 + 0.8 * _r(cx, cy, 15)), "red" if mat != "red" else "cream")
 		w.add_decal("front", _dec(func(c: MotionCanvas, sz: Vector2, s: MotionSolid, _xf: Transform2D) -> void:
-			_chevrons(c, Vector2(8, sz.y - 22), 3, 14, CREAM if s.data.mat == "red" else RED)))
+			MotionMarks.chevron_row(c, Vector2(8, sz.y - 22), 3, 14, CREAM if s.data.mat == "red" else RED)))
 		add.call(w, 0)
 	else:
 		for k in 2:
@@ -288,7 +288,7 @@ func _tower_face(c: MotionCanvas, sz: Vector2, _s: MotionSolid, xf: Transform2D,
 			_txt(c, xf, _font_mono, Vector2(8, 100), serial, 12, ink)
 		_:
 			for j in 4:
-				_chevron(c, Vector2(sz.x * 0.5, 30 + j * 22), 26, accent)
+				MotionMarks.chevron_up(c, Vector2(sz.x * 0.5, 30 + j * 22), 26, accent)
 
 
 func _block_decals(b: MotionSolid, cx: int, cy: int) -> void:
@@ -302,7 +302,7 @@ func _block_face(c: MotionCanvas, sz: Vector2, _s: MotionSolid, xf: Transform2D,
 	match kind:
 		0:
 			_txt(c, xf, _font_mono, Vector2(8, 22), "EXIT", 14, ink)
-			_arrow(c, Vector2(52, 16), 18, accent)
+			MotionMarks.arrow(c, Vector2(52, 16), 18, accent)
 		1:
 			for j in 5:
 				c.draw_rect(Rect2(6 + j * 14, 10, 8, sz.y - 20), accent)
@@ -311,25 +311,6 @@ func _block_face(c: MotionCanvas, sz: Vector2, _s: MotionSolid, xf: Transform2D,
 
 
 # ---------------------------------------------------------------- decals
-
-func _chevron(c: MotionCanvas, at: Vector2, w: float, col: Color) -> void:
-	var h := w * 0.45
-	var t := w * 0.24
-	c.draw_colored_polygon(PackedVector2Array([at + Vector2(-w * 0.5, h), at, at + Vector2(w * 0.5, h),
-		at + Vector2(w * 0.5, h + t), at + Vector2(0, t), at + Vector2(-w * 0.5, h + t)]), col)
-
-
-func _chevrons(c: MotionCanvas, at: Vector2, n: int, h: float, col: Color) -> void:
-	for i in n:
-		var x := at.x + i * h * 0.7
-		c.draw_colored_polygon(PackedVector2Array([Vector2(x, at.y), Vector2(x + h * 0.25, at.y), Vector2(x + h * 0.75, at.y + h * 0.5),
-			Vector2(x + h * 0.25, at.y + h), Vector2(x, at.y + h), Vector2(x + h * 0.5, at.y + h * 0.5)]), col)
-
-
-func _arrow(c: MotionCanvas, at: Vector2, s: float, col: Color) -> void:
-	c.draw_colored_polygon(PackedVector2Array([at + Vector2(0, -s * 0.18), at + Vector2(s * 0.55, -s * 0.18), at + Vector2(s * 0.55, -s * 0.45),
-		at + Vector2(s, 0), at + Vector2(s * 0.55, s * 0.45), at + Vector2(s * 0.55, s * 0.18), at + Vector2(0, s * 0.18)]), col)
-
 
 func _platform_face(c: MotionCanvas, sz: Vector2, xf: Transform2D) -> void:
 	# The platform's south face: serials, katakana and hazard hatch, readable
@@ -349,7 +330,7 @@ func _platform_face(c: MotionCanvas, sz: Vector2, xf: Transform2D) -> void:
 				_txt(c, xf, _font_mono, Vector2(x, y), t, 22.0, CREAM if k % 4 != 2 else RED)
 			x += w + 60.0
 			if k % 3 == 0 and x - 46 > vis.position.x - 40 and x - 46 < vis.end.x:
-				_chevrons(c, Vector2(x - 46, y - 17), 2, 18, RED)
+				MotionMarks.chevron_row(c, Vector2(x - 46, y - 17), 2, 18, RED)
 			k += 1
 	var hy := 58.0
 	var i := maxf(0.0, floorf((vis.position.x - 40.0) / 36.0) * 36.0)
@@ -383,7 +364,7 @@ func _backdrop_face(c: MotionCanvas, sz: Vector2, xf: Transform2D) -> void:
 	c.draw_rect(Rect2(0, 0, sz.x, 10), RED)
 	_txt(c, xf, _font_mono, Vector2(24, 44), "MINIMAL HUMANS // FOSS STUDIO // BERLIN", 18, CREAM)
 	_txt(c, xf, _font_jp, Vector2(sz.x - 330, 46), "ミニマル・ヒューマンズ", 24, RED)
-	_chevrons(c, Vector2(sz.x - 120, 62), 4, 22, RED)
+	MotionMarks.chevron_row(c, Vector2(sz.x - 120, 62), 4, 22, RED)
 	for i in 6:
 		c.draw_rect(Rect2(24 + i * 18, 64, 10, 22), CREAM if i % 2 == 0 else RED)
 
@@ -565,6 +546,6 @@ func ground_markings(c: MotionCanvas, f: float) -> void:
 	if on2 > 0.0 and vis2:
 		var x1 := FTF_X * 100.0
 		for i in int(14 * on2):
-			_chevrons(c, Vector2(x1 + 40 + i * 64, gy.call(2.25)), 1, 46, RED if i % 2 == 0 else INK)
+			MotionMarks.chevron_row(c, Vector2(x1 + 40 + i * 64, gy.call(2.25)), 1, 46, RED if i % 2 == 0 else INK)
 		_txt(c, xf, _font_mono, Vector2(x1, gy.call(0.3)), "PLAZA 02 // F-9000 // TIME GRID", 22, INK)
 	c.draw_set_transform_matrix(Transform2D.IDENTITY)

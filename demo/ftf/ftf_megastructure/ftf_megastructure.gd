@@ -244,7 +244,7 @@ func _mask_canvas(solids: Array[MotionSolid]) -> MotionCanvas:
 	m.draw_fn = func(c: MotionCanvas, _f: float) -> void:
 		for s in solids:
 			var poly := _scene.cap_polygon(s)
-			if poly.size() >= 3 and absf(MotionExtrude._area2(poly)) > 2.0:
+			if poly.size() >= 3 and absf(MotionPoly.area2(poly)) > 2.0:
 				c.draw_colored_polygon(poly, Color.WHITE)
 	_stage.add_child(m)
 	return m
@@ -446,7 +446,7 @@ func _build_cell(cx: int, cy: int) -> void:
 		# A ramp, red, with chevrons.
 		var w := _mat(MotionSolid.wedge(o + Vector3(0.08, 0.1, 0), 0.84, 0.8, 0.15, 1.1 + 0.8 * _r(cx, cy, 15)), "red" if mat != "red" else "cream")
 		w.add_decal("front", func(c: MotionCanvas, sz: Vector2, s: MotionSolid, _xf: Transform2D) -> void:
-			_chevrons(c, Vector2(8, sz.y - 22), 3, 14, CREAM if s.data.mat == "red" else RED))
+			MotionMarks.chevron_row(c, Vector2(8, sz.y - 22), 3, 14, CREAM if s.data.mat == "red" else RED))
 		add.call(w, 0)
 	else:
 		# Pipe rack: two posts and two pipes running east.
@@ -491,7 +491,7 @@ func _tower_face(c: MotionCanvas, sz: Vector2, _s: MotionSolid, xf: Transform2D,
 			_txt(c, xf, _font_mono, Vector2(8, 100), serial, 12, ink)
 		_:   # chevrons climbing
 			for j in 4:
-				_chevron(c, Vector2(sz.x * 0.5, 30 + j * 22), 26, accent)
+				MotionMarks.chevron_up(c, Vector2(sz.x * 0.5, 30 + j * 22), 26, accent)
 
 
 func _tower_east(c: MotionCanvas, sz: Vector2, _s: MotionSolid, _xf: Transform2D, accent: Color) -> void:
@@ -509,7 +509,7 @@ func _block_face(c: MotionCanvas, sz: Vector2, _s: MotionSolid, xf: Transform2D,
 	match kind:
 		0:
 			_txt(c, xf, _font_mono, Vector2(8, 22), "EXIT", 14, ink)
-			_arrow(c, Vector2(52, 16), 18, accent)
+			MotionMarks.arrow(c, Vector2(52, 16), 18, accent)
 		1:
 			for j in 5:
 				c.draw_rect(Rect2(6 + j * 14, 10, 8, sz.y - 20), accent)
@@ -518,26 +518,6 @@ func _block_face(c: MotionCanvas, sz: Vector2, _s: MotionSolid, xf: Transform2D,
 
 
 # ---------------------------------------------------------------- decals
-
-## An upward chevron (^) of width w with its apex at `at`.
-func _chevron(c: MotionCanvas, at: Vector2, w: float, col: Color) -> void:
-	var h := w * 0.45
-	var t := w * 0.24
-	c.draw_colored_polygon(PackedVector2Array([at + Vector2(-w * 0.5, h), at, at + Vector2(w * 0.5, h),
-		at + Vector2(w * 0.5, h + t), at + Vector2(0, t), at + Vector2(-w * 0.5, h + t)]), col)
-
-
-func _chevrons(c: MotionCanvas, at: Vector2, n: int, h: float, col: Color) -> void:
-	for i in n:
-		var x := at.x + i * h * 0.7
-		c.draw_colored_polygon(PackedVector2Array([Vector2(x, at.y), Vector2(x + h * 0.25, at.y), Vector2(x + h * 0.75, at.y + h * 0.5),
-			Vector2(x + h * 0.25, at.y + h), Vector2(x, at.y + h), Vector2(x + h * 0.5, at.y + h * 0.5)]), col)
-
-
-func _arrow(c: MotionCanvas, at: Vector2, s: float, col: Color) -> void:
-	c.draw_colored_polygon(PackedVector2Array([at + Vector2(0, -s * 0.18), at + Vector2(s * 0.55, -s * 0.18), at + Vector2(s * 0.55, -s * 0.45),
-		at + Vector2(s, 0), at + Vector2(s * 0.55, s * 0.45), at + Vector2(s * 0.55, s * 0.18), at + Vector2(0, s * 0.18)]), col)
-
 
 func _platform_face(c: MotionCanvas, sz: Vector2, xf: Transform2D) -> void:
 	# The platform's south face: a strip of serials, katakana and markings,
@@ -553,7 +533,7 @@ func _platform_face(c: MotionCanvas, sz: Vector2, xf: Transform2D) -> void:
 		_txt(c, xf, _font_mono, Vector2(x, y), t, fs, CREAM if k % 4 != 2 else RED)
 		x += _font_mono.get_string_size(t, HORIZONTAL_ALIGNMENT_LEFT, -1, int(fs)).x + 60.0
 		if k % 3 == 0:
-			_chevrons(c, Vector2(x - 46, y - 17), 2, 18, RED)
+			MotionMarks.chevron_row(c, Vector2(x - 46, y - 17), 2, 18, RED)
 		k += 1
 	# hazard hatch
 	var hy := 58.0
@@ -588,7 +568,7 @@ func _backdrop_face(c: MotionCanvas, sz: Vector2, xf: Transform2D) -> void:
 	c.draw_rect(Rect2(0, 0, sz.x, 10), RED)
 	_txt(c, xf, _font_mono, Vector2(24, 44), "MINIMAL HUMANS // FOSS STUDIO // BERLIN", 18, CREAM)
 	_txt(c, xf, _font_jp, Vector2(sz.x - 330, 46), "ミニマル・ヒューマンズ", 24, RED)
-	_chevrons(c, Vector2(sz.x - 120, 62), 4, 22, RED)
+	MotionMarks.chevron_row(c, Vector2(sz.x - 120, 62), 4, 22, RED)
 	for i in 6:
 		c.draw_rect(Rect2(24 + i * 18, 64, 10, 22), CREAM if i % 2 == 0 else RED)
 
@@ -733,7 +713,7 @@ func _place_cap(mask: MotionCanvas, svg: MotionSvg, s: MotionSolid, on: bool, le
 	mask.draw_fn = func(c: MotionCanvas, _f: float) -> void:
 		for q in list:
 			var poly := _scene.cap_polygon(q)
-			if poly.size() >= 3 and absf(MotionExtrude._area2(poly)) > 2.0:
+			if poly.size() >= 3 and absf(MotionPoly.area2(poly)) > 2.0:
 				c.draw_colored_polygon(poly, Color.WHITE)
 	mask.queue_redraw()
 
@@ -785,6 +765,6 @@ func _ground_markings(c: MotionCanvas, f: float) -> void:
 	if on2 > 0.0:
 		var x1 := FTF_X * 100.0
 		for i in int(14 * on2):
-			_chevrons(c, Vector2(x1 + 40 + i * 64, gy.call(2.25)), 1, 46, RED if i % 2 == 0 else INK)
+			MotionMarks.chevron_row(c, Vector2(x1 + 40 + i * 64, gy.call(2.25)), 1, 46, RED if i % 2 == 0 else INK)
 		_txt(c, xf, _font_mono, Vector2(x1, gy.call(0.3)), "PLAZA 02 // F-9000 // GRID 01", 22, INK)
 	c.draw_set_transform_matrix(Transform2D.IDENTITY)

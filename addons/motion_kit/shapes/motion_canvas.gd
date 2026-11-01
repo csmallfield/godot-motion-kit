@@ -27,21 +27,19 @@ func _draw() -> void:
 
 
 func _c(col: Color, opacity: float) -> Color:
-	return Color(col, col.a * opacity)
+	return MotionMarks.fade(col, opacity)
 
 
 # Lines thinner than a pixel draw at 1 px with their coverage as alpha, as a
 # browser rasterizes them (Godot would otherwise drop pixels and dot the line).
+# The helpers below are MotionMarks' primitives drawn into this canvas.
 func _thin(col: Color, w: float) -> Array:
-	if w < 1.0:
-		return [Color(col, col.a * maxf(w, 0.0)), 1.0]
-	return [col, w]
+	return MotionMarks.thin(col, w)
 
 
 ## A straight line, `w` pixels wide.
 func line(a: Vector2, b: Vector2, col: Color, w := 1.0, opacity := 1.0) -> void:
-	var t := _thin(_c(col, opacity), w)
-	draw_line(a, b, t[0], t[1], true)
+	MotionMarks.line(self, a, b, col, w, opacity)
 
 
 ## A dashed line: `dash` on, `gap` off, in pixels (SVG stroke-dasharray).
@@ -112,39 +110,25 @@ func dashed_polyline(pts: PackedVector2Array, col: Color, w: float, dash: float,
 		draw_polyline(run, t[0], t[1], true)
 
 
+## An antialiased polyline (`closed` joins the last point to the first).
 func polyline(pts: PackedVector2Array, col: Color, w := 1.0, opacity := 1.0, closed := false) -> void:
-	if pts.size() < 2:
-		return
-	var p := pts
-	if closed:
-		p = pts.duplicate()
-		p.append(pts[0])
-	var t := _thin(_c(col, opacity), w)
-	draw_polyline(p, t[0], t[1], true)
+	MotionMarks.polyline(self, pts, col, w, opacity, closed)
 
 
-## A filled and/or stroked polygon (fill alpha 0 to skip the fill).
+## A filled and/or stroked polygon (fill alpha 0 to skip the fill; polygons
+## Godot can't triangulate are skipped).
 func polygon(pts: PackedVector2Array, fill: Color, stroke: Color, w := 1.0, opacity := 1.0) -> void:
-	if pts.size() < 3:
-		return
-	if fill.a > 0.0:
-		# Skip polygons Godot can't triangulate (self-intersecting), which would error.
-		if Geometry2D.triangulate_polygon(pts).size() > 0:
-			draw_colored_polygon(pts, _c(fill, opacity))
-	if stroke.a > 0.0 and w > 0.0:
-		polyline(pts, stroke, w, opacity, true)
+	MotionMarks.polygon(self, pts, fill, stroke, w, opacity)
 
 
+## A filled disc.
 func circle(c: Vector2, r: float, fill: Color, opacity := 1.0) -> void:
-	if r > 0.0:
-		draw_circle(c, r, _c(fill, opacity), true, -1.0, true)
+	MotionMarks.circle(self, c, r, fill, opacity)
 
 
 ## A circle outline, `w` pixels wide.
 func ring(c: Vector2, r: float, col: Color, w := 1.0, opacity := 1.0) -> void:
-	if r > 0.0:
-		var t := _thin(_c(col, opacity), w)
-		draw_arc(c, r, 0.0, TAU, maxi(24, int(r * 0.6)), t[0], t[1], true)
+	MotionMarks.ring(self, c, r, col, w, opacity)
 
 
 ## An ellipse outline with radii rx, ry.
@@ -162,11 +146,4 @@ func ellipse(c: Vector2, rx: float, ry: float, col: Color, w := 1.0, opacity := 
 
 ## A filled rectangle, or an outline when `w` > 0 (inside the rect, like a CSS border).
 func rect(r: Rect2, col: Color, opacity := 1.0, w := 0.0) -> void:
-	if w <= 0.0:
-		draw_rect(r, _c(col, opacity))
-	else:
-		var c := _c(col, opacity)
-		draw_rect(Rect2(r.position, Vector2(r.size.x, w)), c)
-		draw_rect(Rect2(r.position + Vector2(0, r.size.y - w), Vector2(r.size.x, w)), c)
-		draw_rect(Rect2(r.position + Vector2(0, w), Vector2(w, r.size.y - 2 * w)), c)
-		draw_rect(Rect2(r.position + Vector2(r.size.x - w, w), Vector2(w, r.size.y - 2 * w)), c)
+	MotionMarks.rect(self, r, col, opacity, w)

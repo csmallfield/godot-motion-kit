@@ -76,10 +76,7 @@ func set_outline(pts: PackedVector2Array) -> MotionSolid:
 	if n > 1 and p[0].distance_to(p[n - 1]) < 1e-6:
 		p = p.slice(0, n - 1)
 		n -= 1
-	for i in n:
-		var q := p[i]
-		var r := p[(i + 1) % n]
-		a += q.x * r.y - r.x * q.y
+	a = MotionPoly.area2(p)
 	if a < 0.0:
 		p.reverse()
 	outline = p
@@ -203,7 +200,7 @@ static func from_svg(svg: MotionSvgData, part: int, k: float, at: Vector3, uu: V
 	var best := PackedVector2Array()
 	var best_a := -1.0
 	for c in svg.outline(part, 0.5):
-		var a := absf(_area(c))
+		var a := absf(MotionPoly.signed_area(c))
 		if a > best_a:
 			best_a = a
 			best = c
@@ -219,10 +216,6 @@ static func from_svg(svg: MotionSvgData, part: int, k: float, at: Vector3, uu: V
 	return s
 
 
+## Deprecated: use MotionPoly.signed_area.
 static func _area(c: PackedVector2Array) -> float:
-	var a := 0.0
-	for i in c.size():
-		var q := c[i]
-		var r := c[(i + 1) % c.size()]
-		a += q.x * r.y - r.x * q.y
-	return a * 0.5
+	return MotionPoly.signed_area(c)

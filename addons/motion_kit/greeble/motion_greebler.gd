@@ -167,14 +167,9 @@ func item_count() -> int:
 
 
 ## A rectangle with its four corners cut at 45 degrees.
+## Deprecated: use MotionPoly.chamfered_rect.
 static func chamfered(r: Rect2, c: float) -> PackedVector2Array:
-	if c <= 0.0:
-		return PackedVector2Array([r.position, Vector2(r.end.x, r.position.y), r.end, Vector2(r.position.x, r.end.y)])
-	c = minf(c, minf(r.size.x, r.size.y) * 0.45)
-	var a := r.position
-	var b := r.end
-	return PackedVector2Array([Vector2(a.x + c, a.y), Vector2(b.x - c, a.y), Vector2(b.x, a.y + c), Vector2(b.x, b.y - c),
-		Vector2(b.x - c, b.y), Vector2(a.x + c, b.y), Vector2(a.x, b.y - c), Vector2(a.x, a.y + c)])
+	return MotionPoly.chamfered_rect(r, c)
 
 
 func _add_item(id: int, it: Dictionary) -> void:
@@ -383,34 +378,15 @@ func _prep_greeble(it: Dictionary) -> void:
 
 
 func _prep_contours(contours: Array) -> Array:
-	var out := []
-	for c in contours:
-		var pts: PackedVector2Array = c
-		if pts.size() < 3:
-			continue
-		out.append({pts = pts, bb = _bounds([pts])})
-	return out
+	return MotionPoly.prepare(contours)
 
 
 func _bounds(contours: Array) -> Rect2:
-	var have := false
-	var b := Rect2()
-	for c in contours:
-		for p in (c as PackedVector2Array):
-			if not have:
-				b = Rect2(p, Vector2.ZERO)
-				have = true
-			else:
-				b = b.expand(p)
-	return b
+	return MotionPoly.bounds_all(contours)
 
 
 static func _inside(p: Vector2, cs: Array) -> bool:
-	var n := 0
-	for c in cs:
-		if (c.bb as Rect2).has_point(p) and Geometry2D.is_point_in_polygon(p, c.pts):
-			n += 1
-	return n % 2 == 1
+	return MotionPoly.contains_prepared(cs, p)
 
 
 ## 0 outside, 1 partial, 2 inside (and clear of `avoid`).
@@ -769,21 +745,4 @@ func _slot(c: CanvasItem, sr: Rect2, it: Dictionary, a: float, f: float, hz: flo
 
 
 func _chevron(c: CanvasItem, sr: Rect2, it: Dictionary, a: float, hz: float) -> void:
-	var n: int = it.n
-	var horiz := sr.size.x >= sr.size.y
-	var col := _h(accent, a, hz)
-	var sh := minf(sr.size.x, sr.size.y)
-	for i in n:
-		var u := (i + 0.15) / n
-		if horiz:
-			var x := sr.position.x + sr.size.x * u
-			var w := sh * 0.5
-			var th := sh * 0.22
-			c.draw_colored_polygon(PackedVector2Array([Vector2(x, sr.position.y), Vector2(x + th, sr.position.y), Vector2(x + th + w, sr.get_center().y),
-				Vector2(x + th, sr.end.y), Vector2(x, sr.end.y), Vector2(x + w, sr.get_center().y)]), col)
-		else:
-			var y := sr.position.y + sr.size.y * u
-			var w2 := sh * 0.5
-			var th2 := sh * 0.22
-			c.draw_colored_polygon(PackedVector2Array([Vector2(sr.position.x, y), Vector2(sr.position.x, y + th2), Vector2(sr.get_center().x, y + th2 + w2),
-				Vector2(sr.end.x, y + th2), Vector2(sr.end.x, y), Vector2(sr.get_center().x, y + w2)]), col)
+	MotionMarks.chevron_strip(c, sr, int(it.n), _h(accent, a, hz))

@@ -180,6 +180,11 @@ col)`, `pill(w, h, col)`; dashes, borders, box-shadow `blur`). `MotionGradient.l
 `radial`, `stripes` (animate `shift`), `rings` (moiré), with `blend` MULTIPLY / SCREEN /
 OVERLAY / ADD. `MotionCanvas.draw_fn = func(c, f)` with `line`, `polyline`, `polygon`,
 `circle`, `ring`, `ellipse`, `rect`, `dashed_polyline` for anything built from loops.
+`MotionMarks` (static, any CanvasItem, with opacity): chevrons, arrows, checker, hatch,
+barcode, crosshair, warning triangles, hazard clamps, ribbons and stripe bundles along
+paths. `MotionPath` measures a polyline (`point_at(s)`, `tangent_at`, `sub(a, b)` /
+`sub_fraction`, `rounded`, `offset`); `MotionPoly` has signed area, bounds and
+point-in-polygon; `MotionTape` poses and draws hazard tape along a path.
 `MotionCells` for palette byte grids.
 
 **Effects.** `MotionFX` (put nodes under `.content`; size it to the frame plus room for

@@ -479,8 +479,8 @@ func _draw_act1(c: MotionCanvas, f: float) -> void:
 		var x := 960.0 + (i - 14) * 60.0
 		if absf(x - 960.0) <= rw:
 			c.line(Vector2(x, 850), Vector2(x, 842 if i % 7 else 830), cream, 2.0, 0.8)
-	FTFKit.plus(c, Vector2(120, 960), 14, cream, 2.0, MK.prog(f, BOOT + 4, 6))
-	FTFKit.plus(c, Vector2(1800, 120), 14, cream, 2.0, MK.prog(f, BOOT + 6, 6))
+	MotionMarks.plus(c, Vector2(120, 960), 14, cream, 2.0, MK.prog(f, BOOT + 4, 6))
+	MotionMarks.plus(c, Vector2(1800, 120), 14, cream, 2.0, MK.prog(f, BOOT + 6, 6))
 	# supergraphic discs (studio colours), springing in on the beat
 	var s0 := _pop(f, DISCS[0], 10, 170)
 	var s1 := _pop(f, DISCS[1], 10, 170)
@@ -508,14 +508,14 @@ func _draw_act1(c: MotionCanvas, f: float) -> void:
 			var rr := MK.rand(floorf(f) * 9.1 + k * 4.7)
 			var rect := Rect2(rr * 1800.0, MK.rand(rr * 77.0 + k) * 1000.0, 80.0 + MK.rand(k * 3.1 + f) * 520.0, 8.0 + MK.rand(k + f * 2.0) * 60.0)
 			c.rect(rect, _acid(f + k, k), 0.9)
-		FTFKit.checker(c, Vector2(MK.rand(f * 3.3) * 1500.0, MK.rand(f * 5.1) * 900.0), 10, 3, 22, _acid(f, 1), 1.0, f)
+		MotionMarks.checker(c, Vector2(MK.rand(f * 3.3) * 1500.0, MK.rand(f * 5.1) * 900.0), 10, 3, 22, _acid(f, 1), 1.0, f)
 
 
 # ---------------------------------------------------------------- act II
 
 ## Path of the livery stripe bundle: up from bottom-left at 45 degrees, then right.
 func _sweep_path() -> PackedVector2Array:
-	return FTFKit.rounded_path(PackedVector2Array([Vector2(-500, 1500), Vector2(560, 440), Vector2(2600, 440)]), 260.0, 14)
+	return MotionPath.rounded(PackedVector2Array([Vector2(-500, 1500), Vector2(560, 440), Vector2(2600, 440)]), 260.0, 14)
 
 
 func _draw_sweep(c: MotionCanvas, f: float) -> void:
@@ -523,7 +523,7 @@ func _draw_sweep(c: MotionCanvas, f: float) -> void:
 		return
 	var head := MK.map(f, [SWEEP, SWEEP + 11], [0, 1], MK.ease_in_out)
 	var tail := MK.map(f, [SWEEP + 9, PANELS[0] + 5], [0, 1], MK.ease_in_quad)
-	FTFKit.stripe_bundle(c, _sweep_path(), [170, 170, 170, 170, 170], [FTFKit.CREAM, FTFKit.CYAN, FTFKit.LILAC, FTFKit.LIME, FTFKit.PINK], 0.0, tail, head)
+	MotionMarks.stripe_bundle(c, _sweep_path(), [170, 170, 170, 170, 170], [FTFKit.CREAM, FTFKit.CYAN, FTFKit.LILAC, FTFKit.LIME, FTFKit.PINK], 0.0, tail, head)
 
 
 func _frame_act2(f: float) -> void:
@@ -577,10 +577,10 @@ func _draw_wall(c: MotionCanvas, f: float) -> void:
 	var a := MK.prog(f, WALL + 2, 8)
 	c.line(Vector2(WALL_ORIGIN.x, 196), Vector2(W - WALL_ORIGIN.x, 196), FTFKit.INK, 3.0, a)
 	c.line(Vector2(WALL_ORIGIN.x, 884), Vector2(W - WALL_ORIGIN.x, 884), FTFKit.INK, 3.0, a)
-	FTFKit.barcode(c, Rect2(1430, 900, 358, 40), FTFKit.INK, 7.0, MK.prog(f, WALL + 6, 14))
-	FTFKit.chevrons(c, Vector2(WALL_ORIGIN.x, 990), 18, 34, FTFKit.PINK, fmod(f / 6.0, 1.0), 1.0, MK.prog(f, WALL + 4, 10))
+	MotionMarks.barcode(c, Rect2(1430, 900, 358, 40), FTFKit.INK, 7.0, MK.prog(f, WALL + 6, 14))
+	MotionMarks.chevrons(c, Vector2(WALL_ORIGIN.x, 990), 18, 34, FTFKit.PINK, fmod(f / 6.0, 1.0), 1.0, MK.prog(f, WALL + 4, 10))
 	for p in [Vector2(70, 70), Vector2(1850, 70), Vector2(70, 1010), Vector2(1850, 1010)]:
-		FTFKit.plus(c, p, 16, FTFKit.INK, 2.0, a)
+		MotionMarks.plus(c, p, 16, FTFKit.INK, 2.0, a)
 
 
 ## A livery's graphics in card space (centre origin, 1920 x 1080).
@@ -590,36 +590,36 @@ func _draw_card(c: MotionCanvas, f: float, i: int, spec: Dictionary) -> void:
 	var lf := f - t0            # local time since the card appeared
 	var draw_in := MK.map(lf, [0, 8], [0, 1], MK.ease_out)
 	# a corner X box and registration marks on every card
-	FTFKit.xbox(c, Vector2(860, -460), 70, fg, 3.0, 1.0, draw_in)
-	FTFKit.plus(c, Vector2(-890, 470), 18, fg, 3.0)
+	MotionMarks.xbox(c, Vector2(860, -460), 70, fg, 3.0, 1.0, draw_in)
+	MotionMarks.plus(c, Vector2(-890, 470), 18, fg, 3.0)
 	match i:
 		0:   # SPARROW: marching chevrons, pink/ink bent stripes
-			FTFKit.chevrons(c, Vector2(-880, -450), 14, 90, FTFKit.INK, fmod(f / 4.0, 1.0), 1.0, draw_in)
-			var p := FTFKit.rounded_path(PackedVector2Array([Vector2(420, -560), Vector2(420, -10), Vector2(980, -10)]), 160.0, 12)
-			FTFKit.stripe_bundle(c, p, [90, 90], [FTFKit.PINK, FTFKit.INK], 22.0, 0.0, draw_in)
+			MotionMarks.chevrons(c, Vector2(-880, -450), 14, 90, FTFKit.INK, fmod(f / 4.0, 1.0), 1.0, draw_in)
+			var p := MotionPath.rounded(PackedVector2Array([Vector2(420, -560), Vector2(420, -10), Vector2(980, -10)]), 160.0, 12)
+			MotionMarks.stripe_bundle(c, p, [90, 90], [FTFKit.PINK, FTFKit.INK], 22.0, 0.0, draw_in)
 		1:   # STARLING: ring stack, crosshair, checker strip, hatched block
 			var cen := Vector2(500, -90)
 			for k in 7:
 				c.ring(cen, (70.0 + k * 52.0) * draw_in, FTFKit.CREAM, 16.0)
-			FTFKit.crosshair(c, cen, 34, FTFKit.INK, 4.0, 1.0, draw_in)
-			FTFKit.checker(c, Vector2(380, 420), 14, 2, 40, FTFKit.INK, draw_in, 3.0)
-			FTFKit.hatch(c, FTFKit.rect_pts(Rect2(-880, -470, 420, 80)), 22, 9, FTFKit.INK, -45.0, f * 2.0)
+			MotionMarks.crosshair(c, cen, 34, FTFKit.INK, 4.0, 1.0, draw_in)
+			MotionMarks.checker(c, Vector2(380, 420), 14, 2, 40, FTFKit.INK, draw_in, 3.0)
+			MotionMarks.hatch(c, MotionPoly.rect(Rect2(-880, -470, 420, 80)), 22, 9, FTFKit.INK, -45.0, f * 2.0)
 		2:   # KESTREL: a field of diagonal arrows climbing up-right
 			c.draw_set_transform(Vector2(560, -170), deg_to_rad(-45.0), Vector2.ONE)
 			for r in 4:
 				var col := FTFKit.ORANGE if r % 2 == 0 else FTFKit.PINK
-				FTFKit.chevrons(c, Vector2(-520, -200 + r * 132), 10, 96, col, fmod(f / 3.0 + r * 0.3, 1.0), 1.0, draw_in, 0.9 if r % 2 == 0 else 0.75)
+				MotionMarks.chevrons(c, Vector2(-520, -200 + r * 132), 10, 96, col, fmod(f / 3.0 + r * 0.3, 1.0), 1.0, draw_in, 0.9 if r % 2 == 0 else 0.75)
 			c.draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
-			FTFKit.hatch(c, FTFKit.rect_pts(Rect2(-880, -470, 420, 80)), 22, 9, FTFKit.ORANGE, 45.0, -f * 2.0)
+			MotionMarks.hatch(c, MotionPoly.rect(Rect2(-880, -470, 420, 80)), 22, 9, FTFKit.ORANGE, 45.0, -f * 2.0)
 		3:   # FLUX WORKS: big white checker flag
 			for y in 4:
 				for x in 6:
 					if (x + y) % 2 == 0:
 						c.rect(Rect2(320 + x * 90, -380 + y * 90, 90, 90), FTFKit.WHITE, draw_in)
-			FTFKit.chevrons(c, Vector2(-880, -470), 10, 70, FTFKit.WHITE, fmod(f / 4.0, 1.0), 1.0, draw_in)
+			MotionMarks.chevrons(c, Vector2(-880, -470), 10, 70, FTFKit.WHITE, fmod(f / 4.0, 1.0), 1.0, draw_in)
 		4:   # ARCLIGHT: cyan/pink stripes bending down
-			var p2 := FTFKit.rounded_path(PackedVector2Array([Vector2(-980, -200), Vector2(300, -200), Vector2(300, 560)]), 220.0, 12)
-			FTFKit.stripe_bundle(c, p2, [80, 80, 80], [FTFKit.CYAN, FTFKit.WHITE, FTFKit.PINK], 0.0, 0.0, draw_in)
+			var p2 := MotionPath.rounded(PackedVector2Array([Vector2(-980, -200), Vector2(300, -200), Vector2(300, 560)]), 220.0, 12)
+			MotionMarks.stripe_bundle(c, p2, [80, 80, 80], [FTFKit.CYAN, FTFKit.WHITE, FTFKit.PINK], 0.0, 0.0, draw_in)
 		5:   # BOREAL: triangle grid
 			for y in 4:
 				for x in 5:
@@ -725,22 +725,22 @@ func _draw_act3_back(c: MotionCanvas, f: float) -> void:
 		band[1].lerp(band[2], on), band[0].lerp(band[3], on)])
 	if on > off:
 		c.polygon(poly, FTFKit.LILAC if g > 0.0 else FTFKit.LIME, Color(0, 0, 0, 0))
-		FTFKit.hatch(c, poly, 34, 10, FTFKit.INK, -55.0, f * 1.5, 0.22)
+		MotionMarks.hatch(c, poly, 34, 10, FTFKit.INK, -55.0, f * 1.5, 0.22)
 	# a thin pink line riding parallel
 	var shift := Vector2(300, 0)
 	var line_a := (band[1] + shift).lerp(band[2] + shift, off)
 	var line_b := (band[1] + shift).lerp(band[2] + shift, on)
 	if on > off:
 		c.line(line_a, line_b, FTFKit.PINK, 14.0)
-	FTFKit.chevrons(c, Vector2(70, 60), 12, 30, FTFKit.PINK, fmod(f / 6.0, 1.0), 1.0, on * (1.0 - off), 0.8)
+	MotionMarks.chevrons(c, Vector2(70, 60), 12, 30, FTFKit.PINK, fmod(f / 6.0, 1.0), 1.0, on * (1.0 - off), 0.8)
 
 
 func _hud_route_a() -> PackedVector2Array:
-	return FTFKit.rounded_path(PackedVector2Array([Vector2(-40, 330), Vector2(110, 330), Vector2(110, 740), Vector2(230, 860), Vector2(1180, 860), Vector2(1300, 980), Vector2(1980, 980)]), 60.0, 10)
+	return MotionPath.rounded(PackedVector2Array([Vector2(-40, 330), Vector2(110, 330), Vector2(110, 740), Vector2(230, 860), Vector2(1180, 860), Vector2(1300, 980), Vector2(1980, 980)]), 60.0, 10)
 
 
 func _hud_route_b() -> PackedVector2Array:
-	return FTFKit.rounded_path(PackedVector2Array([Vector2(1980, 190), Vector2(1560, 190), Vector2(1440, 300), Vector2(980, 300)]), 60.0, 10)
+	return MotionPath.rounded(PackedVector2Array([Vector2(1980, 190), Vector2(1560, 190), Vector2(1440, 300), Vector2(980, 300)]), 60.0, 10)
 
 
 func _draw_hud(c: MotionCanvas, f: float) -> void:
@@ -757,25 +757,25 @@ func _draw_hud(c: MotionCanvas, f: float) -> void:
 	var rb := _hud_route_b()
 	var draw_a := MK.map(f, [HUD_AT[0], HUD_AT[0] + 16], [0, 1], MK.ease_in_out)
 	var draw_b := MK.map(f, [HUD_AT[0] + 4, HUD_AT[0] + 18], [0, 1], MK.ease_in_out)
-	FTFKit.ribbon(c, ra, 24, FTFKit.LILAC, out, draw_a, true)
-	FTFKit.ribbon(c, rb, 24, FTFKit.LILAC, out, draw_b, true)
+	MotionMarks.ribbon(c, ra, 24, FTFKit.LILAC, out, draw_a, true)
+	MotionMarks.ribbon(c, rb, 24, FTFKit.LILAC, out, draw_b, true)
 	if draw_a > 0.2:
-		c.dashed_polyline(FTFKit.sub_path(ra, out, draw_a), FTFKit.INK, 4.0, 18.0, 14.0, -f * 2.0)
+		c.dashed_polyline(MotionPath.slice_fraction(ra, out, draw_a), FTFKit.INK, 4.0, 18.0, 14.0, -f * 2.0)
 	# the hold is alive: chevrons march, X boxes and crosshairs, barcode, checkers
 	var vis := 1.0 - out
 	var s2 := _pop(f, HUD_AT[2], 10, 240) * vis
 	var s3 := _pop(f, HUD_AT[3], 10, 240) * vis
 	var s4 := _pop(f, HUD_AT[4], 10, 240) * vis
-	FTFKit.chevrons(c, Vector2(1480, 120), 10, 44, FTFKit.LIME, fmod(f / 6.0, 1.0), 1.0, s2)
-	FTFKit.xbox(c, Vector2(1640, 290), 64, FTFKit.WHITE, 3.0, 1.0, s3)
-	FTFKit.crosshair(c, Vector2(1760, 290), 26, FTFKit.PINK, 3.0, 1.0, s3)
-	FTFKit.xbox(c, Vector2(300, 760), 44, FTFKit.LIME, 3.0, 1.0, s2)
-	FTFKit.barcode(c, Rect2(1440, 1012, 300, 36), FTFKit.WHITE, 3.0, s4)
-	FTFKit.checker(c, Vector2(1580, 850), 10, 2, 20, FTFKit.WHITE, s4, 5.0)
+	MotionMarks.chevrons(c, Vector2(1480, 120), 10, 44, FTFKit.LIME, fmod(f / 6.0, 1.0), 1.0, s2)
+	MotionMarks.xbox(c, Vector2(1640, 290), 64, FTFKit.WHITE, 3.0, 1.0, s3)
+	MotionMarks.crosshair(c, Vector2(1760, 290), 26, FTFKit.PINK, 3.0, 1.0, s3)
+	MotionMarks.xbox(c, Vector2(300, 760), 44, FTFKit.LIME, 3.0, 1.0, s2)
+	MotionMarks.barcode(c, Rect2(1440, 1012, 300, 36), FTFKit.WHITE, 3.0, s4)
+	MotionMarks.checker(c, Vector2(1580, 850), 10, 2, 20, FTFKit.WHITE, s4, 5.0)
 	if s3 > 0.0:
-		FTFKit.hatch(c, FTFKit.rect_pts(Rect2(1300, 850, 240 * s3, 40)), 16, 6, FTFKit.LIME, 45.0, f * 2.0)
+		MotionMarks.hatch(c, MotionPoly.rect(Rect2(1300, 850, 240 * s3, 40)), 16, 6, FTFKit.LIME, 45.0, f * 2.0)
 	for p in [Vector2(1850, 1040), Vector2(1850, 70)]:
-		FTFKit.plus(c, p, 14, FTFKit.STONE, 2.0, s2)
+		MotionMarks.plus(c, p, 14, FTFKit.STONE, 2.0, s2)
 
 
 func _draw_dot(c: MotionCanvas, f: float) -> void:

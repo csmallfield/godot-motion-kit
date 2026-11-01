@@ -221,7 +221,82 @@ it runs whenever the frame changes. Helpers: `line(a, b, col, w, opacity)`,
 `rect(r, col, opacity, w)`, `dashed_polyline(pts, col, w, dash, gap, offset, opacity)` (SVG
 `stroke-dasharray` with `stroke-dashoffset`; the pattern runs on around corners). Lines thinner than a pixel draw at 1 px with their width as
 alpha, as a browser rasterizes them. Each call's `opacity` applies to that shape alone;
-for a group's opacity use `modulate.a` on the canvas.
+for a group's opacity use `modulate.a` on the canvas. The helpers are `MotionMarks`'
+primitives, which draw into any CanvasItem.
+
+## Paths, polygons, marks and tape: MotionPath, MotionPoly, MotionMarks, MotionTape
+
+Shared geometry and loop-built graphics. Before these existed, MotionFlow, MotionCable,
+MotionMetroMap, MotionTextPath, MotionFaceLights and FTFKit each measured paths their own
+way, five classes had their own signed area and point-in-polygon, and the FTF pieces
+drew chevrons, hatching and tape with private helpers. Those now delegate here; their old
+methods still work (marked Deprecated where a direct replacement exists).
+
+### MotionPath (RefCounted, `core/motion_path.gd`)
+
+A measured polyline: `MotionPath.new(points, closed := false, f32_sum := false)`.
+Arc lengths are pixels; fractions are 0..1 of `length`.
+
+| Member | Notes |
+| --- | --- |
+| `points`, `lengths`, `length` | The polyline, cumulative lengths (one more entry when closed), total |
+| `closed`, `wrap`, `extend` | `closed`: an implied segment back to the start, arc lengths wrap. `wrap`: wrap without the implied segment (a path that already ends at its start). `extend`: open paths run straight on past their ends instead of clamping |
+| `point_at(s)`, `point_at_fraction(u)` | Position |
+| `tangent_at(s, window)`, `tangent_at_fraction(u, window)` | Chord over ±window px (smooth through corners); `Vector2.RIGHT` where there is no direction |
+| `direction_at(s)` | Direction of the segment holding s (turns at each point) |
+| `index_at(s)`, `segment_count()` | Segment lookup (binary search) |
+| `sub(a, b, before)`, `sub_fraction(a, b)` | The part between two arc lengths: the end points plus every point between. `before` picks the segment ending at an exact point hit (MotionFlow's convention) |
+| `sub_clean(a, b, min_step, min_span)` | `sub` for thick strokes: drops points closer than `min_step` (MotionCable's tube) |
+| `nearest(p)` | Arc length of the nearest path point |
+| static `cumulative(pts, closed, f32_sum)`, `polyline_length(pts)` | Measuring without an object |
+| static `point_on(pts, lengths, closed, s)`, `tangent_on(...)` | MotionTextPath's model on raw arrays (wrap when closed, extend when open) |
+| static `slice(pts, a, b)`, `slice_fraction(pts, a, b)` | One-walk sub-path of an unmeasured polyline |
+| static `rounded(pts, r, seg, merge_straight)` | Corners replaced by a `seg`+1-point curve of radius r (FTFKit/MotionFlow style) |
+| static `arc_corners(pts, radii)` | True circular arcs, one radius per corner (MotionMetroMap's bends) |
+| static `round_polygon(poly, r, samples)`, `rounded_rect(rect, radius, seg)` | Closed shapes with soft corners (signs, tape frames) |
+| static `offset(pts, d)` | Sideways copy, miter-compensated so a band keeps its width through bends |
+
+`f32_sum` sums lengths in single precision as they are stored (MotionTextPath's model, kept
+so text placed along a path does not move); `length` is the last cumulative length and
+may be set to a more precise total (MotionMetroMap does).
+
+### MotionPoly (static, `core/motion_poly.gd`)
+
+| Function | Notes |
+| --- | --- |
+| `area2(p)`, `signed_area(p)` | Shoelace sum (positive = counter-clockwise with y up, clockwise on screen) |
+| `bounds(p)`, `bounds_all(contours)` | Bounding rectangles (`Rect2()` when empty) |
+| `contains(contours, pt, evenodd)` | Nonzero (default) or even-odd fill rule by edge crossings |
+| `count_containing(contours, pt, skip)` | How many contours contain pt (`Geometry2D`); odd = inside under even-odd |
+| `prepare(contours)`, `contains_prepared(prepared, pt)` | Even-odd tests against contours with cached bounds (MotionGreebler) |
+| `contour_inside(a, b)`, `hole_flags(contours, majority)` | Nesting: a contour inside an odd number of others is a hole; `majority` tests most of its vertices, false only the first |
+| `rect(r)`, `chamfered_rect(r, c)` | Builders |
+
+### MotionMarks (static, `shapes/motion_marks.gd`)
+
+Every mark takes a `CanvasItem` first (a MotionCanvas, a node's `_draw`, a MotionExtrude or
+MotionGreebler decal callback) and has an `opacity` argument.
+
+| Function | Notes |
+| --- | --- |
+| `line`, `polyline`, `polygon`, `rect`, `circle`, `ring`, `fade`, `thin` | MotionCanvas's primitives as statics (MotionCanvas now calls these) |
+| `chevrons(c, origin, n, h, col, phase, dir, on, opacity)` | A marching row; `phase` 0..1 moves one slot, `on` grows the row |
+| `chevron_row(c, at, n, h, col)`, `chevron_up(c, apex, w, col)`, `chevron_strip(c, rect, n, col)`, `arrow(c, at, s, col)` | Compact decal marks (no triangulation check, cheap in bulk) |
+| `checker(c, pos, cols, rows, cell, col, on, seed)`, `hatch(c, area, spacing, width, col, angle, shift)`, `barcode(c, rect, col, seed, on, opacity, vertical)` | Fields and fills; `on` reveals |
+| `xbox`, `crosshair`, `plus`, `rect_pts` | Registration marks |
+| `ribbon(c, pts, width, col, a, b, round_ends)`, `stripe_bundle(c, pts, widths, cols, gap, a, b)` | Bands along a path from fraction a to b |
+| `triangle(centre, h)`, `warning_triangle(c, centre, h, fill, ink)` | ISO 7010-style sign frame |
+| `hazard_clamp(c, corner, sx, sy, arm, thick, col_a, col_b)`, `barrier(c, pivot, angle, length, thick, col_a, col_b, ink, ground)` | Hazard furniture |
+
+### MotionTape (static, `shapes/motion_tape.gd`)
+
+Tape along any path, as a Dictionary spec posed per frame: `MotionTape.pose(spec, f)` then
+`MotionTape.draw(c, spec, pose, f, opacity)`. Spec keys: `a`/`b` or `pts`/`closed`, `width`,
+`style` (`stripes`, `solid`, `text`), `col_a`, `col_b`, `period`, `duty`, `slant`, `scroll`,
+`at`, `dur`, `out` (`follow`, `back`, `tear`), `out_at`, `out_dur`, `tear`, `wave_amp`,
+`wave_len`, `wave_decay`, `wave_speed`, `seed`. The pose holds `path` (a MotionPath), `pts`,
+`lengths`, `closed`, `total` and `pieces`; give a MotionTextPath `pose.pts` to set text on
+the tape. `edge(pose, s, side)` and `edge_run(...)` place things across it.
 
 ## MotionCells (Node2D)
 
@@ -588,7 +663,7 @@ Node (x, y) sits at `origin + Vector2(x, y) * cell` pixels.
 | `add_path(id, color, points, opts) -> int` | A line along a ready-made pixel path (a logo contour, a hand-drawn route): not bundled or rounded. `opts`: `width`, `closed`, `shift`, `meta`. |
 | `build()` | Route, bundle (each corridor's lines sorted by `order`, offset by `spacing`), offset (miters at turns, 45-degree jogs on slot changes), round (circular arcs) and measure every line. Call once. |
 | static `route(a, b, mode)`, `canonical_route(a, b, mode)` | Octilinear node path between two nodes; the canonical form takes the same nodes whichever way it is travelled, so opposite-direction lines share a corridor. |
-| `length(i)`, `path(i)`, `point_at(i, s)`, `dir_at(i, s)`, `sub_path(i, a, b)`, `s_near(i, p)` | Arc-length queries (pixels; closed lines wrap). |
+| `length(i)`, `path(i)`, `point_at(i, s)`, `dir_at(i, s)`, `sub_path(i, a, b)`, `s_near(i, p)` | Arc-length queries (pixels; closed lines wrap). `measured(i)` returns the line as a `MotionPath`. |
 | `corridor(a, b)`, `node_point(i, k)`, `points_at(node)` | Lines in a corridor; where line i passes its k-th node; every line's position at a node. |
 | `draw_line(c, i, a, b, opacity, w_scale, col, with_casing)` | Draw line i from fraction a to b (draw-on and retract). |
 | `draw_span(c, i, sa, sb, col, w)` | A stretch by arc length, no casing, wrapping on closed lines: light chases, highlights, expresses. |
@@ -693,7 +768,7 @@ A thick cable along a route of waypoints. Set its properties from `f`; a
 | `static plug_length(kind, width)` | Rear-to-front length of a connector: put a route's last point `plug_length` behind a socket so the plug lands in it. |
 | `z`, `z_ranges` | Depth; `[[u0, u1, z], ...]` overrides it on parts of the route, so a cable weaves over and under other cables or nodes. |
 | `shadow`, `shadow_offset`, `opacity`, `layer` | Drop shadow (alpha 0 = none), fade, free tag for filters. |
-| `build(f)`, `curve()`, `length()`, `point_at(u)`, `tangent_at(u)`, `sub(a, b)`, `pieces()` | Build the curve for a frame (cached while nothing changes), then query it: pin labels or particles to a cable with `point_at`. |
+| `build(f)`, `curve()`, `length()`, `point_at(u)`, `tangent_at(u)`, `sub(a, b)`, `pieces()` | Build the curve for a frame (cached while nothing changes), then query it: pin labels or particles to a cable with `point_at`. `path()` returns the built curve as a `MotionPath`. |
 
 ##### MotionCableSet (MotionCanvas)
 
@@ -768,8 +843,8 @@ fluid, pulses, bubbles and a bright travelling front from that state alone.
 | state `flow` | px the contents have moved; drives pulses and bubbles. `f * speed` for a steady flow, a stepped/eased beat count for pumped flow. |
 | state `pulse_len`, `pulse_gap`, `pulse_gain`, `pulse_color` | Slugs of brighter fluid moving with the flow. |
 | state `glow`, `front_glow`, `bubbles`, `bubble_speed`, `bubble_color`, `fluid`, `opacity` | Halo strokes round the fluid, a bright bead on the travelling front, bubbles, per-frame colour override (purges, colour changes), opacity. |
-| `length(i)`, `points(i)`, `point_at(i, s)`, `tangent_at(i, s)` | Arc-length queries (px), to place valves, labels or sounds on a pipe. |
-| static `rounded(pts, r, seg)`, `sub_path(rec, a, b)` | Corner rounding; the piece of a pipe between two arc lengths. |
+| `length(i)`, `points(i)`, `point_at(i, s)`, `tangent_at(i, s)`, `path(i)` | Arc-length queries (px), to place valves, labels or sounds on a pipe; `path(i)` is the pipe as a `MotionPath`. |
+| static `rounded(pts, r, seg)`, `sub_path(rec, a, b)` | Deprecated: `MotionPath.rounded`, `path(i).sub(a, b, true)`. |
 
 ##### MotionLiquidFill (Node2D)
 
@@ -829,8 +904,9 @@ New files (no existing kit file was changed):
 | `addons/motion_kit/text/motion_text_path.gd` | `MotionTextPath` (Node2D): text set along any polyline, like SVG `<textPath>` |
 | `addons/motion_kit/fx/motion_beacon.gd` | `MotionBeacon` (Node2D): a rotating beacon light (shader inside the script) |
 
-The hazard tape itself (stripes in path space, torn ends, whip wave) is a take helper,
-`demo/ftf/ftf_warning/warning_tape.gd`, built on `MotionTextPath`'s static path maths.
+The hazard tape itself (stripes in path space, torn ends, whip wave) started as a take
+helper and is now the kit's `MotionTape` (`addons/motion_kit/shapes/motion_tape.gd`), built
+on `MotionPath` in `MotionTextPath`'s arc-length model.
 
 #### API rows (for docs/API.md)
 
@@ -851,7 +927,8 @@ each is placed at its own arc length on the path and turned to the path's direct
 | `show_from`, `show_to`, `edge_fade` | Only glyphs whose centre lies between these arc lengths are drawn (`show_to` < 0 = the end), fading over `edge_fade` px: text that appears with a tape being laid |
 | `glyph_fn(i, s) -> Dictionary` | Per-glyph overrides `tx` (along), `ty` (across), `s`, `rot`, `o`, `color`, `hide`; `i` = character index, `s` = arc length |
 | `get_text_width()`, `path_length()`, `point_at(s)`, `tangent_at(s)` | Measurements |
-| static `path_lengths(pts, closed)`, `path_point(pts, lengths, closed, s)`, `path_tangent(pts, lengths, closed, s, window)` | The arc-length model, shared with anything else that follows the path (ribbons, tapes, markers). Open paths extend straight past their ends; tangents are chords over ±window so corners don't snap |
+| `measured()` | The path as a `MotionPath` (closed paths wrap, open ones run straight on past their ends) |
+| static `path_lengths(pts, closed)`, `path_point(pts, lengths, closed, s)`, `path_tangent(pts, lengths, closed, s, window)` | Deprecated: `MotionPath.cumulative(pts, closed, true)`, `MotionPath.point_on`, `MotionPath.tangent_on`. Open paths extend straight past their ends; tangents are chords over ±window so corners don't snap |
 
 ##### MotionBeacon (Node2D)
 

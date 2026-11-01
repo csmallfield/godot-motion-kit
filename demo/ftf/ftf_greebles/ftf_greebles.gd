@@ -211,14 +211,6 @@ func _contours(data: MotionSvgData, parts: Array, k: float, tl: Vector2) -> Arra
 	return out
 
 
-func _poly_area(p: PackedVector2Array) -> float:
-	var a := 0.0
-	for i in p.size():
-		var q := p[(i + 1) % p.size()]
-		a += p[i].x * q.y - q.x * p[i].y
-	return a * 0.5
-
-
 func _build() -> void:
 	_built = true
 	_mh = _svg("res://demo/assets/logos/mh_logoFull_standard.svg")
@@ -367,20 +359,13 @@ func _build_mh_world() -> void:
 
 ## The point of a shape farthest from its outline (sampled).
 func _thickest(contours: Array) -> Vector2:
-	var b := Rect2(contours[0][0], Vector2.ZERO)
-	for c in contours:
-		for p in (c as PackedVector2Array):
-			b = b.expand(p)
+	var b := MotionPoly.bounds_all(contours)
 	var best := b.get_center()
 	var best_d := -1.0
 	for iy in 24:
 		for ix in 24:
 			var p := b.position + Vector2((ix + 0.5) / 24.0 * b.size.x, (iy + 0.5) / 24.0 * b.size.y)
-			var n := 0
-			for c in contours:
-				if Geometry2D.is_point_in_polygon(p, c):
-					n += 1
-			if n % 2 == 0:
+			if MotionPoly.count_containing(contours, p) % 2 == 0:
 				continue
 			var dmin := INF
 			for c in contours:
@@ -398,7 +383,7 @@ func _build_ftf_world() -> void:
 	var o := Vector2(X0, 0)
 	# The hull plate: its pink rim's outer contour extruded deep; raised letters.
 	var rim := _contours(_ftf, [1], _k_ftf, _ftf_tl)
-	rim.sort_custom(func(x: PackedVector2Array, y: PackedVector2Array) -> bool: return absf(_poly_area(x)) > absf(_poly_area(y)))
+	rim.sort_custom(func(x: PackedVector2Array, y: PackedVector2Array) -> bool: return absf(MotionPoly.signed_area(x)) > absf(MotionPoly.signed_area(y)))
 	var outer: PackedVector2Array = rim[0]
 	var inner: PackedVector2Array = rim[1] if rim.size() > 1 else rim[0]
 	_plate_outline = outer

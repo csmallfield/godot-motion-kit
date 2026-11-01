@@ -40,7 +40,6 @@
 extends MotionComposition
 
 const Look := preload("res://demo/ftf/ftf_warning/warning_look.gd")
-const Tape := preload("res://demo/ftf/ftf_warning/warning_tape.gd")
 const Signs := preload("res://demo/ftf/ftf_warning/warning_signs.gd")
 
 const W := 1920.0
@@ -194,7 +193,7 @@ func _tape(parent: Node, spec: Dictionary) -> Dictionary:
 	canvas.draw_fn = func(c: MotionCanvas, f: float) -> void:
 		if rec.pose.is_empty():
 			return
-		Tape.draw(c, spec, rec.pose, f)
+		MotionTape.draw(c, spec, rec.pose, f)
 	if spec.get("style", "") == "text":
 		var t := MotionTextPath.new()
 		t.font = Look.font(spec.get("font", Look.FONT_WARN))
@@ -257,7 +256,7 @@ func _build_placard() -> void:
 	_plac_canvas.draw_fn = _draw_placard
 	_placard.add_child(_plac_canvas)
 	var r := _sign_rect()
-	var pts := Tape.rounded_rect(r.grow(-15.0), 34.0, 6)
+	var pts := MotionPath.rounded_rect(r.grow(-15.0), 34.0, 6)
 	var total := MotionTextPath.path_lengths(pts, true)
 	var L: float = total[total.size() - 1]
 	_plac_border = {pts = pts, closed = true, width = 30.0, style = "stripes", col_a = Look.YELLOW, col_b = Look.BLACK,
@@ -302,7 +301,7 @@ func _build_countdown() -> void:
 	_count_canvas.draw_fn = _draw_countdown
 	_stage.add_child(_count_canvas)
 	var plate := Rect2(-215, -215, 430, 430)
-	var pts := Tape.rounded_rect(plate.grow(-34.0), 20.0, 5)
+	var pts := MotionPath.rounded_rect(plate.grow(-34.0), 20.0, 5)
 	var total := MotionTextPath.path_lengths(pts, true)
 	var L: float = total[total.size() - 1]
 	_plate_border = {pts = pts, closed = true, width = 36.0, style = "stripes", col_a = Look.YELLOW, col_b = Look.BLACK,
@@ -339,7 +338,7 @@ func _build_wall() -> void:
 func _build_logo() -> void:
 	_logo_grp = Node2D.new()
 	_stage.add_child(_logo_grp)
-	var frame_pts := Tape.rounded_rect(FRAME_R, 110.0, 10)
+	var frame_pts := MotionPath.rounded_rect(FRAME_R, 110.0, 10)
 	_tape(_logo_grp, {pts = frame_pts, closed = true, width = 46.0, style = "text", col_a = Look.YELLOW, col_b = Look.BLACK,
 		text = NAME_TEXT, text_size = 25, text_scroll = 3.0, at = CLAMP, dur = 18.0, seed = 60.0, edge_w = 3.0, edge_inset = 5.0, font = Look.FONT_WARN})
 	_logo = MotionSvg.new()
@@ -509,7 +508,7 @@ func _update_tape(rec: Dictionary, f: float) -> void:
 		node.visible = false
 		rec.pose = {}
 		return
-	var pose := Tape.pose(spec, f)
+	var pose := MotionTape.pose(spec, f)
 	if (pose.pieces as Array).is_empty():
 		node.visible = false
 		rec.pose = {}
@@ -584,10 +583,10 @@ func _draw_placard(c: MotionCanvas, f: float) -> void:
 			k += 1
 		c.circle(Vector2(x, r.position.y + 10.0), 13.0, Look.STONE)
 	# the sign
-	c.polygon(Tape.rounded_rect(r, 40.0, 6), Look.INK, Color(0, 0, 0, 0))
-	c.polygon(Tape.rounded_rect(Rect2(r.position + Vector2(30, 30), Vector2(r.size.x - 60, 82)), 10.0, 4), Look.YELLOW, Color(0, 0, 0, 0))
-	var pose := Tape.pose(_plac_border, f)
-	Tape.draw(c, _plac_border, pose, f)
+	c.polygon(MotionPath.rounded_rect(r, 40.0, 6), Look.INK, Color(0, 0, 0, 0))
+	c.polygon(MotionPath.rounded_rect(Rect2(r.position + Vector2(30, 30), Vector2(r.size.x - 60, 82)), 10.0, 4), Look.YELLOW, Color(0, 0, 0, 0))
+	var pose := MotionTape.pose(_plac_border, f)
+	MotionTape.draw(c, _plac_border, pose, f)
 	# divider under the logo, and a hazard ticker
 	c.rect(Rect2(-540, 920, 1080, 4), Look.STONE, 0.6)
 
@@ -679,17 +678,17 @@ func _draw_countdown(c: MotionCanvas, f: float) -> void:
 	var rot := deg_to_rad(3.0 if n % 2 == 0 else -3.0)
 	var appear := MK.map(f, [COUNT[0] - 2.0, COUNT[0]], [0, 1], MK.ease_out)
 	c.draw_set_transform(Vector2(960, 470), rot, Vector2.ONE * s * appear)
-	c.polygon(Tape.rounded_rect(Rect2(-215, -215, 430, 430), 30.0, 5), Look.INK, Color(0, 0, 0, 0))
-	c.polygon(Tape.rounded_rect(Rect2(-200, -200, 400, 400), 22.0, 5), Look.YELLOW, Color(0, 0, 0, 0))
+	c.polygon(MotionPath.rounded_rect(Rect2(-215, -215, 430, 430), 30.0, 5), Look.INK, Color(0, 0, 0, 0))
+	c.polygon(MotionPath.rounded_rect(Rect2(-200, -200, 400, 400), 22.0, 5), Look.YELLOW, Color(0, 0, 0, 0))
 	c.draw_set_transform(Vector2(960, 470), rot, Vector2.ONE * s * appear)
-	var pose := Tape.pose(_plate_border, f)
-	Tape.draw(c, _plate_border, pose, f)
+	var pose := MotionTape.pose(_plate_border, f)
+	MotionTape.draw(c, _plate_border, pose, f)
 	c.draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 	# gates
 	if f >= GATES[0] - 3.0:
-		Signs.barrier(c, Vector2(80, 790), _gate_angle(f, GATES[0], 0.0), 860.0, 46.0, Look.YELLOW, Look.BLACK)
+		MotionMarks.barrier(c, Vector2(80, 790), _gate_angle(f, GATES[0], 0.0), 860.0, 46.0, Look.YELLOW, Look.BLACK, Look.INK)
 	if f >= GATES[1] - 3.0:
-		Signs.barrier(c, Vector2(1840, 790), _gate_angle(f, GATES[1], -PI), 860.0, 46.0, Look.PINK, Look.BLACK)
+		MotionMarks.barrier(c, Vector2(1840, 790), _gate_angle(f, GATES[1], -PI), 860.0, 46.0, Look.PINK, Look.BLACK, Look.INK)
 
 
 # ---------------------------------------------------------------- logo
@@ -750,7 +749,7 @@ func _draw_clamps(c: MotionCanvas, f: float) -> void:
 		var sx: float = k[1]
 		var sy: float = k[2]
 		var p: Vector2 = k[0] - Vector2(sx, sy) * d
-		Signs.hazard_clamp(c, p, sx, sy, 200.0, 44.0, Look.YELLOW if _escalated(f) == false else Look.PINK, Look.BLACK)
+		MotionMarks.hazard_clamp(c, p, sx, sy, 200.0, 44.0, Look.YELLOW if _escalated(f) == false else Look.PINK, Look.BLACK)
 
 
 func _strip_pos(i: int) -> Vector2:

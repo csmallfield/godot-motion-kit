@@ -1,7 +1,8 @@
 # SPDX-License-Identifier: Apache-2.0
-# Warning pictograms for the FTF Warning take (ISO 7010-style triangles with
-# invented FTF hazards), drawn into a MotionCanvas, plus hazard clamps and
-# barrier arms. All static; sizes are the triangle's height.
+# Warning pictograms for the FTF Warning take: invented FTF hazard icons on
+# MotionMarks' ISO 7010-style warning triangle, drawn into a MotionCanvas. All
+# static; sizes are the triangle's height. (Hazard clamps and barrier arms
+# moved to MotionMarks; the old names below forward to it.)
 extends RefCounted
 
 const Look := preload("res://demo/ftf/ftf_warning/warning_look.gd")
@@ -9,24 +10,14 @@ const Look := preload("res://demo/ftf/ftf_warning/warning_look.gd")
 enum Icon { ANTIGRAV, VOLTAGE, SPEED, MAGNET }
 
 
+## Deprecated: use MotionMarks.triangle.
 static func _tri(c: Vector2, h: float) -> PackedVector2Array:
-	var w := h * 1.1547   # equilateral
-	return PackedVector2Array([c + Vector2(0, -h * 0.62), c + Vector2(w * 0.5, h * 0.38), c + Vector2(-w * 0.5, h * 0.38)])
+	return MotionMarks.triangle(c, h)
 
 
+## Deprecated: use MotionPath.round_polygon.
 static func _round(poly: PackedVector2Array, r: float) -> PackedVector2Array:
-	var out := PackedVector2Array()
-	var n := poly.size()
-	for i in n:
-		var a := poly[(i - 1 + n) % n]
-		var b := poly[i]
-		var cc := poly[(i + 1) % n]
-		var p1 := b + (a - b).normalized() * r
-		var p2 := b + (cc - b).normalized() * r
-		for k in 6:
-			var u := float(k) / 5.0
-			out.append(p1.lerp(b, u).lerp(b.lerp(p2, u), u))
-	return out
+	return MotionPath.round_polygon(poly, r)
 
 
 ## A warning triangle: black border, `fill` field, black icon. `s` scales it about its centre.
@@ -35,10 +26,7 @@ static func warning_sign(c: MotionCanvas, centre: Vector2, h: float, icon: int, 
 		return
 	h *= s
 	c.draw_set_transform(centre, rot, Vector2.ONE)
-	var outer := _round(_tri(Vector2.ZERO, h), h * 0.1)
-	c.polygon(outer, Look.INK, Color(0, 0, 0, 0), 0.0, opacity)
-	var inner := _round(_tri(Vector2(0, h * 0.035), h * 0.74), h * 0.06)
-	c.polygon(inner, fill, Color(0, 0, 0, 0), 0.0, opacity)
+	MotionMarks.warning_triangle(c, Vector2.ZERO, h, fill, Look.INK, opacity)
 	var ic := Vector2(0, h * 0.1)
 	var u := h * 0.30
 	match icon:
@@ -82,38 +70,11 @@ static func warning_sign(c: MotionCanvas, centre: Vector2, h: float, icon: int, 
 	c.draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 
 
-## An L-shaped hazard clamp at `corner`, arms pointing along +x/-x (sx) and +y/-y (sy).
+## Deprecated: use MotionMarks.hazard_clamp.
 static func hazard_clamp(c: MotionCanvas, corner: Vector2, sx: float, sy: float, arm: float, thick: float, col_a: Color, col_b: Color) -> void:
-	var r1 := Rect2(corner + Vector2(minf(0, sx * arm), minf(0, sy * thick)), Vector2(arm, thick))
-	var r2 := Rect2(corner + Vector2(minf(0, sx * thick), minf(0, sy * arm)), Vector2(thick, arm))
-	for r in [r1, r2]:
-		c.rect(r, col_a)
-	# diagonal stripes clipped to each arm
-	for r in [r1, r2]:
-		var rr: Rect2 = r
-		var k0 := -6
-		for k in range(k0, int((rr.size.x + rr.size.y) / 34.0) + 6):
-			var x := rr.position.x + k * 34.0
-			var band := PackedVector2Array([Vector2(x, rr.position.y), Vector2(x + 17, rr.position.y), Vector2(x + 17 - rr.size.y, rr.end.y), Vector2(x - rr.size.y, rr.end.y)])
-			var rect := PackedVector2Array([rr.position, Vector2(rr.end.x, rr.position.y), rr.end, Vector2(rr.position.x, rr.end.y)])
-			for poly in Geometry2D.intersect_polygons(band, rect):
-				c.polygon(poly, col_b, Color(0, 0, 0, 0))
-	# bolt
-	c.circle(corner + Vector2(sx, sy) * thick * 0.5, thick * 0.22, col_b)
-	c.ring(corner + Vector2(sx, sy) * thick * 0.5, thick * 0.3, col_b, 3.0)
+	MotionMarks.hazard_clamp(c, corner, sx, sy, arm, thick, col_a, col_b)
 
 
-## A barrier arm from `pivot`, `angle` radians (0 = pointing along +x), blocks alternating.
+## Deprecated: use MotionMarks.barrier (with ink = Look.INK).
 static func barrier(c: MotionCanvas, pivot: Vector2, angle: float, length: float, thick: float, col_a: Color, col_b: Color) -> void:
-	c.draw_set_transform(pivot, angle, Vector2.ONE)
-	var n := 8
-	var bl := length / n
-	for i in n:
-		c.rect(Rect2(i * bl, -thick * 0.5, bl + 0.5, thick), col_a if i % 2 == 0 else col_b)
-	c.rect(Rect2(0, -thick * 0.5, length, thick), Look.INK, 1.0, 3.0)
-	c.circle(Vector2.ZERO, thick * 0.7, Look.INK)
-	c.circle(Vector2.ZERO, thick * 0.3, col_a)
-	c.draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
-	# post
-	c.rect(Rect2(pivot + Vector2(-thick * 0.45, 0), Vector2(thick * 0.9, 1080.0 - pivot.y)), Look.INK)
-	c.rect(Rect2(pivot + Vector2(-thick * 0.45, thick), Vector2(thick * 0.9, 18)), col_a)
+	MotionMarks.barrier(c, pivot, angle, length, thick, col_a, col_b, Look.INK)

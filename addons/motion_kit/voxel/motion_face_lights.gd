@@ -85,9 +85,7 @@ static func chase(c: CanvasItem, size: Vector2, phase: float, length: float, col
 static func chase_path(c: CanvasItem, pts: PackedVector2Array, phase: float, length: float, col: Color, w: float, glow := 3.0) -> void:
 	if col.a <= 0.01 or pts.size() < 2:
 		return
-	var per := 0.0
-	for i in pts.size() - 1:
-		per += pts[i].distance_to(pts[i + 1])
+	var per := MotionPath.polyline_length(pts)
 	var head := fposmod(phase, 1.0) * per
 	for seg in _sub(pts, per, head - length * per, head):
 		var p: PackedVector2Array = seg
@@ -105,20 +103,4 @@ static func _sub(pts: PackedVector2Array, per: float, a: float, b: float) -> Arr
 
 
 static func _piece(pts: PackedVector2Array, a: float, b: float) -> PackedVector2Array:
-	var out := PackedVector2Array()
-	var s := 0.0
-	for i in pts.size() - 1:
-		var p := pts[i]
-		var q := pts[i + 1]
-		var l := p.distance_to(q)
-		if l <= 0.0:
-			continue
-		var s1 := s + l
-		if s1 >= a and s <= b:
-			var t0 := clampf((a - s) / l, 0.0, 1.0)
-			var t1 := clampf((b - s) / l, 0.0, 1.0)
-			if out.is_empty():
-				out.append(p.lerp(q, t0))
-			out.append(p.lerp(q, t1))
-		s = s1
-	return out
+	return MotionPath.slice(pts, a, b)

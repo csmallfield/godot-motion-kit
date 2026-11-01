@@ -95,6 +95,7 @@ var layer := 0
 
 var _pts := PackedVector2Array()
 var _cum := PackedFloat32Array()
+var _path := MotionPath.new()
 var _key := ""
 
 
@@ -127,6 +128,7 @@ func build(f: float) -> void:
 	var n := points.size()
 	if n < 2:
 		_cum = PackedFloat32Array()
+		_path = MotionPath.new()
 		return
 	var wob := 0.0
 	for t in tugs:
@@ -169,13 +171,8 @@ func build(f: float) -> void:
 				if wob != 0.0:
 					p += g_nrm * g_wob * (sin(PI * u) + 0.4 * sin(TAU * u) * sin(PI * u))
 			_pts.append(p)
-	_cum = PackedFloat32Array()
-	_cum.resize(_pts.size())
-	var acc := 0.0
-	for i in _pts.size():
-		if i > 0:
-			acc += _pts[i - 1].distance_to(_pts[i])
-		_cum[i] = acc
+	_path = MotionPath.new(_pts)
+	_cum = _path.lengths
 
 
 ## Centripetal Catmull-Rom (Barry-Goldman, alpha 0.5): no cusps or loops where
@@ -199,6 +196,11 @@ func curve() -> PackedVector2Array:
 	return _pts
 
 
+## The built curve as a measured MotionPath (call build first).
+func path() -> MotionPath:
+	return _path
+
+
 func length() -> float:
 	return _cum[_cum.size() - 1] if _cum.size() > 0 else 0.0
 
@@ -207,61 +209,28 @@ func length() -> float:
 func point_at(u: float) -> Vector2:
 	if _pts.size() < 2:
 		return points[0] if points.size() > 0 else Vector2.ZERO
-	var target := clampf(u, 0.0, 1.0) * length()
-	var i := _index_at(target)
-	var seg := _cum[i + 1] - _cum[i]
-	var k := (target - _cum[i]) / seg if seg > 0.0 else 0.0
-	return _pts[i].lerp(_pts[i + 1], k)
+	return _path.point_at(clampf(u, 0.0, 1.0) * length())
 
 
-## Unit tangent at fraction u (direction of travel from start to end).
+## Unit tangent at fraction u (direction of travel from start to end): the
+## segment's direction, looking one point further over a degenerate segment.
 func tangent_at(u: float) -> Vector2:
 	if _pts.size() < 2:
 		return Vector2.RIGHT
-	var target := clampf(u, 0.0, 1.0) * length()
-	var i := _index_at(target)
+	var i := _path.index_at(clampf(u, 0.0, 1.0) * length())
 	var d := _pts[i + 1] - _pts[i]
 	if d.length() < 0.001 and i + 2 < _pts.size():
 		d = _pts[i + 2] - _pts[i]
 	return d.normalized()
 
 
-func _index_at(target: float) -> int:
-	var lo := 0
-	var hi := _cum.size() - 2
-	while lo < hi:
-		var mid := (lo + hi + 1) >> 1
-		if _cum[mid] <= target:
-			lo = mid
-		else:
-			hi = mid - 1
-	return clampi(lo, 0, _pts.size() - 2)
-
-
-## The part of the built curve between fractions a and b.
+## The part of the built curve between fractions a and b, with near-duplicate
+## points dropped (MotionPath.sub_clean).
 func sub(a: float, b: float) -> PackedVector2Array:
-	var out := PackedVector2Array()
 	if _pts.size() < 2:
-		return out
+		return PackedVector2Array()
 	var total := length()
-	var la := clampf(a, 0.0, 1.0) * total
-	var lb := clampf(b, 0.0, 1.0) * total
-	if lb - la < 0.5:
-		return out
-	out.append(point_at(la / total))
-	var i := _index_at(la) + 1
-	while i < _pts.size() and _cum[i] < lb:
-		# skip near-duplicates: a sub-pixel segment has no reliable direction and
-		# turns a thick polyline's end into a spike
-		if _pts[i].distance_to(out[out.size() - 1]) >= 1.5:
-			out.append(_pts[i])
-		i += 1
-	var last := point_at(lb / total)
-	if out.size() > 1 and last.distance_to(out[out.size() - 1]) < 1.5:
-		out[out.size() - 1] = last
-	else:
-		out.append(last)
-	return out
+	return _path.sub_clean(clampf(a, 0.0, 1.0) * total, clampf(b, 0.0, 1.0) * total)
 
 
 ## Depth at fraction u.
