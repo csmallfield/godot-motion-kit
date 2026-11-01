@@ -88,3 +88,15 @@ func facing(n: Vector3) -> bool:
 ## CanvasItem.draw_set_transform_matrix, or set it on a node (a MotionSvg on a face).
 func plane_transform(origin: Vector3, a: Vector3, b: Vector3) -> Transform2D:
 	return Transform2D(vec(a), vec(b), project(origin))
+
+
+## The MotionLens3D that draws this view of a MotionStage3D scene (Godot axes,
+## see MotionLens3D.from_extrude): orthographic, same yaw, pitch, roll, scale
+## and centre, so lens.project(MotionLens3D.from_extrude(p)) == project(p).
+func to_lens(screen := Vector2(1920, 1080)) -> MotionLens3D:
+	var l := MotionLens3D.extrude(yaw, pitch, scale, MotionLens3D.from_extrude(target), centre, screen)
+	if roll != 0.0:
+		var r := deg_to_rad(roll)
+		var b := l.basis
+		l.basis = Basis(b.x * cos(r) + b.y * sin(r), b.y * cos(r) - b.x * sin(r), b.z)
+	return l

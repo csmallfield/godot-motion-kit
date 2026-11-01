@@ -11,18 +11,14 @@ uniform float opacity = 1.0;
 uniform float amplitude = 0.62;    // spread of the noise around its centre (feTurbulence is gentle)
 uniform float centre = 0.5625;     // feTurbulence fractalNoise sits a little above 0.5
 
+#include "res://addons/motion_kit/shaders/motion_noise.gdshaderinc"
+
 float hash(vec2 p) {
-	p = fract(p * vec2(123.34, 456.21) + seed * 0.618);
-	p += dot(p, p + 45.32);
-	return fract(p.x * p.y);
+	return mk_hash21(p, seed * 0.618);
 }
 
 float vnoise(vec2 p) {
-	vec2 i = floor(p);
-	vec2 f = fract(p);
-	f = f * f * (3.0 - 2.0 * f);
-	float a = hash(i), b = hash(i + vec2(1, 0)), c = hash(i + vec2(0, 1)), d = hash(i + vec2(1, 1));
-	return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
+	return mk_vnoise2(p, seed * 0.618);
 }
 
 void fragment() {

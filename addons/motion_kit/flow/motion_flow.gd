@@ -14,7 +14,7 @@
 ## Arc lengths are in pixels. Everything is drawn in one _draw, so a few dozen
 ## pipes with pulses cost a few hundred draw calls and no offscreen pass.
 @tool
-@icon("res://addons/motion_kit/icons/shape.svg")
+@icon("res://addons/motion_kit/icons/flow.svg")
 class_name MotionFlow
 extends Node2D
 
@@ -33,8 +33,8 @@ const PIPE_DEFAULTS := {
 	arrow_color = Color(0.08, 0.1, 0.14),
 }
 const STATE_DEFAULTS := {
-	draw = 1.0,            # 0..1 of the pipe wall drawn from the start (a pipe tracing itself)
-	draw_from = 0.0,       # 0..1 where the drawn wall starts (un-drawing from the start)
+	draw = 1.0,            # 0..1 of the pipe wall drawn from the start (a pipe tracing itself); alias `reveal`
+	draw_from = 0.0,       # 0..1 where the drawn wall starts (un-drawing from the start); alias `reveal_from`
 	fill = 0.0,            # 0..1 fluid front position along the pipe
 	drain = 0.0,           # 0..1 fluid tail position (fluid between drain and fill)
 	flow = 0.0,            # px the contents have moved (animate f * speed)
@@ -49,6 +49,10 @@ const STATE_DEFAULTS := {
 	opacity = 1.0,
 	front_glow = 0.0,      # 0..1 a bright bead at the travelling front
 }
+
+## Optional (i: int, f: float) -> Dictionary: pipe i's state at frame f. While
+## set, _frame(f) applies it to every pipe (apply() / set_state() still work).
+var state_fn: Callable
 
 var _pipes: Array[Dictionary] = []
 var _nodes: Array[Dictionary] = []
@@ -110,10 +114,20 @@ static func _tangent(mp: MotionPath, s: float) -> Vector2:
 	return (mp.point_at(s + 1.0) - mp.point_at(s - 1.0)).normalized()
 
 
-## Set pipe i's state for this frame (keys of STATE_DEFAULTS); unset keys reset to defaults.
+func _frame(f: float) -> void:
+	if state_fn.is_valid():
+		apply(func(i: int) -> Variant: return state_fn.call(i, f))
+
+
+## Set pipe i's state for this frame (keys of STATE_DEFAULTS); unset keys reset
+## to defaults. `reveal` / `reveal_from` are accepted for `draw` / `draw_from`.
 func set_state(i: int, d: Dictionary) -> void:
 	var s := STATE_DEFAULTS.duplicate()
 	s.merge(d, true)
+	if d.has("reveal"):
+		s.draw = d.reveal
+	if d.has("reveal_from"):
+		s.draw_from = d.reveal_from
 	_state[i] = s
 	queue_redraw()
 

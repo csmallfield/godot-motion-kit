@@ -15,20 +15,31 @@ const SUITES := [
 	"res://tests/test_motion_poly.gd",
 	"res://tests/test_motion_travel.gd",
 	"res://tests/test_kit_helpers.gd",
+	"res://tests/test_kit_classes.gd",
 ]
 
-func _init() -> void:
+# Run once the tree is up (root inside the tree, after the first flush), so
+# suites can add nodes to it.
+func _initialize() -> void:
+	_run.call_deferred()
+
+
+func _run() -> void:
 	var failed := 0
 	var passed := 0
 	for path in SUITES:
 		if not ResourceLoader.exists(path):
 			continue
 		var suite: Object = load(path).new()
+		if "tree" in suite:
+			suite.set("tree", self)   # suites that need nodes in a tree
 		for m in suite.get_method_list():
 			var name: String = m.name
 			if not name.begins_with("test_"):
 				continue
-			var err: String = suite.call(name)
+			var res: Variant = suite.call(name)
+			# a test that hits a script error returns null: that is a failure too
+			var err: String = res if res is String else "script error (no result)"
 			if err == "":
 				passed += 1
 				print("  ok    %s::%s" % [path.get_file(), name])

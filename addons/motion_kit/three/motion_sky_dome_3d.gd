@@ -18,7 +18,7 @@
 ## use 4000). Below the horizon it shows the horizon colour; the ground hides
 ## it anyway, and `horizon_cut` sinks the sun behind the horizon line.
 @tool
-@icon("res://addons/motion_kit/icons/shape.svg")
+@icon("res://addons/motion_kit/icons/three.svg")
 class_name MotionSkyDome3D
 extends MeshInstance3D
 

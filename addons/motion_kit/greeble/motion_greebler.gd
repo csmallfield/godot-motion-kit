@@ -151,8 +151,14 @@ func set_visible(id: int, on: bool) -> void:
 	_structures[id].visible = on
 
 
+## Opacity of structure `id` (0..1).
+func set_opacity(id: int, opacity: float) -> void:
+	_structures[id].alpha = opacity
+
+
+## Deprecated: use set_opacity.
 func set_alpha(id: int, a: float) -> void:
-	_structures[id].alpha = a
+	set_opacity(id, a)
 
 
 func structure_count() -> int:

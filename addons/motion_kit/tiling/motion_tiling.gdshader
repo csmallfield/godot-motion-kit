@@ -83,10 +83,10 @@ void vertex() {
 	local_px = VERTEX;
 }
 
+#include "res://addons/motion_kit/shaders/motion_noise.gdshaderinc"
+
 float hash(vec2 p) {
-	p = fract(p * vec2(123.34, 456.21) + seed * 0.618);
-	p += dot(p, p + 45.32);
-	return fract(p.x * p.y);
+	return mk_hash21(p, seed * 0.618);
 }
 
 vec2 rot(vec2 p, float a) {

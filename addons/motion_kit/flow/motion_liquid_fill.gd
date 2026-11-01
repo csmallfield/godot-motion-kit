@@ -13,19 +13,20 @@
 ##   tank.fill.add_child(logo)                 # the logo in its own colours
 ##   tank.surface.add_child(logo_light)        # optional: a white copy for the meniscus
 ##   tank.kicks = [Vector2(176, 1.0), Vector2(200, 1.6)]
-##   # in _frame: tank.level = MK.map(f, [176, 200], [0, 1])
+##   # in _frame: tank.fill_level = MK.map(f, [176, 200], [0, 1])
 ##
-## Coordinates: the vessel is the rect (0, 0)–size in local space; level 0 is
+## Coordinates: the vessel is the rect (0, 0)–size in local space; fill_level 0 is
 ## its bottom edge, 1 its top. The masks are drawn with draw_* calls
 ## (clip_children), so they follow the node's transform.
 @tool
-@icon("res://addons/motion_kit/icons/shape.svg")
+@icon("res://addons/motion_kit/icons/flow.svg")
 class_name MotionLiquidFill
 extends Node2D
 
 @export var size := Vector2(400, 200)
-## 0 = empty (surface at the bottom edge), 1 = surface at the top edge.
-@export var level := 0.0
+## How full the vessel is: 0 = empty (surface at the bottom edge), 1 = surface
+## at the top edge. (`fill` is the node the liquid reveals.)
+@export var fill_level := 0.0
 ## Surface slope: px the right end sits above the left end.
 @export var tilt := 0.0
 ## Standing-wave amplitude in px per unit of kick.
@@ -50,7 +51,8 @@ extends Node2D
 @export var bubble_color := Color(1, 1, 1, 0.7)
 @export var bubble_size := 6.0
 @export var bubble_speed := 4.0
-@export var seed_value := 1.0
+## Seed for the bubbles and foam.
+@export var seed := 1.0
 
 ## Slosh kicks: Vector2(frame, strength) or {at, amp, mode} (mode 1 = sloshing
 ## end to end, 2 = a hump in the middle; default both).
@@ -60,6 +62,15 @@ var fill: Node2D
 ## Children here show only in the meniscus band (optional).
 var surface: Node2D
 var frame := 0.0
+
+## Deprecated: use fill_level.
+var level: float:
+	get: return fill_level
+	set(v): fill_level = v
+## Deprecated: use seed.
+var seed_value: float:
+	get: return seed
+	set(v): seed = v
 
 var _clip: MotionCanvas
 var _band: MotionCanvas
@@ -97,7 +108,7 @@ func _frame(f: float) -> void:
 	var bottom := _max_surface_y()
 	# An empty clip mask clips nothing: hide what would be empty.
 	_clip.visible = top < size.y - 0.5
-	var band_on := bottom > -meniscus and top < size.y + meniscus and level > -0.02 and level < 1.0 + (wave_amp * 2.0 + absf(tilt) + meniscus) / maxf(1.0, size.y)
+	var band_on := bottom > -meniscus and top < size.y + meniscus and fill_level > -0.02 and fill_level < 1.0 + (wave_amp * 2.0 + absf(tilt) + meniscus) / maxf(1.0, size.y)
 	_band.visible = band_on and surface.get_child_count() > 0
 	_plain.visible = band_on and surface.get_child_count() == 0 and meniscus > 0.0
 	for c: MotionCanvas in [_clip, _band, _fx, _plain]:
@@ -135,7 +146,7 @@ static func slosh(f: float, x01: float, kick_list: Array, amp := 10.0, freq := 0
 ## Surface y in local px at local x.
 func surface_y(x: float) -> float:
 	var u := clampf(x / maxf(1.0, size.x), 0.0, 1.0)
-	var y := size.y * (1.0 - level) - tilt * (u - 0.5)
+	var y := size.y * (1.0 - fill_level) - tilt * (u - 0.5)
 	y -= slosh(frame, u, kicks, wave_amp, wave_freq, damping)
 	if ripple > 0.0:
 		y -= ripple * sin(TAU * (x / ripple_len) - frame * ripple_speed * TAU / ripple_len)
@@ -204,20 +215,20 @@ func _draw_bubbles(c: MotionCanvas, f: float) -> void:
 	var top := _min_surface_y()
 	if bubbles > 0:
 		for k in bubbles:
-			var r0 := MK.rand(k * 3.17 + seed_value)
-			var x := size.x * MK.rand(k * 9.71 + seed_value * 2.0)
-			var speed := bubble_speed * (0.6 + 0.8 * MK.rand(k * 1.3 + seed_value))
+			var r0 := MK.rand(k * 3.17 + seed)
+			var x := size.x * MK.rand(k * 9.71 + seed * 2.0)
+			var speed := bubble_speed * (0.6 + 0.8 * MK.rand(k * 1.3 + seed))
 			var span := size.y + 40.0
 			var y := size.y + 20.0 - fposmod(r0 * span + f * speed, span)
 			x += sin(f * 0.15 + k) * 6.0
 			if y < surface_y(x) + 4.0:
 				continue
-			var rad := bubble_size * (0.5 + MK.rand(k * 5.1 + seed_value))
+			var rad := bubble_size * (0.5 + MK.rand(k * 5.1 + seed))
 			c.draw_arc(Vector2(x, y), rad, 0.0, TAU, 14, bubble_color, maxf(1.5, rad * 0.35), true)
 	if foam > 0.0:
 		var n := int(size.x / 14.0)
 		for k in n:
-			var x2 := (float(k) + MK.rand(k * 2.3 + seed_value)) * 14.0
+			var x2 := (float(k) + MK.rand(k * 2.3 + seed)) * 14.0
 			var sy := surface_y(x2)
 			if sy > size.y or sy < 0.0:   # no foam above a brim-full vessel
 				continue

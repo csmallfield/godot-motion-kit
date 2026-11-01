@@ -248,7 +248,7 @@ func _frame(f: float) -> void:
 		elif _in(f, L.TEAR, L.TEAR + 10.0):
 			_mode = &"rows"
 			_rows.profile = MotionTimeSlices.Profile.RANDOM
-			_rows.seed_value = floorf(f / 2.0)
+			_rows.seed = floorf(f / 2.0)
 			_rows.step = 2.0
 			_rows.delay = 10.0 * (1.0 - MK.map(f, [L.TEAR + 6.0, L.TEAR + 10.0], [0, 1], MK.linear))
 		elif _in(f, L.PASS, L.PASS + 16.0):

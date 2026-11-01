@@ -3,6 +3,7 @@
 ## tag pills of the SCF lockups and a common UI element. The node origin is
 ## the pill's centre, so scale pops it in place; `top_left` gives the box corner.
 @tool
+@icon("res://addons/motion_kit/icons/text.svg")
 class_name MotionPill
 extends Node2D
 

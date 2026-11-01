@@ -276,7 +276,7 @@ func _build_mh() -> void:
 	_mh_tank.bubble_size = 5.0
 	_mh_tank.foam = 0.8
 	_mh_tank.foam_color = Color(1, 0.95, 0.8, 0.9)
-	_mh_tank.seed_value = 3.0
+	_mh_tank.seed = 3.0
 	_mh_tank.kicks = [Vector2(MH_FILL, 0.6), Vector2(50, 0.45), Vector2(62, 0.4), Vector2(72, 0.4), Vector2(MH_FULL, 1.0),
 		Vector2(MH_DRAIN, 0.9), Vector2(MH_DRAIN + 12.0, 0.5)]
 	_stage.add_child(_mh_tank)
@@ -588,7 +588,7 @@ func _frame_mh(f: float) -> void:
 	var lv := MK.map(f, [MH_FILL, MH_FULL - 4.0], [-0.03, 1.12], MK.ease_in_out)
 	if f >= MH_DRAIN:
 		lv = MK.map(f, [MH_DRAIN, MH_EMPTY], [1.12, -0.06], MK.ease_in_out)
-	_mh_tank.level = lv
+	_mh_tank.fill_level = lv
 	# placard rises into place as one plate, and leaves the same way
 	var pin := MK.map(f, [PRESENTS, PRESENTS + 8.0], [0, 1], MK.ease_out)
 	var pout := MK.map(f, [MH_DRAIN + 6.0, MH_DRAIN + 14.0], [0, 1], MK.ease_in_quad)

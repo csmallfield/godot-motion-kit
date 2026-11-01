@@ -4,7 +4,7 @@
 ## toward its edges. Static and frame-pure; move or rotate the node to feed
 ## sheets through a press. `shadow` draws a soft drop shadow under it.
 @tool
-@icon("res://addons/motion_kit/icons/shape.svg")
+@icon("res://addons/motion_kit/icons/print.svg")
 class_name MotionPaper
 extends Node2D
 

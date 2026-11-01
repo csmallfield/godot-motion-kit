@@ -18,7 +18,7 @@
 ##   split.region = Rect2(160, 200, 1600, 560)
 ##   func _frame(f): split.delay = 4.0 * exp(-(f - 240.0) * 0.3)
 @tool
-@icon("res://addons/motion_kit/icons/fx.svg")
+@icon("res://addons/motion_kit/icons/time.svg")
 class_name MotionTimeSplit
 extends Node2D
 
@@ -84,12 +84,8 @@ func rebuild() -> void:
 	var masks: Array[Sprite2D] = []
 	var adds: Array[Sprite2D] = []
 	for k in 3:
-		var vp := SubViewport.new()
-		vp.transparent_bg = true
-		vp.disable_3d = true
-		vp.size = Vector2i(maxi(1, int(region.size.x)), maxi(1, int(region.size.y)))
-		vp.render_target_update_mode = SubViewport.UPDATE_DISABLED
-		vp.canvas_item_default_texture_filter = Viewport.DEFAULT_CANVAS_ITEM_TEXTURE_FILTER_LINEAR
+		var vp := MotionOffscreen.viewport(SubViewport.UPDATE_DISABLED,
+				Viewport.DEFAULT_CANVAS_ITEM_TEXTURE_FILTER_LINEAR, MotionOffscreen.pixels(region.size, 1.0, false))
 		var holder := Node2D.new()
 		holder.position = -region.position
 		vp.add_child(holder)
@@ -129,7 +125,7 @@ func _frame(f: float) -> void:
 		var inst: Node = c.inst
 		(c.mask as CanvasItem).visible = on
 		(c.add as CanvasItem).visible = on
-		(c.vp as SubViewport).render_target_update_mode = SubViewport.UPDATE_ALWAYS if on else SubViewport.UPDATE_DISABLED
+		MotionOffscreen.gate(c.vp as SubViewport, on)
 		inst.set("hide_outside", not on)
 		inst.set("start", delay * shares[k] if on else 1e9)
 		if on:

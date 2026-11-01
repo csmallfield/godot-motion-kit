@@ -18,7 +18,7 @@
 ## Use two nodes to put other things between the field and a warped logo: one
 ## with `draw_field = true` and no content, one with `draw_field = false`.
 @tool
-@icon("res://addons/motion_kit/icons/fx.svg")
+@icon("res://addons/motion_kit/icons/field.svg")
 class_name MotionWarpField
 extends Node2D
 
@@ -119,14 +119,8 @@ var _lut: GradientTexture1D
 
 
 func _init() -> void:
-	_vp = SubViewport.new()
-	_vp.transparent_bg = true
-	_vp.disable_3d = true
-	_vp.render_target_update_mode = SubViewport.UPDATE_DISABLED
-	content = Node2D.new()
-	content.name = "Content"
-	_vp.add_child(content)
-	add_child(_vp, false, Node.INTERNAL_MODE_FRONT)
+	content = MotionOffscreen.holder("Content")
+	_vp = MotionOffscreen.make(self, content, SubViewport.UPDATE_DISABLED)
 	_rect = ColorRect.new()
 	_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_mat = ShaderMaterial.new()
@@ -153,10 +147,7 @@ func _notification(what: int) -> void:
 func _resize() -> void:
 	if not _vp:
 		return
-	var px := (size * render_scale).round()
-	_vp.size = Vector2i(maxi(1, int(px.x)), maxi(1, int(px.y)))
-	if _vp.is_inside_tree():
-		_vp.canvas_transform = Transform2D.IDENTITY.scaled(Vector2(render_scale, render_scale))
+	MotionOffscreen.fit(_vp, size, render_scale)
 	_rect.size = size
 
 
@@ -189,7 +180,7 @@ func _apply() -> void:
 	if not _mat:
 		return
 	var on := is_visible_in_tree() and _has_content() and content_level > 0.0
-	_vp.render_target_update_mode = SubViewport.UPDATE_ALWAYS if on else SubViewport.UPDATE_DISABLED
+	MotionOffscreen.gate(_vp, on)
 	var m := _mat
 	m.set_shader_parameter("size", size)
 	m.set_shader_parameter("time", _time)

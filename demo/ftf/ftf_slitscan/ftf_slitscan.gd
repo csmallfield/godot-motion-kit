@@ -278,7 +278,7 @@ func _frame_logo(f: float) -> void:
 			_cols.slit = 0.0
 			_cols.reveal = 1.0
 			_cols.profile = MotionTimeSlices.Profile.RANDOM
-			_cols.seed_value = floorf(f / 2.0)
+			_cols.seed = floorf(f / 2.0)
 			_cols.step = 2.0
 			_cols.delay = 10.0
 		else:

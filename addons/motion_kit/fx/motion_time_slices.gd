@@ -20,7 +20,7 @@
 ## each a full box: fill is the sum of their areas (about bands / (2p+1)
 ## frames for `box_power` p), so keep box counts to a dozen or two.
 @tool
-@icon("res://addons/motion_kit/icons/fx.svg")
+@icon("res://addons/motion_kit/icons/time.svg")
 class_name MotionTimeSlices
 extends Node2D
 
@@ -36,7 +36,7 @@ enum Profile {
 	CENTRE,    ## the middle band lags most
 	EDGES,     ## the outer bands lag most
 	SINE,      ## a wave across the bands (`waves`, `phase`)
-	RANDOM,    ## seeded per band (`seed_value`)
+	RANDOM,    ## seeded per band (`seed`)
 	CUSTOM,    ## `profile_fn(u) -> 0..1`
 }
 
@@ -67,7 +67,7 @@ enum Profile {
 @export var waves := 1.0
 @export var phase := 0.0
 ## RANDOM: seed.
-@export var seed_value := 1.0
+@export var seed := 1.0
 ## Quantise each band's delay to whole steps of this many frames (0 = smooth).
 @export var step := 0.0
 
@@ -95,6 +95,11 @@ enum Profile {
 var builder: Callable
 ## CUSTOM profile: u (0..1 across the bands) -> 0..1 of `delay`.
 var profile_fn: Callable
+
+## Deprecated: use seed.
+var seed_value: float:
+	get: return seed
+	set(v): seed = v
 
 var _bands: Array[Dictionary] = []   # {vp, holder, inst, spr, dst: Rect2, u: float}
 var _dirty := true
@@ -157,12 +162,8 @@ func rebuild() -> void:
 		_add_mat.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
 	for k in n:
 		var dst: Rect2 = rects[k]
-		var vp := SubViewport.new()
-		vp.transparent_bg = true
-		vp.disable_3d = true
-		vp.size = Vector2i(maxi(1, int(dst.size.x)), maxi(1, int(dst.size.y)))
-		vp.render_target_update_mode = SubViewport.UPDATE_ALWAYS
-		vp.canvas_item_default_texture_filter = Viewport.DEFAULT_CANVAS_ITEM_TEXTURE_FILTER_LINEAR
+		var vp := MotionOffscreen.viewport(SubViewport.UPDATE_ALWAYS,
+				Viewport.DEFAULT_CANVAS_ITEM_TEXTURE_FILTER_LINEAR, MotionOffscreen.pixels(dst.size, 1.0, false))
 		var holder := Node2D.new()
 		vp.add_child(holder)
 		var inst: Node = scene.instantiate() if scene else builder.call()
@@ -188,7 +189,7 @@ func rebuild() -> void:
 
 ## 0..1 share of `delay` for a band at u (0..1 across the bands).
 func profile_at(u: float, k: int) -> float:
-	return profile_value(profile, u, k, waves, phase, seed_value, profile_fn)
+	return profile_value(profile, u, k, waves, phase, seed, profile_fn)
 
 
 ## A profile's 0..1 share of `delay` for band k at u (0..1 across the bands):
@@ -247,7 +248,7 @@ func _frame(f: float) -> void:
 		var u: float = b.u
 		var on := live and absf(u - reveal_from) <= reveal * 0.5 + 0.5 / n
 		spr.visible = on
-		vp.render_target_update_mode = SubViewport.UPDATE_ALWAYS if on else SubViewport.UPDATE_DISABLED
+		MotionOffscreen.gate(vp, on)
 		if not on:
 			# The parent still walks into the band: make it return at once.
 			inst.set("hide_outside", true)

@@ -30,7 +30,7 @@ equal (quantised) delay share one render.
 | `scene` / `builder`, `size` | As MotionTimeSlices. |
 | `layout` | `ROWS`, `COLUMNS` (slit-scan: every band shows the slit, stretched across the band) or `CHANNELS` (three full-frame copies tinted R, G, B and added). |
 | `bands`, `slots` | Number of bands; most distinct moments rendered per frame (one content instance each, built once). More distinct delays than slots are merged to `slots` evenly spaced levels. |
-| `delay`, `profile` (MotionTimeSlices.Profile), `waves`, `phase`, `seed_value`, `profile_fn`, `step` | As MotionTimeSlices; `step` (default 1 frame) is what makes bands share. |
+| `delay`, `profile` (MotionTimeSlices.Profile), `waves`, `phase`, `seed`, `profile_fn`, `step` | As MotionTimeSlices; `step` (default 1 frame) is what makes bands share. |
 | `slit_pos`, `slit_width` | The slit each slot renders (a `slit_width`-pixel column or row): the slot viewport is that size, so a slot costs a line, not a frame. |
 | `channel_shares` | CHANNELS: delay share per channel. `[1, 0, 0]` = red lags, green and blue together: a red/cyan split in two renders instead of three. |
 | `reveal`, `reveal_from` | Show only some bands (as MotionTimeSlices). |

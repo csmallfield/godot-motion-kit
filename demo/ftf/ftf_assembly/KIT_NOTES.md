@@ -32,7 +32,7 @@ function of the frame.
 | --- | --- |
 | `MotionBlockPlan.new(n)`, `resize(n)`, `size()` | |
 | `start`, `waves`, `wave_step`, `dur`, `jitter` | Wave k starts at `start + k * wave_step` (a beat, so moves land on the beat); each move takes `dur` frames; inside a wave, up to `jitter` frames of delay follow the key, so a wave ripples instead of firing as one block (and never as a per-letter cascade). |
-| `lift`, `slide_max`, `sink_share`, `land`, `seed_v` | Flying cruise height (±40% per block, so crossing blocks fly at different heights); moves up to `slide_max` cells slide on the ground, longer ones fly (or, for `sink_share` of them, sink and rise); height overshoot on landing (servo telescoping). |
+| `lift`, `slide_max`, `sink_share`, `land`, `seed` | Flying cruise height (±40% per block, so crossing blocks fly at different heights); moves up to `slide_max` cells slide on the ground, longer ones fly (or, for `sink_share` of them, sink and rise); height overshoot on landing (servo telescoping). |
 | `set_move(i, a, b, key, style = -1)` | `a`, `b` = Vector3(x, y, height). `key` 0..1 picks the wave (e.g. the target's elliptical distance from the logo's centre: middle out). `style`: `STAY` (height only), `SLIDE` (two axis legs on the ground, x/y order seeded), `FLY` (lift, two legs in the air, drop), `SINK` (down at the source, up at the target); -1 picks. |
 | `pose(i, f)` | Vector4(x, y, lift above ground, height) at frame f. Clamped: before the move it returns `a`, after it `b`, so a chain of plans (A→B, B→C…) is evaluated by picking the latest plan whose `start` has passed. |
 | `progress(i, f)`, `starts(i)`, `lands(i)`, `target(i)`, `origin(i)`, `style(i)`, `wave_frames()` | Light switches on landing, cues on wave frames. |

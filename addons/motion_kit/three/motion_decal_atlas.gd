@@ -15,6 +15,7 @@
 ## renders once (UPDATE_ONCE) on the first frame drawn; call `refresh()` after
 ## adding cells later.
 @tool
+@icon("res://addons/motion_kit/icons/three.svg")
 class_name MotionDecalAtlas
 extends Node
 
@@ -32,13 +33,8 @@ var _row := 0
 
 func _init(atlas_size := Vector2i(2048, 2048)) -> void:
 	size = atlas_size
-	viewport = SubViewport.new()
-	viewport.size = size
-	viewport.transparent_bg = true
-	viewport.disable_3d = true
-	viewport.render_target_update_mode = SubViewport.UPDATE_ONCE
-	viewport.canvas_item_default_texture_filter = Viewport.DEFAULT_CANVAS_ITEM_TEXTURE_FILTER_LINEAR
-	add_child(viewport, false, Node.INTERNAL_MODE_FRONT)
+	viewport = MotionOffscreen.make(self, null, SubViewport.UPDATE_ONCE,
+			Viewport.DEFAULT_CANVAS_ITEM_TEXTURE_FILTER_LINEAR, size)
 	texture = viewport.get_texture()
 
 

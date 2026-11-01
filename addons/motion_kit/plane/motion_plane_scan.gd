@@ -12,7 +12,8 @@
 ## time-varying state as a Dictionary (keys, all optional: `offset` Vector2 =
 ## ground_offset, `cell` Vector2, `blur` Vector2 = motion_blur, `color_a`,
 ## `color_b`, `accent` Colors, `sun` float = sun size scale, `level` float),
-## and call `capture(f)` in `_frame(f)`: the last `history` frames are sampled
+## and the plane captures it every frame (or call `capture(f)` yourself in
+## `_frame(f)`): the last `history` frames are sampled
 ## into a small float texture the shader interpolates. Everything else (camera,
 ## bends, fog, sky, ring) is shared by all times. Without `history_fn` every
 ## time shows the present (slit-scan of a still plane is just stretching).
@@ -28,9 +29,9 @@
 ##   var board := MotionPlaneScan.new()
 ##   board.history_fn = func(t: float) -> Dictionary: return {offset = Vector2(0, travel(t))}
 ##   func _frame(f): board.ground_offset.y = travel(f); board.scan = 1.0; board.walls = 1.0
-##                   board.delay = 60.0; board.capture(f); board.sync_now()
+##                   board.delay = 60.0                   # history captured in the board's own _frame
 @tool
-@icon("res://addons/motion_kit/icons/shape.svg")
+@icon("res://addons/motion_kit/icons/field.svg")
 class_name MotionPlaneScan
 extends MotionPatternPlane
 
@@ -90,15 +91,26 @@ const SCAN_SHADER := preload("res://addons/motion_kit/plane/motion_plane_scan.gd
 @export_range(2, 1024) var history := 96
 
 ## (frame: float) -> Dictionary of the plane's state at that frame. Must be pure.
+## While set, _frame(f) captures the history by itself (calling capture(f)
+## yourself still works: a frame already captured is not sampled twice).
 var history_fn: Callable
 
+var _captured_at := NAN
 var _hist_img: Image
 var _hist_tex: ImageTexture
 var _hist_len := 0
 
 
-## Sample the state history for frame f (call it in `_frame`, before `sync_now()`).
+func _frame(f: float) -> void:
+	if history_fn.is_valid() and f != _captured_at:
+		capture(f)
+
+
+## Sample the state history for frame f. Called by _frame(f) when `history_fn`
+## is set; call it yourself (in `_frame`, before `sync_now()`) to capture after
+## changing other properties in the same frame.
 func capture(f: float) -> void:
+	_captured_at = f
 	if not history_fn.is_valid():
 		_hist_len = 0
 		_dirty()

@@ -24,7 +24,7 @@
 ##   floor.color_a = Color.WHITE; floor.color_b = Color.BLACK
 ##   func _frame(f): floor.ground_offset.y = f * 1.5; floor.curve = 0.0004 * sin(f / 40.0)
 @tool
-@icon("res://addons/motion_kit/icons/shape.svg")
+@icon("res://addons/motion_kit/icons/field.svg")
 class_name MotionPatternPlane
 extends Node2D
 

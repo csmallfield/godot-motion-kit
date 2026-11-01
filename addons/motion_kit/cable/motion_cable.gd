@@ -55,9 +55,13 @@ var pinned := false
 ## Tugs: [{at, amp, period, decay}] (frames, pixels, frames per swing, frames to 1/e).
 ## Build them with MotionCable.tug().
 var tugs: Array = []
-## Drawn part of the route, 0..1 of its length.
+## Drawn part of the route, 0..1 of its length: from `start` to `reveal`.
 var start := 0.0
 var reveal := 1.0
+## The kit's name for `start` (partial drawing is `reveal_from` .. `reveal`).
+var reveal_from: float:
+	get: return start
+	set(v): start = v
 ## Coloured bands along the jacket: [{u, len, color}] (u 0..1, len in pixels).
 var bands: Array = []
 ## Repeating stripes: every `stripe_every` px a `stripe_len` px band (0 = off).

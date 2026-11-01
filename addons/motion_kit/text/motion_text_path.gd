@@ -14,7 +14,7 @@
 ## path (px from the path's start), so effects can follow the path (a wave
 ## running along the tape) or the text (a highlighted word).
 @tool
-@icon("res://addons/motion_kit/icons/text.svg")
+@icon("res://addons/motion_kit/icons/text_path.svg")
 class_name MotionTextPath
 extends Node2D
 

@@ -34,7 +34,7 @@
 ##   t.inv_by = MotionTiling.by(1.0)                 # and invert: the logo reads as fabric
 ##   t.scale_by = MotionTiling.by(0.0, 0.0, -1.0)    # a ring shrinks cells to nothing
 @tool
-@icon("res://addons/motion_kit/icons/shape.svg")
+@icon("res://addons/motion_kit/icons/field.svg")
 class_name MotionTiling
 extends Node2D
 
@@ -155,14 +155,8 @@ func reset_channels() -> void:
 
 
 func _init() -> void:
-	_mask_vp = SubViewport.new()
-	_mask_vp.transparent_bg = true
-	_mask_vp.disable_3d = true
-	_mask_vp.render_target_update_mode = SubViewport.UPDATE_ALWAYS
-	mask_content = Node2D.new()
-	mask_content.name = "Mask"
-	_mask_vp.add_child(mask_content)
-	add_child(_mask_vp, false, Node.INTERNAL_MODE_FRONT)
+	mask_content = MotionOffscreen.holder("Mask")
+	_mask_vp = MotionOffscreen.make(self, mask_content)
 	_mat = ShaderMaterial.new()
 	_mat.shader = SHADER
 	material = _mat
@@ -177,8 +171,7 @@ func _ready() -> void:
 func _resize() -> void:
 	if not _mask_vp:
 		return
-	_mask_vp.size = Vector2i(maxi(1, roundi(size.x * mask_scale)), maxi(1, roundi(size.y * mask_scale)))
-	_mask_vp.canvas_transform = Transform2D.IDENTITY.scaled(Vector2(mask_scale, mask_scale))
+	MotionOffscreen.fit(_mask_vp, size, mask_scale)
 	queue_redraw()
 
 
@@ -194,9 +187,7 @@ func _frame(f: float) -> void:
 func _process(_d: float) -> void:
 	# The mask only renders while it can be seen.
 	if _mask_vp:
-		var want := SubViewport.UPDATE_ALWAYS if (is_visible_in_tree() and has_mask()) else SubViewport.UPDATE_DISABLED
-		if _mask_vp.render_target_update_mode != want:
-			_mask_vp.render_target_update_mode = want
+		MotionOffscreen.gate(_mask_vp, is_visible_in_tree() and has_mask())
 	_sync()
 
 

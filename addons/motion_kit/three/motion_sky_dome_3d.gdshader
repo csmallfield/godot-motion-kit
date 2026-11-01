@@ -23,6 +23,8 @@ uniform float level = 1.0;
 
 varying vec3 dir;
 
+#include "res://addons/motion_kit/shaders/motion_sun.gdshaderinc"
+
 void vertex() {
 	dir = VERTEX;
 }
@@ -37,18 +39,12 @@ void fragment() {
 		float aa = max(fwidth(ang), 1e-5);
 		float disc = 1.0 - smoothstep(sun_size - aa, sun_size + aa, ang);
 		float v = (asin(clamp(r.y, -1.0, 1.0)) - asin(clamp(sd.y, -1.0, 1.0))) / sun_size;   // -1 bottom .. 1 top
-		if (v < sun_bands.z) {
-			// bands get thicker toward the bottom (OutRun sun)
-			float depth = clamp((sun_bands.z - v) / (sun_bands.z + 1.0), 0.0, 1.0);
-			float q = fract(v * sun_bands.x * 0.5 + sun_bands.y);
-			float cut = depth * 0.7;
-			float qa = max(fwidth(v) * sun_bands.x * 0.5, 1e-5);
-			disc *= smoothstep(cut - qa, cut + qa, q);
-		}
+		float qa = max(fwidth(v) * sun_bands.x * 0.5, 1e-5);
+		disc *= sun_band_cut(v, sun_bands, qa);
 		float above = mix(1.0, smoothstep(-aa, aa, r.y), horizon_cut);
-		vec3 sc = mix(sun_bottom.rgb, sun_top.rgb, clamp(v * 0.5 + 0.5, 0.0, 1.0)) * sun_energy;
+		vec3 sc = sun_tint(v, sun_bottom, sun_top).rgb * sun_energy;
 		col = mix(col, sc, disc * above);
-		col += sun_top.rgb * sun_glow * exp(-max(ang - sun_size, 0.0) / (sun_size * 1.5)) * mix(1.0, smoothstep(-0.02, 0.02, r.y), horizon_cut);
+		col += sun_top.rgb * sun_glow * sun_glow_k(ang, sun_size) * mix(1.0, smoothstep(-0.02, 0.02, r.y), horizon_cut);
 	}
 	ALBEDO = col * level;
 }

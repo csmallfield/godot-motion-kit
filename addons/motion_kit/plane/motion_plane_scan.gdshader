@@ -7,8 +7,8 @@
 // One quad, no instancing: a whole stargate costs one plane render (three
 // pattern evaluations with the RGB time split on).
 //
-// The plane part (camera, bends, patterns, fog, sky, sun, ring) is the same as
-// motion_pattern_plane.gdshader; keep the two in step.
+// The plane part (camera, bends, patterns, sky, sun, ring) is shared with
+// motion_pattern_plane.gdshader through plane/motion_pattern.gdshaderinc.
 shader_type canvas_item;
 
 uniform vec2 size = vec2(1920.0, 1080.0);
@@ -92,43 +92,8 @@ void vertex() {
 	local = VERTEX;
 }
 
-vec3 cam_to_world(vec3 d) {
-	float cr = cos(cam_rot.z), sr = sin(cam_rot.z);
-	d = vec3(d.x * cr - d.y * sr, d.x * sr + d.y * cr, d.z);
-	float cp = cos(cam_rot.x), sp = sin(cam_rot.x);
-	d = vec3(d.x, d.y * cp + d.z * sp, -d.y * sp + d.z * cp);
-	float cy = cos(cam_rot.y), sy = sin(cam_rot.y);
-	return vec3(d.x * cy + d.z * sy, d.y, -d.x * sy + d.z * cy);
-}
-
-float checker(vec2 p, vec2 w) {
-	vec2 i = 2.0 * (abs(fract((p - 0.5 * w) * 0.5) - 0.5) - abs(fract((p + 0.5 * w) * 0.5) - 0.5)) / w;
-	return 0.5 - 0.5 * i.x * i.y;
-}
-
-float box_int(float x, float b) {
-	return floor(x) * b + min(fract(x), b);
-}
-
-float band(float x, float w, float b) {
-	return (box_int(x + 0.5 * w, b) - box_int(x - 0.5 * w, b)) / w;
-}
-
-float lines(vec2 p, vec2 w, float lw) {
-	vec2 d = abs(fract(p + 0.5) - 0.5);
-	vec2 a = 1.0 - smoothstep(vec2(lw * 0.5) - w * 0.5, vec2(lw * 0.5) + w * 0.5, d);
-	vec2 avg = vec2(lw);
-	vec2 k = clamp(w * 1.5 - 0.5, 0.0, 1.0);
-	a = mix(a, avg, k);
-	return max(a.x, a.y);
-}
-
-float dots(vec2 p, vec2 w, float r) {
-	vec2 q = fract(p) - 0.5;
-	float fw = max(w.x, w.y);
-	float a = 1.0 - smoothstep(r - fw * 0.5, r + fw * 0.5, length(q));
-	return mix(a, 3.14159 * r * r, clamp(fw * 1.5 - 0.5, 0.0, 1.0));
-}
+#define MK_PLANE
+#include "res://addons/motion_kit/plane/motion_pattern.gdshaderinc"
 
 // The state `t` frames back: rows of the history, linearly interpolated.
 vec4 hist(int row, float t, vec4 now) {
@@ -141,25 +106,7 @@ vec4 hist(int row, float t, vec4 now) {
 }
 
 vec4 sky_colour(vec3 r, float sun_k, float px) {
-	vec4 col = mix(sky_horizon, sky_top, smoothstep(0.0, sky_spread, r.y));
-	float ss = sun_size * sun_k;
-	if (ss > 0.0) {
-		vec3 sd = normalize(sun_dir);
-		float ang = acos(clamp(dot(r, sd), -1.0, 1.0));
-		float disc = 1.0 - smoothstep(ss - px, ss + px, ang);
-		float v = (r.y - sd.y) / ss;
-		if (v < sun_bands.z) {
-			float depth = clamp((sun_bands.z - v) / (sun_bands.z + 1.0), 0.0, 1.0);
-			float q = fract(v * sun_bands.x * 0.5 + sun_bands.y);
-			float cut = depth * 0.7;
-			float aa = min(sun_bands.x * 0.5 * px / ss * 2.0, 0.5);
-			disc *= smoothstep(cut - aa, cut + aa, q);
-		}
-		vec4 sc = mix(sun_bottom, sun_top, clamp(v * 0.5 + 0.5, 0.0, 1.0));
-		col = mix(col, sc, disc);
-		col.rgb += sun_top.rgb * sun_glow * exp(-max(ang - ss, 0.0) / (ss * 1.5));
-	}
-	return col;
+	return plane_sky(r, sun_size * sun_k, px, true);
 }
 
 // The plane's colour for the ray `r` (from a source pixel) at `back` frames ago.
@@ -171,45 +118,19 @@ vec4 shade(vec3 r, bool surface, bool hit_c, vec2 g, float t, float back, float 
 	if (surface) {
 		vec2 cl = st0.zw;
 		vec2 gg = g;
-		if (ring.z > 0.0) {
-			vec2 rd = gg - ring.xy;
-			float dist = length(rd);
-			float k = exp(-pow((dist - ring.z) / max(ring.w, 1e-3), 2.0));
-			gg += (dist > 1e-4 ? rd / dist : vec2(0.0)) * k * ring_push * cl.x;
-		}
+		if (ring.z > 0.0)
+			gg = ring_displace(gg, cl.x);
 		vec2 p = gg / cl + st0.xy / cell_scroll + pattern_shift;
 		vec2 w = max(abs(dFdx(p)), abs(dFdy(p))) + 1e-4;
 		w = min(w + st1.xy, vec2(4.0));
 		vec4 ca = hit_c ? ceiling_a : hist(2, back, color_a);
 		vec4 cb = hit_c ? ceiling_b : hist(3, back, color_b);
-		float m;
-		if (pattern == 0) {
-			m = checker(p, w);
-		} else if (pattern == 1) {
-			m = band(p.x, w.x, 0.5);
-		} else if (pattern == 2) {
-			m = lines(p, w, line_width);
-		} else if (pattern == 3) {
-			m = dots(p, w, line_width);
-		} else {
-			m = 0.0;
-		}
-		if (pattern == 4) {
-			col = textureGrad(pattern_texture, p, dFdx(p), dFdy(p));
-		} else {
-			col = mix(cb, ca, m);
-		}
+		col = pattern_colour(p, w, ca, cb);
 		vec4 acc = hist(4, back, accent_color);
-		if (!hit_c && accent_every > 0.0 && acc.a > 0.0) {
-			float q = p.x / accent_every;
-			float a = band(q, w.x / accent_every, accent_width / accent_every);
-			col.rgb = mix(col.rgb, acc.rgb, a * acc.a);
-		}
-		if (!hit_c && ring.z > 0.0 && ring_color.a > 0.0) {
-			float dist = length(gg - ring.xy);
-			float k = exp(-pow((dist - ring.z) / max(ring.w, 1e-3), 2.0));
-			col.rgb = mix(col.rgb, ring_color.rgb, k * ring_color.a);
-		}
+		if (!hit_c && accent_every > 0.0 && acc.a > 0.0)
+			col.rgb = accent_lanes(col.rgb, p, w, acc);
+		if (!hit_c && ring.z > 0.0 && ring_color.a > 0.0)
+			col.rgb = mix(col.rgb, ring_color.rgb, ring_k(gg) * ring_color.a);
 		float fog = smoothstep(fog_range.x, fog_range.y, t);
 		col = mix(col, fog_color, fog);
 		if (hit_c)
@@ -255,19 +176,13 @@ void fragment() {
 	// ---- the plane's ray through the source pixel (shared by every time sample)
 	vec3 d = normalize(vec3(src.x - centre.x, centre.y - src.y, focal));
 	vec3 r = cam_to_world(d);
-	float A = max(channel * r.x * r.x + hill * r.z * r.z, 0.0);
-	float S = sqrt(max(r.y * r.y + 4.0 * A * height, 0.0));
-	float den = S - r.y;
-	float tg = den > 1e-7 ? 2.0 * height / den : -1.0;
-	float tc = (ceiling && r.y > 1e-5) ? ceiling_height / r.y : -1.0;
-	bool hit_g = tg > 0.0;
-	bool hit_c = tc > 0.0 && (!hit_g || tc < tg);
-	float t = hit_c ? tc : tg;
-	bool surface = (hit_g || hit_c);
+	bool hit_c;
+	float t = plane_hit(r, hit_c);
+	bool surface = t > 0.0;
 	vec3 P = r * t;
 	if (surface && (P.z < clip.x || P.z >= clip.y))
 		surface = false;
-	vec2 g = vec2(P.x - curve * P.z * P.z + wave.x * sin(P.z * wave.y + wave.z), P.z);
+	vec2 g = ground_coord(P);
 	// the sun's edge: one screen pixel, widened where the walls magnify the source
 	float spx = max(1.5 / focal, length(fwidth(src)) / focal);
 

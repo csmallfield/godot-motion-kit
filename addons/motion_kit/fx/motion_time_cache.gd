@@ -24,7 +24,7 @@
 ## accept negative frames. Heavy content should cull itself to what its slot
 ## shows (MotionViewRect.of(self)): a slit slot is a few pixels wide.
 @tool
-@icon("res://addons/motion_kit/icons/fx.svg")
+@icon("res://addons/motion_kit/icons/time.svg")
 class_name MotionTimeCache
 extends Node2D
 
@@ -63,7 +63,8 @@ enum Layout {
 @export var profile := MotionTimeSlices.Profile.LINEAR
 @export var waves := 1.0
 @export var phase := 0.0
-@export var seed_value := 1.0
+## RANDOM: seed.
+@export var seed := 1.0
 ## Quantise delays to steps of this many frames: equal delays share a render.
 @export var step := 1.0
 
@@ -80,6 +81,11 @@ var profile_fn: Callable
 ## lags, green and blue together (a red/cyan split in two renders).
 var channel_shares := [0.0, 0.5, 1.0]
 var builder: Callable
+
+## Deprecated: use seed.
+var seed_value: float:
+	get: return seed
+	set(v): seed = v
 
 var _slots: Array[Dictionary] = []   # {vp, holder, inst}
 var _bands: Array[Dictionary] = []   # {spr, dst, u}
@@ -127,12 +133,8 @@ func rebuild() -> void:
 	var n_slots := mini(slots, 3) if layout == Layout.CHANNELS else slots
 	var reg := region()
 	for i in n_slots:
-		var vp := SubViewport.new()
-		vp.transparent_bg = true
-		vp.disable_3d = true
-		vp.size = Vector2i(int(reg.size.x), int(reg.size.y))
-		vp.render_target_update_mode = SubViewport.UPDATE_DISABLED
-		vp.canvas_item_default_texture_filter = Viewport.DEFAULT_CANVAS_ITEM_TEXTURE_FILTER_LINEAR
+		var vp := MotionOffscreen.viewport(SubViewport.UPDATE_DISABLED,
+				Viewport.DEFAULT_CANVAS_ITEM_TEXTURE_FILTER_LINEAR, Vector2i(int(reg.size.x), int(reg.size.y)))
 		var holder := Node2D.new()
 		vp.add_child(holder)
 		var inst: Node = scene.instantiate() if scene else builder.call()
@@ -169,7 +171,7 @@ func rebuild() -> void:
 func profile_at(u: float, k: int) -> float:
 	if layout == Layout.CHANNELS:
 		return float(channel_shares[k])
-	return MotionTimeSlices.profile_value(profile, u, k, waves, phase, seed_value, profile_fn)
+	return MotionTimeSlices.profile_value(profile, u, k, waves, phase, seed, profile_fn)
 
 
 ## The distinct delays rendered this frame (after quantising and merging).

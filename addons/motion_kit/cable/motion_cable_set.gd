@@ -12,6 +12,7 @@
 ## Static helpers draw a matching connector or a panel socket anywhere:
 ## `draw_plug(canvas, kind, pos, dir, width, ...)` and `draw_port(canvas, pos, dir, width, lit, led)`.
 @tool
+@icon("res://addons/motion_kit/icons/flow.svg")
 class_name MotionCableSet
 extends MotionCanvas
 

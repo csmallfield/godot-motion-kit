@@ -21,7 +21,7 @@
 ##   field.mask_content.add_child(logo)        # lights the glyphs where the logo is
 ##   # in _frame(f): field.reveal = MK.prog(f, 30, 20); field.solidify = ...
 @tool
-@icon("res://addons/motion_kit/icons/fx.svg")
+@icon("res://addons/motion_kit/icons/field.svg")
 class_name MotionGlyphField
 extends Node2D
 
@@ -159,21 +159,10 @@ class _AtlasDraw extends Node2D:
 
 
 func _init() -> void:
-	_mask_vp = SubViewport.new()
-	_mask_vp.transparent_bg = true
-	_mask_vp.disable_3d = true
-	_mask_vp.render_target_update_mode = SubViewport.UPDATE_ALWAYS
-	mask_content = Node2D.new()
-	mask_content.name = "Mask"
-	_mask_vp.add_child(mask_content)
-	add_child(_mask_vp, false, Node.INTERNAL_MODE_FRONT)
-	_atlas_vp = SubViewport.new()
-	_atlas_vp.transparent_bg = true
-	_atlas_vp.disable_3d = true
-	_atlas_vp.render_target_update_mode = SubViewport.UPDATE_ALWAYS
+	mask_content = MotionOffscreen.holder("Mask")
+	_mask_vp = MotionOffscreen.make(self, mask_content)
 	_atlas_draw = _AtlasDraw.new()
-	_atlas_vp.add_child(_atlas_draw)
-	add_child(_atlas_vp, false, Node.INTERNAL_MODE_FRONT)
+	_atlas_vp = MotionOffscreen.make(self, _atlas_draw)
 	_mat = ShaderMaterial.new()
 	_mat.shader = SHADER
 	material = _mat
@@ -188,9 +177,7 @@ func _ready() -> void:
 func _resize() -> void:
 	if not _mask_vp:
 		return
-	_mask_vp.size = Vector2i(maxi(1, roundi(size.x * mask_scale)), maxi(1, roundi(size.y * mask_scale)))
-	if _mask_vp.is_inside_tree():
-		_mask_vp.canvas_transform = Transform2D.IDENTITY.scaled(Vector2(mask_scale, mask_scale))
+	MotionOffscreen.fit(_mask_vp, size, mask_scale)
 	queue_redraw()
 
 
@@ -237,9 +224,7 @@ func _process(_d: float) -> void:
 			_atlas_vp.render_target_update_mode = SubViewport.UPDATE_DISABLED
 	# A hidden field needn't render its mask.
 	if _mask_vp:
-		var want := SubViewport.UPDATE_ALWAYS if is_visible_in_tree() else SubViewport.UPDATE_DISABLED
-		if _mask_vp.render_target_update_mode != want:
-			_mask_vp.render_target_update_mode = want
+		MotionOffscreen.gate(_mask_vp, is_visible_in_tree())
 
 
 func _sync() -> void:

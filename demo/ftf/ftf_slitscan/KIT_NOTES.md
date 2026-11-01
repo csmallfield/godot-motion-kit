@@ -15,7 +15,7 @@ Callable) is instanced once per band, and each band shows it at `f - delay(band)
 | `layout` | `ROWS`, `COLUMNS`, `BOXES` (nested boxes about the centre, drawn outside in: a square tunnel), `CHANNELS` (three full-frame copies tinted R, G, B and added: a time-split chromatic fringe). Changing it, `bands`, `size` or `scene` rebuilds the bands. |
 | `bands` | Number of bands (CHANNELS is always 3). |
 | `delay` | Frames the most delayed band lags. Animate it to 0 for a sharp picture. |
-| `profile` | How the delay spreads across the bands: `LINEAR`, `REVERSE`, `CENTRE`, `EDGES`, `SINE` (`waves`, `phase`), `RANDOM` (`seed_value`), `CUSTOM` (`profile_fn(u) -> 0..1`, u = 0..1 across the bands). |
+| `profile` | How the delay spreads across the bands: `LINEAR`, `REVERSE`, `CENTRE`, `EDGES`, `SINE` (`waves`, `phase`), `RANDOM` (`seed`), `CUSTOM` (`profile_fn(u) -> 0..1`, u = 0..1 across the bands). |
 | `step` | Quantise each band's delay to steps of this many frames (stutter). |
 | `slit` | 0 = each band shows its own place (time displacement); 1 = every band shows the slit (slit-scan: streaks). In between the bands unfold from the slit. |
 | `slit_pos`, `slit_width` | Where the slit is across the bands (0..1: COLUMNS x, ROWS y) and how much of the content each band shows at `slit = 1` (pixels; for BOXES the width of the centre box). Narrower than the band, it is stretched: streaks. |

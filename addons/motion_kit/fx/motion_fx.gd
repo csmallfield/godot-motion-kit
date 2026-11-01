@@ -80,15 +80,9 @@ var _offs := PackedFloat32Array()
 
 
 func _init() -> void:
-	_vp = SubViewport.new()
-	_vp.transparent_bg = true
-	_vp.disable_3d = true
-	_vp.render_target_update_mode = SubViewport.UPDATE_ALWAYS
-	_vp.canvas_item_default_texture_filter = Viewport.DEFAULT_CANVAS_ITEM_TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
-	content = Node2D.new()
-	content.name = "Content"
-	_vp.add_child(content)
-	add_child(_vp, false, Node.INTERNAL_MODE_FRONT)
+	content = MotionOffscreen.holder("Content")
+	_vp = MotionOffscreen.make(self, content, SubViewport.UPDATE_ALWAYS,
+			Viewport.DEFAULT_CANVAS_ITEM_TEXTURE_FILTER_LINEAR_WITH_MIPMAPS)
 	_make_blur_pass()
 	_view = Sprite2D.new()
 	_view.centered = false
@@ -105,11 +99,7 @@ func _init() -> void:
 # content viewport (created later, it rendered a frame behind the content),
 # but kept at 1x1 until a blur, glow or shadow needs it.
 func _make_blur_pass() -> void:
-	_vp_h = SubViewport.new()
-	_vp_h.transparent_bg = true
-	_vp_h.disable_3d = true
-	_vp_h.size = Vector2i(1, 1)
-	_vp_h.render_target_update_mode = SubViewport.UPDATE_DISABLED
+	_vp_h = MotionOffscreen.viewport(SubViewport.UPDATE_DISABLED, -1, Vector2i(1, 1))
 	_h_sprite = Sprite2D.new()
 	_h_sprite.centered = false
 	_h_sprite.texture = _vp.get_texture()
@@ -143,12 +133,9 @@ func _ready() -> void:
 func _resize() -> void:
 	if not _vp:
 		return
-	var px := (size * render_scale).round()
-	_vp.size = Vector2i(maxi(1, int(px.x)), maxi(1, int(px.y)))
+	# (the canvas transform is only set once the viewport is in the tree)
+	MotionOffscreen.fit(_vp, size, render_scale)
 	_vp_h.size = _blur_size()
-	# A viewport's canvas transform can only be set once it is in the tree.
-	if _vp.is_inside_tree():
-		_vp.canvas_transform = Transform2D.IDENTITY.scaled(Vector2(render_scale, render_scale))
 	_view.scale = Vector2.ONE / render_scale
 
 

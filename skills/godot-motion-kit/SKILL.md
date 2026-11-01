@@ -202,7 +202,18 @@ blur): `blur` (sigma), `glow` + `glow_strength`, `shadow_color`/`shadow_blur`/
 `pixel_size`, `brightness`, `invert`, goo (`blur` + `alpha_matrix = Vector2(26, -11)` +
 `flood_color`; `source_atop = true` keeps each shape's colour), `render_scale`. One
 `MotionFX` has one blur radius; nest two for two. `MotionOverlay` kind STATIC or CRT.
-`MotionPixelGrid.cells_from_svg()` for pixel builds.
+`MotionPixelGrid.cells_from_svg()` for pixel builds. A new node that renders a subtree
+offscreen uses `MotionOffscreen` (`make(self, content)`, `fit(vp, size, scale)`,
+`gate(vp, visible)`); new shaders take noise from `shaders/motion_noise.gdshaderinc`
+(`mk_hash21(p, seed * k)`, `mk_vnoise2/3`, `mk_fbm3`) and patterns / the banded sun from
+`plane/motion_pattern.gdshaderinc` and `shaders/motion_sun.gdshaderinc`.
+
+**Naming.** Partial drawing is `reveal` (0..1, the drawn end) and `reveal_from` (its
+start); random seeds are `seed`; alpha is `opacity` (`set_opacity(id, a)` per greeble
+structure); `level` is brightness or a fade, except `MotionLiquidFill.fill_level` (how
+full). Nodes given a pure per-frame function run it in their own `_frame`
+(`MotionPlaneScan.history_fn`, `MotionFlow.state_fn(i, f)`). A `MotionExtrudeCamera`
+view becomes a matching 3D camera with `cam.to_lens()` (a `MotionLens3D`).
 
 **Reveals.** `clip_children = CanvasItem.CLIP_CHILDREN_ONLY` on a `MotionCanvas` that
 draws the mask (strips, comb teeth, random blocks, an iris), children inside it. Polygons

@@ -59,19 +59,7 @@ void vertex() {
 	wpos = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
 }
 
-// Box-filtered checker (Inigo Quilez): w = filter footprint in cells.
-float checker(vec2 p, vec2 w) {
-	vec2 i = 2.0 * (abs(fract((p - 0.5 * w) * 0.5) - 0.5) - abs(fract((p + 0.5 * w) * 0.5) - 0.5)) / w;
-	return 0.5 - 0.5 * i.x * i.y;
-}
-
-float box_int(float x, float b) {
-	return floor(x) * b + min(fract(x), b);
-}
-
-float band(float x, float w, float b) {
-	return (box_int(x + 0.5 * w, b) - box_int(x - 0.5 * w, b)) / w;
-}
+#include "res://addons/motion_kit/plane/motion_pattern.gdshaderinc"
 
 float grid(vec2 p, vec2 w, float lw) {
 	vec2 g = vec2(band(p.x + 0.5 * lw, w.x, lw), band(p.y + 0.5 * lw, w.y, lw));

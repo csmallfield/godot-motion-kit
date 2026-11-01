@@ -14,7 +14,7 @@
 ##
 ## The quad lies in its local XY plane, centred, facing +Z.
 @tool
-@icon("res://addons/motion_kit/icons/shape.svg")
+@icon("res://addons/motion_kit/icons/three.svg")
 class_name MotionPanel3D
 extends MeshInstance3D
 
@@ -46,12 +46,9 @@ var _mat: ShaderMaterial
 
 
 func _init() -> void:
-	viewport = SubViewport.new()
-	viewport.transparent_bg = true
-	viewport.disable_3d = true
-	viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS if animated else SubViewport.UPDATE_ONCE
-	viewport.canvas_item_default_texture_filter = Viewport.DEFAULT_CANVAS_ITEM_TEXTURE_FILTER_LINEAR
-	add_child(viewport, false, Node.INTERNAL_MODE_FRONT)
+	viewport = MotionOffscreen.make(self, null,
+			SubViewport.UPDATE_ALWAYS if animated else SubViewport.UPDATE_ONCE,
+			Viewport.DEFAULT_CANVAS_ITEM_TEXTURE_FILTER_LINEAR)
 	_bg = ColorRect.new()
 	_bg.color = background
 	viewport.add_child(_bg)

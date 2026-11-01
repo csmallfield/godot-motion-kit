@@ -50,7 +50,11 @@ var sink_share := 0.0
 ## Landing overshoot of the height (telescoping servo), as a fraction of the height.
 var land := 0.12
 ## Seed for the per-block variation.
-var seed_v := 1.0
+var seed := 1.0
+## Deprecated: use seed.
+var seed_v: float:
+	get: return seed
+	set(v): seed = v
 
 var _m := PackedFloat32Array()
 var _count := 0
@@ -76,7 +80,7 @@ func size() -> int:
 ## wave; `style` -1 = auto (STAY when the cell doesn't change).
 func set_move(i: int, a: Vector3, b: Vector3, key: float, style := -1) -> void:
 	var o := i * STRIDE
-	var r := MK.rand(i * 1.731 + seed_v * 17.3)
+	var r := MK.rand(i * 1.731 + seed * 17.3)
 	var dist := absf(b.x - a.x) + absf(b.y - a.y)
 	var st := style
 	if st < 0:
@@ -85,7 +89,7 @@ func set_move(i: int, a: Vector3, b: Vector3, key: float, style := -1) -> void:
 		elif dist <= slide_max:
 			st = SLIDE
 		else:
-			st = SINK if MK.rand(i * 3.17 + seed_v * 5.1) < sink_share else FLY
+			st = SINK if MK.rand(i * 3.17 + seed * 5.1) < sink_share else FLY
 	var k := clampf(key, 0.0, 0.9999)
 	var w := floorf(k * waves)
 	var inner := k * waves - w
@@ -98,7 +102,7 @@ func set_move(i: int, a: Vector3, b: Vector3, key: float, style := -1) -> void:
 	_m[o + 6] = start + w * wave_step + inner * jitter
 	_m[o + 7] = st
 	_m[o + 8] = lift * (0.6 + 0.8 * r)
-	_m[o + 9] = 1.0 if MK.rand(i * 7.7 + seed_v) < 0.5 else 0.0
+	_m[o + 9] = 1.0 if MK.rand(i * 7.7 + seed) < 0.5 else 0.0
 	_m[o + 10] = dur
 
 

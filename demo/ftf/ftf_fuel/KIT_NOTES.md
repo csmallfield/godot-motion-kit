@@ -40,13 +40,13 @@ line is drawn).
 
 | Member | Notes |
 | --- | --- |
-| `size`, `level` | Vessel size; 0 = surface at the bottom edge, 1 = at the top (above 1 = brim-full, surface out of sight; just under 1 keeps a sloshing band in the top). |
+| `size`, `fill_level` (was `level`) | Vessel size; 0 = surface at the bottom edge, 1 = at the top (above 1 = brim-full, surface out of sight; just under 1 keeps a sloshing band in the top). |
 | `tilt` | Surface slope (px, right end up). |
 | `kicks` | Slosh impulses: `Vector2(frame, strength)` or `{at, amp, mode}` (mode 1 end-to-end, 2 central hump, default both). Pour, beat slaps, a slam. |
 | `wave_amp`, `wave_freq`, `damping` | Slosh px per unit kick, angular frequency (rad/frame), decay per frame. |
 | `ripple`, `ripple_len`, `ripple_speed` | Small travelling ripples always running. |
 | `meniscus`, `meniscus_color` | Band thickness; plain line colour when `surface` is empty. |
-| `bubbles`, `bubble_color`, `bubble_size`, `bubble_speed`, `seed_value` | Bubbles rising below the surface. |
+| `bubbles`, `bubble_color`, `bubble_size`, `bubble_speed`, `seed` | Bubbles rising below the surface. |
 | `foam`, `foam_color` | A row of small bubbles just under the surface (not drawn above a brim-full vessel). |
 | `fill`, `surface` | Add content here. |
 | `surface_y(x)` | Surface height (local px) at x, for placing things on it. |
@@ -82,4 +82,4 @@ shape (put the logo under `fill`). Slosh is a visual model, not a simulation.
 | Technique | How to use it | Practical example |
 | --- | --- | --- |
 | Flow along paths | `MotionFlow.add_pipe(points, {width, fluid})`, then each frame `apply(func(i): return {draw, fill, drain, flow, pulse_gain})`: `draw` traces the pipe, `fill` sends fluid down it, `drain` empties it, `flow` moves pulses and bubbles; a stepped beat count in `flow` makes it pump. | FTF Fuel Lines: a fuel schematic whose lines trace themselves, flood on valve beats, lurch on every beat in the hold and drain one by one in the outro; pulses chasing round the logo's rim as a pressure ring. Also: a data bus in a HUD, a loading bar that is a pipe, a route preview. |
-| Liquid fill | `MotionLiquidFill` with the logo under `fill` (and a lighter copy under `surface`); animate `level`, give `kicks` for pours and slams. | The Minimal Humans lockup filling with fuel in its own colours and draining away; the FTF logo racing to brim-full on the drop and slapping in its top band on every beat; sight glasses using `MotionLiquidFill.slosh()`. |
+| Liquid fill | `MotionLiquidFill` with the logo under `fill` (and a lighter copy under `surface`); animate `fill_level`, give `kicks` for pours and slams. | The Minimal Humans lockup filling with fuel in its own colours and draining away; the FTF logo racing to brim-full on the drop and slapping in its top band on every beat; sight glasses using `MotionLiquidFill.slosh()`. |

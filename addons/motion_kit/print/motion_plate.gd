@@ -18,7 +18,7 @@
 ## not inside a transparent MotionFX, since multiply needs something to
 ## multiply with. A hidden plate stops rendering its content.
 @tool
-@icon("res://addons/motion_kit/icons/fx.svg")
+@icon("res://addons/motion_kit/icons/print.svg")
 class_name MotionPlate
 extends Node2D
 
@@ -75,15 +75,8 @@ var _mat: ShaderMaterial
 
 
 func _init() -> void:
-	_vp = SubViewport.new()
-	_vp.transparent_bg = true
-	_vp.disable_3d = true
-	_vp.render_target_update_mode = SubViewport.UPDATE_ALWAYS
-	_vp.canvas_item_default_texture_filter = Viewport.DEFAULT_CANVAS_ITEM_TEXTURE_FILTER_LINEAR
-	content = Node2D.new()
-	content.name = "Content"
-	_vp.add_child(content)
-	add_child(_vp, false, Node.INTERNAL_MODE_FRONT)
+	content = MotionOffscreen.holder("Content")
+	_vp = MotionOffscreen.make(self, content, SubViewport.UPDATE_ALWAYS, Viewport.DEFAULT_CANVAS_ITEM_TEXTURE_FILTER_LINEAR)
 	_view = Sprite2D.new()
 	_view.texture = _vp.get_texture()
 	_view.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
@@ -104,13 +97,13 @@ func _ready() -> void:
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_VISIBILITY_CHANGED and _vp:
-		_vp.render_target_update_mode = SubViewport.UPDATE_ALWAYS if is_visible_in_tree() else SubViewport.UPDATE_DISABLED
+		MotionOffscreen.gate(_vp, is_visible_in_tree())
 
 
 func _resize() -> void:
 	if not _vp:
 		return
-	_vp.size = Vector2i(maxi(1, int(size.x)), maxi(1, int(size.y)))
+	MotionOffscreen.fit(_vp, size, 1.0, false)
 	_view.position = size * 0.5
 
 

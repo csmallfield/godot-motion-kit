@@ -342,7 +342,7 @@ func _build_plans() -> void:
 	_mh.jitter = 3.0
 	_mh.lift = 2.4
 	_mh.sink_share = 0.3
-	_mh.seed_v = 3.0
+	_mh.seed = 3.0
 	var mh_who := _assign(mh_vox, mh_t, MH_O, homes)
 	var mh_rect := Rect2(MH_O - Vector2(2, 3), Vector2(MH_COLS + 4, MH_ROWS + 5))
 	for i in n:
@@ -370,7 +370,7 @@ func _build_plans() -> void:
 	_disp.jitter = 3.0
 	_disp.lift = 1.8
 	_disp.sink_share = 0.2
-	_disp.seed_v = 5.0
+	_disp.seed = 5.0
 	for i in n:
 		var a := _mh.target(i)
 		_disp.set_move(i, a, _home[i], 1.0 - _key(Vector2(a.x, a.y), MH_O, MH_COLS, MH_ROWS))
@@ -386,7 +386,7 @@ func _build_plans() -> void:
 	_ftf.jitter = 3.0
 	_ftf.lift = 2.8
 	_ftf.sink_share = 0.25
-	_ftf.seed_v = 7.0
+	_ftf.seed = 7.0
 	var ftf_who := _assign(ftf_vox, ftf_t, FTF_O, homes)
 	var ftf_rect := Rect2(FTF_O - Vector2(2, 3), Vector2(FTF_COLS + 4, FTF_ROWS + 5))
 	for i in n:
@@ -422,7 +422,7 @@ func _build_plans() -> void:
 	_out.dur = 24.0
 	_out.jitter = 4.0
 	_out.slide_max = 99.0
-	_out.seed_v = 9.0
+	_out.seed = 9.0
 	var fc := FTF_O + Vector2(FTF_COLS, FTF_ROWS) * 0.5
 	for i in n:
 		var a := _ftf.target(i)

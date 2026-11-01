@@ -4,6 +4,27 @@ All coordinates are pixels in the composition's reference space (1920×1080 unle
 change `MotionComposition.size`). Frames are floats; at 60 Hz and above the same
 functions are evaluated between whole frames.
 
+**Conventions.** Names mean the same thing across the kit:
+
+- **Partial drawing** is a pair of fractions 0..1 of the length (or of the bands, cells,
+  parts): `reveal` is how far it is drawn (its end), `reveal_from` where the drawn part
+  starts. MotionCable (`reveal_from` = `start`), MotionFlow states (`reveal` /
+  `reveal_from` keys for `draw` / `draw_from`), MotionTimeSlices and MotionTimeCache
+  (`reveal` share of the bands around `reveal_from`) and MotionGlyphField (`reveal` share
+  of the cells) follow it. Pixel windows keep their own names (`MotionTextPath.show_from`
+  / `show_to` in px of arc length), as do per-level arrays (`MotionGreebler.reveal`) and
+  explicit arguments (`MotionMetroMap.draw_line(c, i, a, b)`).
+- **`seed`** is every node's and plan's random seed (float). The older `seed_value`
+  (MotionLiquidFill, MotionTimeSlices, MotionTimeCache) and `seed_v` (MotionBlockPlan)
+  still work as deprecated aliases.
+- **`opacity`** is alpha (0..1); per-structure opacity is `set_opacity(id, a)`
+  (MotionGreebler; `set_alpha` is its deprecated alias). **`level`** is brightness or an
+  overall fade on fields, planes and skies (and on/off on MotionBeacon); a liquid's fill
+  height is `MotionLiquidFill.fill_level` (`level` is its deprecated alias).
+- **`_frame(f)`**: nodes that need per-frame work do it in their own `_frame` when given
+  a pure function of the frame (`MotionPlaneScan.history_fn`, `MotionFlow.state_fn`,
+  `MotionCanvas.draw_fn`); calling the manual method (`capture(f)`, `apply(fn)`) still works.
+
 ## MK (static maths)
 
 | Function | Notes |
@@ -337,6 +358,36 @@ a track, a pump's spin). Entry i is the distance at frame i; `at(f)` interpolate
 | `extrapolate`, `end` | Outside the table clamp (default) or run on at the end speeds: `f * speed(0)` before 0, `at(end) + (f - end) * speed(end)` after `end`. |
 | `precise` | Float64 table (long tracks) instead of Float32. |
 
+## Offscreen rendering: MotionOffscreen (static, `core/motion_offscreen.gd`)
+
+The setup every node that renders a CanvasItem subtree into a texture first shares
+(MotionFX, MotionTiling and MotionGlyphField masks, MotionPlate, MotionWarpField,
+MotionTimeSplit, MotionTimeSlices, MotionTimeCache, MotionDecalAtlas, MotionPanel3D):
+
+```gdscript
+content = MotionOffscreen.holder("Content")
+_vp = MotionOffscreen.make(self, content)               # in _init
+MotionOffscreen.fit(_vp, size, render_scale)           # in _resize (and _ready)
+MotionOffscreen.gate(_vp, is_visible_in_tree())        # in _process / _frame
+```
+
+| Function | Notes |
+| --- | --- |
+| `make(owner, content=null, mode=UPDATE_ALWAYS, filter=-1, px=(-1, -1), internal=INTERNAL_MODE_FRONT) -> SubViewport` | A transparent, 2D-only SubViewport holding `content`, added to `owner` as an internal child. `filter`: a `Viewport.DefaultCanvasItemTextureFilter` (-1 keeps the default); `px`: its size, if known. |
+| `viewport(mode, filter, px) -> SubViewport` | The same, not added anywhere. Viewports render in the order they were created: when the content holds offscreen nodes of its own (a time effect's copies), create the viewport first, then the content. |
+| `holder(name) -> Node2D` | A named content root. |
+| `pixels(size, scale=1, round_px=true) -> Vector2i` | `size * scale`, rounded (or truncated), at least 1×1. |
+| `fit(vp, size, scale=1, round_px=true)` | Size the viewport to `pixels(...)` and scale its canvas by `scale` (only possible in the tree; call it again from `_ready`). |
+| `gate(vp, on) -> bool` | Render every frame while `on`, not at all otherwise; true when the mode changed. |
+
+## Shader includes
+
+| Include | Holds |
+| --- | --- |
+| `shaders/motion_noise.gdshaderinc` | `mk_hash21(p, s)`, `mk_vnoise2(p, s)`, `mk_hash31(p, s)`, `mk_vnoise3(p, s)`, `mk_fbm3(p, s, octaves, lacunarity, shift)`: the kit's hash and value noise with the seed term `s` passed in, so each shader keeps its own constants (`mk_hash21(p, seed * 0.618)` in static and tiling, `seed * 0.1234` in paper, plate and glyphs, `mk_hash31(p, seed * 0.0137)` in the warp field). |
+| `shaders/motion_sun.gdshaderinc` | The banded OutRun sun: `sun_band_cut(v, bands, aa)`, `sun_tint(v, bottom, top)`, `sun_glow_k(ang, radius)`; each caller keeps its own antialiasing (screen pixels on the planes, `fwidth` on the sky dome). |
+| `plane/motion_pattern.gdshaderinc` | Box-filtered `checker`, `band` (`box_int`), `lines`, `dots` (MotionPatternPlane, MotionPlaneScan, MotionPattern3D). With `#define MK_PLANE` before it, also the plane model the two plane shaders share: `cam_to_world`, `plane_hit`, `ground_coord`, the ring, `pattern_colour`, `accent_lanes` and `plane_sky`. |
+
 ## MotionCells (Node2D)
 
 A grid of palette-coloured cells drawn from one byte per cell in a single quad: cellular
@@ -408,7 +459,7 @@ Callable) is instanced once per band, and each band shows it at `f - delay(band)
 | `layout` | `ROWS`, `COLUMNS`, `BOXES` (nested boxes about the centre, drawn outside in: a square tunnel), `CHANNELS` (three full-frame copies tinted R, G, B and added: a time-split chromatic fringe). Changing it, `bands`, `size` or `scene` rebuilds the bands. |
 | `bands` | Number of bands (CHANNELS is always 3). |
 | `delay` | Frames the most delayed band lags. Animate it to 0 for a sharp picture. |
-| `profile` | How the delay spreads across the bands: `LINEAR`, `REVERSE`, `CENTRE`, `EDGES`, `SINE` (`waves`, `phase`), `RANDOM` (`seed_value`), `CUSTOM` (`profile_fn(u) -> 0..1`, u = 0..1 across the bands). |
+| `profile` | How the delay spreads across the bands: `LINEAR`, `REVERSE`, `CENTRE`, `EDGES`, `SINE` (`waves`, `phase`), `RANDOM` (`seed`; `seed_value` is a deprecated alias), `CUSTOM` (`profile_fn(u) -> 0..1`, u = 0..1 across the bands). |
 | `step` | Quantise each band's delay to steps of this many frames (stutter). |
 | `slit` | 0 = each band shows its own place (time displacement); 1 = every band shows the slit (slit-scan: streaks). In between the bands unfold from the slit. |
 | `slit_pos`, `slit_width` | Where the slit is across the bands (0..1: COLUMNS x, ROWS y) and how much of the content each band shows at `slit = 1` (pixels; for BOXES the width of the centre box). Narrower than the band, it is stretched: streaks. |
@@ -450,6 +501,7 @@ An orthographic camera. World axes: x east, y north, z up.
 | `target`, `scale`, `centre`, `roll` | The world point drawn at `centre`, pixels per world unit, screen roll in degrees. |
 | `update()` | Recompute the basis (`right`, `up`, `forward`, `forward_h`). `MotionExtrude.prepare()` calls it. |
 | `project(p)`, `vec(v)`, `depth(p)`, `ground_key(p)`, `facing(n)` | World point → screen; world direction → screen vector; distance into the scene; painter's key on the ground plan; whether a normal faces the camera. |
+| `to_lens(screen=(1920, 1080)) -> MotionLens3D` | The orthographic MotionLens3D that draws this exact view (yaw, pitch, roll, scale, centre) of a MotionStage3D scene: `to_lens().project(MotionLens3D.from_extrude(p)) == project(p)` (tested). |
 | `plane_transform(origin, a, b)` | The Transform2D that maps a plane's local (x, y) to the screen: for drawing into a face, or setting on a node (a MotionSvg on a face). |
 
 #### MotionSolid (RefCounted)
@@ -750,7 +802,7 @@ out of bold shapes, and pulling out makes them read clean again.
 | `add_detail(contours, opts) -> id` | Panels and greebles inside a shape, no base: greeble a logo's face. |
 | `add_item(id, kind, rect, level, extra)` | One hand-placed item (`Kind.HAZARD`, `STENCIL` with `txt` and `c`, `LIGHT`...). |
 | opts | `seed`, `max_level`, `min_size`, `greeble_chance`, `rest_chance`, `raise_chance`, `depth_k` (bevel depth), `first_level`, `avoid` (contours kept clear, e.g. a logo's letters) + `margin`; per structure `face`, `side_lit`, `side_dark`, `haze` (added), `lod` (multiplier on `lod_px`: above 1 keeps a structure clean until the camera is closer). |
-| `set_offset(id, v)`, `set_visible(id, on)`, `set_alpha(id, a)` | Move (doors, clamps), hide or fade a structure per frame. |
+| `set_offset(id, v)`, `set_visible(id, on)`, `set_opacity(id, a)` | Move (doors, clamps), hide or fade a structure per frame (`set_alpha` is the deprecated name of `set_opacity`). |
 | `draw(canvas, s, origin, f, view)` | Draw everything into any CanvasItem (call from a `MotionCanvas` draw_fn). |
 | Generation | `max_level`, `min_size`, `split_chance[level]`, `inset_chance`, `raise_chance`, `rest_chance` + `rest_levels` (plain plates at the top levels: areas of rest), `greeble_chance`, `stencils`. |
 | Look | `face`, `tone_jitter`, `bevel_light`, `bevel_shade`, `recess`, `recess_deep`, `seam`, `side_lit`, `side_dark`, `pipe`, `accent`, `accent2`, `ink`, `lamp`, `lamp_alt`, `lamp_off`, `extrude_dir`, `font` (stencils). |
@@ -796,7 +848,7 @@ A thick cable along a route of waypoints. Set its properties from `f`; a
 | `pinned` | false (default): the whole route hangs as one span between its ends: sag and wobble use one envelope over the route. true: every waypoint is a pin (hook, clip, the edge of a plate it wraps) and each span sags and wobbles on its own. |
 | `tension`, `sag`, `sag_ref`, `gravity` | 0 = slack, 1 = taut. Sag in pixels for a span `sag_ref` px long (longer spans sag more, clamped ×0.15–3). Animate `tension` with a spring to pull a cable taut on a beat. |
 | `tugs`, `static tug(at, amp, period, decay)` | Damped wobbles across the chord starting on frame `at` (pixels, frames per swing, frames to 1/e). A twang when a plug lands, a twitch on an accent, a whip when it's yanked. |
-| `start`, `reveal` | The drawn part, 0..1 of the length. Grow `reveal` to snake a cable in head first along its route; shrink it to pull it back out the way it came. The head connector rides the `reveal` end. |
+| `start` (alias `reveal_from`), `reveal` | The drawn part, 0..1 of the length. Grow `reveal` to snake a cable in head first along its route; shrink it to pull it back out the way it came. The head connector rides the `reveal` end. |
 | `width`, `jacket`, `edge`, `gloss`, `light` | Tube diameter; body colour; rim colour (alpha 0 = jacket darkened); specular strength; direction towards the light (the highlight stays on the lit side as the cable turns). |
 | `bands`, `stripe_every`, `stripe_len`, `stripe_color`, `stripe_phase` | Jacket bands `[{u, len, color}]` and repeating stripes, shaded like the tube. |
 | `pulses` | Light pulses `[{u, len, color, power}]` drawn as glowing segments: animate `u` for current running along the cable. |
@@ -877,7 +929,8 @@ fluid, pulses, bubbles and a bright travelling front from that state alone.
 | `add_pipe(points, opts) -> int` | A pipe through `points` (local px). `opts`: `width`, `wall_width`, `radius` (corners rounded once at build), `segments`, `wall`, `core`, `fluid`, `pulse` (pulse colour), `caps`, `arrows` (spacing of flow arrows on the core, 0 = none), `arrow_color`. Use `width` with `wall_width = 0` and transparent wall/core for pulses alone (a light chasing round an outline). |
 | `add_node(pos, radius, ring, fill) -> int`, `set_node(i, {o, lit})` | Fittings and junctions drawn over the pipes. |
 | `set_state(i, d)`, `apply(fn)` | Per-frame state; `apply(func(i): return {...})` like `MotionSvg.apply`. Unset keys reset to defaults. |
-| state `draw`, `draw_from` | 0..1 of the wall drawn (a pipe tracing itself; un-drawing from its start). |
+| `state_fn(i, f) -> Dictionary` | Optional: set it once and the flow applies it to every pipe in its own `_frame(f)` (manual `apply` / `set_state` still work). |
+| state `draw`, `draw_from` (keys `reveal`, `reveal_from` too) | 0..1 of the wall drawn (a pipe tracing itself; un-drawing from its start). |
 | state `fill`, `drain` | 0..1 fluid front and tail along the pipe: animate `fill` 0→1 for fuel arriving, `drain` 0→1 for a line emptying behind it. |
 | state `flow` | px the contents have moved; drives pulses and bubbles. `f * speed` for a steady flow, a stepped/eased beat count for pumped flow. |
 | state `pulse_len`, `pulse_gap`, `pulse_gain`, `pulse_color` | Slugs of brighter fluid moving with the flow. |
@@ -895,13 +948,13 @@ line is drawn).
 
 | Member | Notes |
 | --- | --- |
-| `size`, `level` | Vessel size; 0 = surface at the bottom edge, 1 = at the top (above 1 = brim-full, surface out of sight; just under 1 keeps a sloshing band in the top). |
+| `size`, `fill_level` | Vessel size; how full: 0 = surface at the bottom edge, 1 = at the top (above 1 = brim-full, surface out of sight; just under 1 keeps a sloshing band in the top). `level` is the deprecated name. |
 | `tilt` | Surface slope (px, right end up). |
 | `kicks` | Slosh impulses: `Vector2(frame, strength)` or `{at, amp, mode}` (mode 1 end-to-end, 2 central hump, default both). Pour, beat slaps, a slam. |
 | `wave_amp`, `wave_freq`, `damping` | Slosh px per unit kick, angular frequency (rad/frame), decay per frame. |
 | `ripple`, `ripple_len`, `ripple_speed` | Small travelling ripples always running. |
 | `meniscus`, `meniscus_color` | Band thickness; plain line colour when `surface` is empty. |
-| `bubbles`, `bubble_color`, `bubble_size`, `bubble_speed`, `seed_value` | Bubbles rising below the surface. |
+| `bubbles`, `bubble_color`, `bubble_size`, `bubble_speed`, `seed` | Bubbles rising below the surface (`seed_value`: deprecated alias). |
 | `foam`, `foam_color` | A row of small bubbles just under the surface (not drawn above a brim-full vessel). |
 | `fill`, `surface` | Add content here. |
 | `surface_y(x)` | Surface height (local px) at x, for placing things on it. |
@@ -1260,7 +1313,7 @@ equal (quantised) delay share one render.
 | `scene` / `builder`, `size` | As MotionTimeSlices. |
 | `layout` | `ROWS`, `COLUMNS` (slit-scan: every band shows the slit, stretched across the band) or `CHANNELS` (three full-frame copies tinted R, G, B and added). |
 | `bands`, `slots` | Number of bands; most distinct moments rendered per frame (one content instance each, built once). More distinct delays than slots are merged to `slots` evenly spaced levels. |
-| `delay`, `profile` (MotionTimeSlices.Profile), `waves`, `phase`, `seed_value`, `profile_fn`, `step` | As MotionTimeSlices; `step` (default 1 frame) is what makes bands share. |
+| `delay`, `profile` (MotionTimeSlices.Profile), `waves`, `phase`, `seed` (alias `seed_value`), `profile_fn`, `step` | As MotionTimeSlices; `step` (default 1 frame) is what makes bands share. |
 | `slit_pos`, `slit_width` | The slit each slot renders (a `slit_width`-pixel column or row): the slot viewport is that size, so a slot costs a line, not a frame. |
 | `channel_shares` | CHANNELS: delay share per channel. `[1, 0, 0]` = red lags, green and blue together: a red/cyan split in two renders instead of three. |
 | `reveal`, `reveal_from` | Show only some bands (as MotionTimeSlices). |
@@ -1456,7 +1509,7 @@ Everything in MotionPatternPlane, plus:
 
 | Member | Notes |
 | --- | --- |
-| `history_fn: Callable`, `capture(f)`, `history` | `history_fn(t) -> Dictionary` is the plane's time-varying state at frame t (pure; must accept negative t). Keys, all optional (missing ones use the current property): `offset` (ground_offset), `cell`, `blur` (motion_blur), `color_a`, `color_b`, `accent` (accent_color), `sun` (sun size scale), `level`. `capture(f)` samples f, f-1 … f-(history-1) into a 5-row RGBAF texture (call it in `_frame`, then `sync_now()`). Camera, bends, fog, sky colours and the ring are shared by every time. |
+| `history_fn: Callable`, `capture(f)`, `history` | `history_fn(t) -> Dictionary` is the plane's time-varying state at frame t (pure; must accept negative t). Keys, all optional (missing ones use the current property): `offset` (ground_offset), `cell`, `blur` (motion_blur), `color_a`, `color_b`, `accent` (accent_color), `sun` (sun size scale), `level`. While `history_fn` is set the plane captures in its own `_frame(f)`; `capture(f)` samples f, f-1 … f-(history-1) into a 5-row RGBAF texture (call it yourself in `_frame`, then `sync_now()`, to capture after changing other properties; a frame already captured is not sampled twice). Camera, bends, fog, sky colours and the ring are shared by every time. |
 | `scan` | 0 = each pixel at its own place (pure time displacement: the delay grows with the distance from the slit line); 1 = every pixel reads the slit. In between the picture unrolls from the slit. |
 | `axis` | `VERTICAL` (a vertical slit through `slit_at.x`: walls left and right), `HORIZONTAL` (a horizontal slit through `slit_at.y`: walls above and below), `TUNNEL` (both, split along the diagonals of `wall_ref`: four walls). |
 | `slit_at` | Where the slit lines cross, in pixels: the vanishing point of the walls. |
@@ -1570,7 +1623,7 @@ function of the frame.
 | --- | --- |
 | `MotionBlockPlan.new(n)`, `resize(n)`, `size()` | |
 | `start`, `waves`, `wave_step`, `dur`, `jitter` | Wave k starts at `start + k * wave_step` (a beat, so moves land on the beat); each move takes `dur` frames; inside a wave, up to `jitter` frames of delay follow the key, so a wave ripples instead of firing as one block (and never as a per-letter cascade). |
-| `lift`, `slide_max`, `sink_share`, `land`, `seed_v` | Flying cruise height (±40% per block, so crossing blocks fly at different heights); moves up to `slide_max` cells slide on the ground, longer ones fly (or, for `sink_share` of them, sink and rise); height overshoot on landing (servo telescoping). |
+| `lift`, `slide_max`, `sink_share`, `land`, `seed` (alias `seed_v`) | Flying cruise height (±40% per block, so crossing blocks fly at different heights); moves up to `slide_max` cells slide on the ground, longer ones fly (or, for `sink_share` of them, sink and rise); height overshoot on landing (servo telescoping). |
 | `set_move(i, a, b, key, style = -1)` | `a`, `b` = Vector3(x, y, height). `key` 0..1 picks the wave (e.g. the target's elliptical distance from the logo's centre: middle out). `style`: `STAY` (height only), `SLIDE` (two axis legs on the ground, x/y order seeded), `FLY` (lift, two legs in the air, drop), `SINK` (down at the source, up at the target); -1 picks. |
 | `pose(i, f)` | Vector4(x, y, lift above ground, height) at frame f. Clamped: before the move it returns `a`, after it `b`, so a chain of plans (A→B, B→C…) is evaluated by picking the latest plan whose `start` has passed. |
 | `progress(i, f)`, `starts(i)`, `lands(i)`, `target(i)`, `origin(i)`, `style(i)`, `wave_frames()` | Light switches on landing, cues on wave frames. |
