@@ -16,6 +16,7 @@ const SUITES := [
 	"res://tests/test_motion_travel.gd",
 	"res://tests/test_kit_helpers.gd",
 	"res://tests/test_kit_classes.gd",
+	"res://tests/test_city_plan.gd",
 ]
 
 # Run once the tree is up (root inside the tree, after the first flush), so

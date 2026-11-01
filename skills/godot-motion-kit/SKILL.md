@@ -193,7 +193,9 @@ paths. `MotionPath` measures a polyline (`point_at(s)`, `tangent_at`, `sub(a, b)
 point-in-polygon; `MotionTape` poses and draws hazard tape along a path.
 `MotionTravel` tables distance over time (camera along a track: `from_keys` speed keys,
 `from_anchors` landmarks on frames; `at(f)` per frame). `MotionTrack3D` builds banked
-track curves and ribbons for MotionStage3D worlds.
+track curves and ribbons for MotionStage3D worlds. `MotionCityPlan` plans a machine city
+as data (grid, streets, hashed kinds and materials, parts per lot) and emits it as
+MotionExtrude solids (`solids`) or MotionFlat3D meshes (`to_flat3d`); decals per `part.role`.
 `MotionCells` for palette byte grids.
 
 **Effects.** `MotionFX` (put nodes under `.content`; size it to the frame plus room for

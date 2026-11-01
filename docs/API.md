@@ -358,6 +358,48 @@ a track, a pump's spin). Entry i is the distance at frame i; `at(f)` interpolate
 | `extrapolate`, `end` | Outside the table clamp (default) or run on at the end speeds: `f * speed(0)` before 0, `at(end) + (f - end) * speed(end)` after `end`. |
 | `precise` | Float64 table (long tracks) instead of Float32. |
 
+## City plans: MotionCityPlan (RefCounted, `city/motion_city_plan.gd`)
+
+A procedural machine city as plain data, so the same lots feed the 2.5D look (MotionExtrude)
+or real 3D (MotionFlat3D). Plan space is x east, y north, z up, one unit per lot. Every
+choice is the pure lot hash `rand(i, j, key) = MK.rand(i * hash_i + j * hash_j + key * hash_k + seed)`,
+so call order never matters.
+
+```gdscript
+var plan := MotionCityPlan.new()
+plan.grid = Rect2i(0, 0, 24, 14)
+plan.skip = [Rect2i(0, 0, 11, 5)]                       # a plaza
+plan.prepare = func(cell: Dictionary) -> void:
+	if cell.j <= 1: cell.force = "low"                   # low front rows
+for cell in plan.build():
+	var parts: Array = cell.parts
+	var sol := plan.solids(cell, func(s: MotionSolid, mat: String) -> void: _paint(s, mat))
+	for n in sol.size():
+		if parts[n].role == "shaft": sol[n].add_decal(Vector3(0, -1, 0), _face)
+		scene.add(sol[n])
+# or in 3D: MotionCityPlan.to_flat3d(cell, surfaces_by_mat, key, edges)
+```
+
+| Member | Notes |
+| --- | --- |
+| `grid`, `skip`, `include` | Lots to plan (rows outer), rects left out, optional `func(i, j) -> bool` filter. |
+| `street_every`, `street_at` | Per-axis street period and phase (`posmod(i, every.x) == at.x`); street lots get kind `"street"`, no parts. |
+| `seed`, `hash_i`, `hash_j`, `hash_k` | The hash (defaults 0.7, 13.13, 71.7, 5.31). `rand(i, j, k)`, `pick(i, j, k)` (material), `is_street(i, j)`. |
+| `materials`, `mat_split`, `mat_key` | Names light → dark (grammar uses [0] light, [1] accent, [2] neutral, [3] dark) and the picker thresholds. |
+| `kinds`, `kind_split`, `empty_below`, `kind_key` | `r < empty_below` is empty, else first `kinds[n]` with `r < kind_split[n]`, else the last. Built in: tower, block, silos, ramp, stack, rack, low. |
+| `prepare` | `func(cell)` before the kind draw: set `force` (a kind, never empty), `cap` (height cap), `h_range` ([base, span] main height) or own fields. |
+| `shape` | Overrides of `SHAPE` (the grammar's numbers: ranges `[base, span, key]`, chances `[threshold, key]`, offsets, sizes, segments). Doubles only. |
+| `builders` | `kind -> func(plan, cell, o)` to add or replace a kind with `add_box`/`add_cylinder`/`add_pipe`/`add_wedge` and `local(x, y, z)`. |
+| `corner`, `corner_inset`, `y_dir` | Lot frame: corner `o = (i + corner[0] + corner_inset[0], j + ...)`, local y times `y_dir` (-1: lots laid out southwards from their north-west corner, as y-up builders do). |
+| `build()`, `plan_lot(i, j)`, `cells` | Records `{i, j, kind, mat, r, h, top, cap, forced, corner, parts}`; parts `{type, role, mat, stack, at, size / r, h / to, len / w, h0, h1, seg, plain}`. |
+| `solids(cell, paint)`, static `solid(part)` | 2.5D: one MotionSolid per part in order (`paint(s, mat)` then `plain` parts lose their outline). |
+| static `to_flat3d(cell, surfaces, key, edges=null, col)`, static `to_y_up(p)` | 3D: parts into `surfaces[mat]` (MotionFlat3D builders) with outlines; plan → y-up is `(x, z, -y)`, exact. |
+
+Decals and dressing stay in the piece, keyed on `cell.kind` and `part.role` (shaft, cap,
+mast, tank, vent, deck, silo, ramp, step, post, pipe). Megastructure and Time City use the
+defaults (Time City overrides segment counts); Canyon passes its own thresholds, numbers,
+street rule and a y-down lot frame and gets the same parts its y-up builder made.
+
 ## Offscreen rendering: MotionOffscreen (static, `core/motion_offscreen.gd`)
 
 The setup every node that renders a CanvasItem subtree into a texture first shares

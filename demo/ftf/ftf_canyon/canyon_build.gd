@@ -8,7 +8,8 @@
 # ground anchor (UV2) so the city can pulse and sink in rings from the shader.
 #
 # Grid: cell (i, j) is centred on world (i, 0, -j) (x east, -z north, y up);
-# every fifth row and column is a street one cell wide.
+# every fifth row and column is a street one cell wide. Lots, kinds and parts
+# come from a MotionCityPlan (`city_plan()`); this builder adds the markings.
 extends RefCounted
 
 const MATS := {
@@ -54,6 +55,7 @@ static func is_street(i: int, j: int) -> bool:
 	return posmod(i, 5) == 0 or posmod(j, 5) == 0
 
 
+## The lot hash (the MotionCityPlan default).
 static func rnd(i: int, j: int, k: float) -> float:
 	return MK.rand(i * 13.13 + j * 71.7 + k * 5.31 + 0.7)
 
@@ -144,22 +146,56 @@ func _route_dist(p: Vector2) -> float:
 
 # ------------------------------------------------------------------ the city
 
+## The city as a MotionCityPlan: the Megastructure grammar with this take's
+## thresholds and numbers, lots centred on their grid point and laid out from
+## their north-west corner (y_dir -1), so the parts land on exactly the
+## positions the y-up builders used.
+func city_plan() -> MotionCityPlan:
+	var fw := 1.0 - 2.0 * INSET
+	var p := MotionCityPlan.new()
+	p.grid = CITY
+	p.skip = [MH_PLAZA, FTF_PLAZA]
+	p.include = func(i: int, j: int) -> bool:
+		var q := Vector2(i, j)
+		return _route_dist(q) < 9.5 or q.distance_to(Vector2(9, 15)) < 17.0 or q.distance_to(Vector2(0, -2)) < 14.0
+	p.street_every = Vector2i(5, 5)
+	p.mat_split = [0.40, 0.64, 0.82]
+	p.kinds = PackedStringArray(["tower", "block", "silos", "stack", "rack"])
+	p.kind_split = [0.34, 0.6, 0.76, 0.88]
+	p.empty_below = 0.05
+	p.corner = [-0.5, 0.5]
+	p.corner_inset = [INSET, -INSET]
+	p.y_dir = -1.0
+	p.shape = {
+		inset = 0.0, width = fw,
+		tower_h = [1.6, 2.4, 4], cap_at = 0.16, cap_w = fw - 0.32, cap_h = [0.25, 0.3, 5],
+		mast = [0.6, 7], mast_at = fw * 0.5, mast_r = 0.035, mast_h = 0.6, mast_z32 = false,
+		block_h = [0.6, 1.2, 8], tank_at = [0.36, 0.45], tank_r = [0.18, 0.08, 10], tank_h = [0.3, 0.3, 11], tank_seg = 12,
+		vent_x = [0.12, 0.34], vent_y = 0.2,
+		deck_at = 0.0, deck_w = fw, silo_x = [0.24, 0.38], silo_y = [0.62, -0.38], silo_r = 0.18, silo_h = [0.9, 1.0, 13],
+		post_x = [0.1, fw - 0.2], post_y = 0.36, post_size = [0.1, 0.12, 0.9],
+		pipe_x = [-0.08, fw + 0.08], pipe_y = 0.42, pipe_z = [0.6, 0.84], pipe_r = [0.09, 0.07], pipe_seg = 8,
+	}
+	# Route canyons are always tall towers; lots in front of the FTF plaza stay
+	# low so the iso shot reads.
+	p.prepare = func(cell: Dictionary) -> void:
+		var i: int = cell.i
+		var j: int = cell.j
+		cell.front = (i - 9) + (15 - j) > 3 and Vector2(i, j).distance_to(Vector2(9, 15)) < 13.0
+		cell.cap = 1.5 if cell.front else 9.0
+		if _canyon.has(Vector2i(i, j)):
+			cell.force = "tower"
+			cell.h_range = [2.0, 2.8]
+	return p
+
+
 func build_city() -> void:
-	for j in range(CITY.position.y, CITY.end.y):
-		for i in range(CITY.position.x, CITY.end.x):
-			var c := Vector2i(i, j)
-			if MH_PLAZA.has_point(c) or FTF_PLAZA.has_point(c):
-				continue
-			var p := Vector2(i, j)
-			var near_route := _route_dist(p) < 9.5
-			var near_iso := p.distance_to(Vector2(9, 15)) < 17.0
-			var near_mh := p.distance_to(Vector2(0, -2)) < 14.0
-			if not (near_route or near_iso or near_mh):
-				continue
-			if is_street(i, j):
-				_street_cell(i, j)
-			else:
-				_cell(i, j)
+	var plan := city_plan()
+	for cell in plan.build():
+		if cell.kind == "street":
+			_street_cell(cell.i, cell.j)
+		else:
+			_cell(cell)
 	_ground_plane()
 
 
@@ -192,17 +228,6 @@ func _street_cell(i: int, j: int) -> void:
 			flat_decal("chev_up", w(i, j, 0.005), 0.5, k, RED if rnd(i, j, 41) > 0.5 else INK, rot, true)
 
 
-func _pick(i: int, j: int, k: float) -> String:
-	var r := rnd(i, j, k)
-	if r < 0.40:
-		return "cream"
-	if r < 0.64:
-		return "red"
-	if r < 0.82:
-		return "grey"
-	return "black"
-
-
 func _ink_on(mat: String) -> Color:
 	return INK if mat in ["cream", "grey"] else CREAM
 
@@ -211,72 +236,39 @@ func _accent_on(mat: String) -> Color:
 	return RED if mat != "red" else CREAM
 
 
-func _cell(i: int, j: int) -> void:
+## One planned lot: its parts into the material meshes, then this take's
+## markings, roof height and cranes.
+func _cell(cell: Dictionary) -> void:
+	if cell.kind == "empty":
+		return                                        # empty lot
+	var i: int = cell.i
+	var j: int = cell.j
 	var k := key_of(i, j)
+	MotionCityPlan.to_flat3d(cell, st, k, edges)
 	var o := w(i - 0.5 + INSET, j + 0.5 - INSET)       # min corner (x min, z min = north edge)
 	var fw := 1.0 - 2.0 * INSET
-	var mat := _pick(i, j, 1)
-	var r := rnd(i, j, 0)
-	var canyon := _canyon.has(Vector2i(i, j))
-	var front := (i - 9) + (15 - j) > 3 and Vector2(i, j).distance_to(Vector2(9, 15)) < 13.0
-	var h_cap := 1.5 if front else 9.0
-	if r < 0.05 and not canyon:
-		return                                        # empty lot
-	var top := 0.0
-	if canyon or r < 0.34:
-		# tower: shaft, set-back cap, antenna or a crane later
-		var h := minf(h_cap, (2.0 if canyon else 1.6) + (2.8 if canyon else 2.4) * rnd(i, j, 4))
-		box(mat, o, Vector3(fw, h, fw), k)
-		_tower_decals(o, Vector3(fw, h, fw), mat, i, j, k)
-		var cm := _pick(i, j, 6)
-		var ch := 0.25 + 0.3 * rnd(i, j, 5)
-		box(cm, o + Vector3(0.16, h, 0.16), Vector3(fw - 0.32, ch, fw - 0.32), k)
-		top = h + ch
-		if rnd(i, j, 7) > 0.6:
-			cyl("black", o + Vector3(fw * 0.5, top, fw * 0.5), 0.035, 0.6, k, 6)
-		elif rnd(i, j, 8) > 0.55:
-			flat_decal("helipad", o + Vector3(fw * 0.5, top, fw * 0.5), fw - 0.42, k, _accent_on(cm))
-	elif r < 0.6:
-		# mid block with roof plant
-		var h := minf(h_cap, 0.6 + 1.2 * rnd(i, j, 8))
-		box(mat, o, Vector3(fw, h, fw), k)
-		_block_decals(o, Vector3(fw, h, fw), mat, i, j, k)
-		top = h
-		if rnd(i, j, 9) > 0.45:
-			var tr := 0.18 + 0.08 * rnd(i, j, 10)
-			cyl("cream" if mat == "red" else "red", o + Vector3(0.36, h, 0.45), tr, 0.3 + 0.3 * rnd(i, j, 11), k)
-		else:
-			for q in 2:
-				box("grey", o + Vector3(0.12 + q * 0.34, h, 0.2), Vector3(0.24, 0.16, 0.42), k)
-				flat_decal("vent", o + Vector3(0.24 + q * 0.34, h + 0.16, 0.41), 0.2, k, INK)
-	elif r < 0.76:
-		# silos on a low deck
-		box("grey", o, Vector3(fw, 0.12, fw), k)
-		var sm := "cream" if rnd(i, j, 12) > 0.4 else "red"
-		for q in 2:
-			var sh := minf(h_cap, 0.9 + 1.0 * rnd(i, j, 13 + q))
-			cyl(sm, o + Vector3(0.24 + q * 0.38, 0.12, 0.62 - q * 0.38), 0.18, sh, k, 14)
-			top = maxf(top, sh + 0.12)
-		flat_decal("circle", o + Vector3(0.24, 0.12 + minf(h_cap, 0.9 + rnd(i, j, 13)), 0.62), 0.24, k, INK)
-	elif r < 0.88:
-		# stepped stack
-		var h1 := minf(h_cap, 0.5 + 0.8 * rnd(i, j, 15))
-		box(mat, o, Vector3(fw, h1, fw), k)
-		var m2 := _pick(i, j, 16)
-		var h2 := minf(h_cap * 0.5, 0.4 + 0.9 * rnd(i, j, 17))
-		box(m2, o + Vector3(0.0, h1, 0.0), Vector3(fw * 0.55, h2, fw * 0.55), k)
-		face_decal("hazard", o, Vector3(fw, h1, fw), 0, 0.5, h1 - 0.08, fw, k, _accent_on(mat))
-		top = h1 + h2
-	else:
-		# pipe rack on a plinth
-		box("black", o + Vector3(0.1, 0, 0.36), Vector3(0.1, 0.9, 0.12), k)
-		box("black", o + Vector3(fw - 0.2, 0, 0.36), Vector3(0.1, 0.9, 0.12), k)
-		pipe("red", o + Vector3(-0.08, 0.6, 0.42), o + Vector3(fw + 0.08, 0.6, 0.42), 0.09, k)
-		pipe("cream", o + Vector3(-0.08, 0.84, 0.42), o + Vector3(fw + 0.08, 0.84, 0.42), 0.07, k)
-		top = 0.9
+	var mat: String = cell.mat
+	var h: float = cell.h
+	var top: float = cell.top
+	var h_cap: float = cell.cap
+	var parts: Array = cell.parts
+	match cell.kind:
+		"tower":
+			_tower_decals(o, Vector3(fw, h, fw), mat, i, j, k)
+			if parts.size() == 2 and rnd(i, j, 8) > 0.55:      # no mast: maybe a helipad
+				flat_decal("helipad", o + Vector3(fw * 0.5, top, fw * 0.5), fw - 0.42, k, _accent_on(parts[1].mat))
+		"block":
+			_block_decals(o, Vector3(fw, h, fw), mat, i, j, k)
+			if parts[1].role == "vent":
+				for q in 2:
+					flat_decal("vent", o + Vector3(0.24 + q * 0.34, h + 0.16, 0.41), 0.2, k, INK)
+		"silos":
+			flat_decal("circle", o + Vector3(0.24, 0.12 + minf(h_cap, 0.9 + rnd(i, j, 13)), 0.62), 0.24, k, INK)
+		"stack":
+			face_decal("hazard", o, Vector3(fw, h, fw), 0, 0.5, h - 0.08, fw, k, _accent_on(mat))
 	tops[Vector2i(i, j)] = top
 	# cranes on some towers around the FTF plaza
-	if top > 2.2 and not front and Vector2(i, j).distance_to(Vector2(9, 15)) < 11.0 and rnd(i, j, 50) > 0.55 and cranes.size() < 6:
+	if top > 2.2 and not cell.front and Vector2(i, j).distance_to(Vector2(9, 15)) < 11.0 and rnd(i, j, 50) > 0.55 and cranes.size() < 6:
 		cranes.append({pos = o + Vector3(fw * 0.5, top, fw * 0.5), key = k, len = 1.6 + 0.8 * rnd(i, j, 51), seed = float(i * 7 + j)})
 
 

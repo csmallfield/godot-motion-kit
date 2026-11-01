@@ -40,6 +40,8 @@ const LETTER_D := 0.32
 const FTF_D := 0.6
 
 var scene := MotionExtrude.new()
+## The city plan (lots, kinds, parts) the cells are built from.
+var plan := MotionCityPlan.new()
 var cells: Array[Dictionary] = []
 var platform: MotionSolid
 var base_pipes: Array[MotionSolid] = []
@@ -95,18 +97,7 @@ func _mat(s: MotionSolid, key: String, edge := true) -> MotionSolid:
 
 
 func _r(cx: int, cy: int, k: float) -> float:
-	return MK.rand(cx * 13.13 + cy * 71.7 + k * 5.31 + 0.7)
-
-
-func _pick_mat(cx: int, cy: int, k: float) -> String:
-	var r := _r(cx, cy, k)
-	if r < 0.42:
-		return "cream"
-	if r < 0.66:
-		return "red"
-	if r < 0.82:
-		return "grey"
-	return "black"
+	return plan.rand(cx, cy, k)
 
 
 func _build_world() -> void:
@@ -123,9 +114,16 @@ func _build_world() -> void:
 		p.layer = 1
 		base_pipes.append(p)
 		scene.add(p)
-	for cy in NY:
-		for cx in NX:
-			_build_cell(cx, cy)
+	# The Megastructure city grammar (MotionCityPlan defaults) with this
+	# take's coarser cylinders and pipes.
+	plan.grid = Rect2i(0, 0, NX, NY)
+	plan.skip = [MH_PLAZA]
+	plan.shape = {tank_seg = 12, silo_seg = 12, pipe_seg = 10}
+	plan.prepare = func(cell: Dictionary) -> void:
+		if cell.j <= 1:
+			cell.force = "low"
+	for pc in plan.build():
+		_build_cell(pc)
 
 	var mk := MH_WIDTH / mh_data.view_box.size.x
 	mh_h = mh_data.view_box.size.y * mk
@@ -165,80 +163,37 @@ func _in_rect(r: Rect2i, cx: int, cy: int) -> bool:
 	return r.has_point(Vector2i(cx, cy))
 
 
-func _build_cell(cx: int, cy: int) -> void:
-	if _in_rect(MH_PLAZA, cx, cy):
+func _build_cell(pc: Dictionary) -> void:
+	var parts: Array = pc.parts
+	if parts.is_empty():
 		return
+	var cx: int = pc.i
+	var cy: int = pc.j
 	var cell := {cx = cx, cy = cy, solids = [], rest = [], top = 0.0, ftf = _in_rect(FTF_PLAZA, cx, cy)}
-	var o := Vector3(cx, cy, 0)
-	var r := _r(cx, cy, 0)
-	var south := cy <= 1
-	var inset := 0.1
-	var add := func(s: MotionSolid, stk: int) -> void:
+	var sol := plan.solids(pc, _mat)
+	for n in sol.size():
+		var s := sol[n]
+		var part: Dictionary = parts[n]
+		match part.role:
+			"shaft":
+				if pc.kind == "tower":
+					_tower_decals(s, cx, cy)
+				elif pc.kind == "block":
+					_block_decals(s, cx, cy)
+			"silo":
+				if part.stack == 1:
+					s.add_decal("front", _dec(func(c: MotionCanvas, sz: Vector2, _s: MotionSolid, _xf: Transform2D) -> void:
+						c.draw_circle(sz * 0.5, sz.x * 0.28, INK)))
+			"ramp":
+				s.add_decal("front", _dec(func(c: MotionCanvas, sz: Vector2, so: MotionSolid, _xf: Transform2D) -> void:
+					MotionMarks.chevron_row(c, Vector2(8, sz.y - 22), 3, 14, CREAM if so.data.mat == "red" else RED)))
 		s.clip_z = 0.0
-		s.stack = stk
+		s.stack = part.stack
 		s.sort_at = Vector3(cx + 0.5, cy + 0.5, 0.0)
 		s.data.cell = Vector2(cx + 0.5, cy + 0.5)
 		cell.solids.append(s)
 		cell.rest.append(s.origin.z)
 		cell.top = maxf(cell.top, s.origin.z + (s.depth if s.normal().z > 0.5 else 0.6))
-	var mat := _pick_mat(cx, cy, 1)
-	if r < 0.08 and not south:
-		return
-	if south:
-		var b := _mat(MotionSolid.box(o + Vector3(inset, inset, 0), Vector3(1 - 2 * inset, 1 - 2 * inset, 0.18 + 0.3 * _r(cx, cy, 2))), mat)
-		add.call(b, 0)
-		if _r(cx, cy, 3) > 0.5:
-			var t := _mat(MotionSolid.cylinder(o + Vector3(0.5, 0.5, b.depth), 0.22, 0.25), "cream" if mat != "cream" else "red")
-			add.call(t, 1)
-			t.origin.z = b.depth
-	elif r < 0.34:
-		var h := 1.8 + 2.6 * _r(cx, cy, 4)
-		var b := _mat(MotionSolid.box(o + Vector3(inset, inset, 0), Vector3(1 - 2 * inset, 1 - 2 * inset, h)), mat)
-		_tower_decals(b, cx, cy)
-		add.call(b, 0)
-		var c := _mat(MotionSolid.box(o + Vector3(0.24, 0.24, h), Vector3(0.52, 0.52, 0.35 + 0.3 * _r(cx, cy, 5))), _pick_mat(cx, cy, 6))
-		add.call(c, 1)
-		if _r(cx, cy, 7) > 0.55:
-			var a := _mat(MotionSolid.cylinder(o + Vector3(0.5, 0.5, h + c.depth), 0.04, 0.7, 6), "black")
-			add.call(a, 2)
-	elif r < 0.58:
-		var h := 0.7 + 1.1 * _r(cx, cy, 8)
-		var b := _mat(MotionSolid.box(o + Vector3(inset, inset, 0), Vector3(1 - 2 * inset, 1 - 2 * inset, h)), mat)
-		_block_decals(b, cx, cy)
-		add.call(b, 0)
-		if _r(cx, cy, 9) > 0.45:
-			var t := _mat(MotionSolid.cylinder(o + Vector3(0.38, 0.55, h), 0.2 + 0.08 * _r(cx, cy, 10), 0.35 + 0.3 * _r(cx, cy, 11), 12), "cream" if mat == "red" else "red")
-			add.call(t, 1)
-		else:
-			for k in 2:
-				var v := _mat(MotionSolid.box(o + Vector3(0.2 + k * 0.34, 0.3, h), Vector3(0.24, 0.42, 0.16)), "grey")
-				add.call(v, 1)
-	elif r < 0.74:
-		var deck := _mat(MotionSolid.box(o + Vector3(0.05, 0.05, 0), Vector3(0.9, 0.9, 0.12)), "grey")
-		add.call(deck, 0)
-		var smat := "cream" if _r(cx, cy, 12) > 0.4 else "red"
-		for k in 2:
-			var s := _mat(MotionSolid.cylinder(o + Vector3(0.3 + k * 0.4, 0.3 + k * 0.4, 0.12), 0.19, 1.0 + 0.9 * _r(cx, cy, 13 + k), 12), smat)
-			s.outline_width = 0.0
-			if k == 0:
-				s.add_decal("front", _dec(func(c: MotionCanvas, sz: Vector2, _s: MotionSolid, _xf: Transform2D) -> void:
-					c.draw_circle(sz * 0.5, sz.x * 0.28, INK)))
-			add.call(s, 1 + k)
-	elif r < 0.88:
-		var w := _mat(MotionSolid.wedge(o + Vector3(0.08, 0.1, 0), 0.84, 0.8, 0.15, 1.1 + 0.8 * _r(cx, cy, 15)), "red" if mat != "red" else "cream")
-		w.add_decal("front", _dec(func(c: MotionCanvas, sz: Vector2, s: MotionSolid, _xf: Transform2D) -> void:
-			MotionMarks.chevron_row(c, Vector2(8, sz.y - 22), 3, 14, CREAM if s.data.mat == "red" else RED)))
-		add.call(w, 0)
-	else:
-		for k in 2:
-			var post := _mat(MotionSolid.box(o + Vector3(0.12 + k * 0.66, 0.42, 0), Vector3(0.1, 0.16, 0.95)), "black")
-			add.call(post, k)
-		for k in 2:
-			var p := _mat(MotionSolid.pipe(o + Vector3(0.0, 0.5, 0.55 + k * 0.3), 0.11, 1.0, Vector3.RIGHT, 10), "red" if k == 0 else "cream")
-			p.outline_width = 0.0
-			add.call(p, 2 + k)
-	if cell.solids.is_empty():
-		return
 	for s in cell.solids:
 		scene.add(s)
 	var top: float = cell.top
