@@ -45,6 +45,17 @@ title takes"):
 | Checkerboard City | `ftf_checkercity/` | 112.5 bpm (16 f/beat) | `MotionPatternPlane` (plane/): ray-cast pattern plane with curve, tube, fold, motion blur | ~0.37 s/frame |
 | Houndstooth | `ftf_houndstooth/` | 120 bpm (15 f/beat) | `MotionTiling` (tiling/): woven houndstooth and other motifs, per-cell transforms driven by a logo mask | ~0.33 s/frame |
 
+Five mixtures of the favourites (API in `docs/API.md` under "Added with the FTF
+mixture takes"):
+
+| Take | Folder | Tempo | New kit technique | Render cost (software GL) |
+| --- | --- | --- | --- | --- |
+| Night Circuit (Gantry × Checkerboard City) | `ftf_nightcircuit/` | 150 bpm (12 f/beat) | `MotionPattern3D`, `MotionSkyDome3D` (three/): filtered patterns on 3D surfaces, OutRun sky dome | ~0.8 s/frame |
+| Time City (Megastructure × Slit-Scan) | `ftf_timecity/` | 120 bpm (15 f/beat) | `MotionViewRect`, `MotionTimeCache` (fx/): per-band culling, shared renders for equal delays | ~0.55 s/frame |
+| Through the Megastructure (Megastructure × Gantry) | `ftf_canyon/` | 112.5 bpm (16 f/beat) | `MotionLens3D`, `MotionFlat3D`, `MotionEdges3D`, `MotionDecalAtlas` (three/): perspective→isometric blend, poster shading, outlines, decals | ~0.5 s/frame |
+| Stargate Board (Checkerboard City × Slit-Scan) | `ftf_stargate/` | 180 bpm (10 f/beat) | `MotionPlaneScan` (plane/), `MotionTimeSplit` (fx/): per-pixel slit-scan of the pattern plane, RGB time split over any background | ~0.44 s/frame |
+| Assembly (Megastructure, night) | `ftf_assembly/` | 100 bpm (18 f/beat) | `MotionVoxelize`, `MotionBlockPlan`, `MotionFaceLights` (voxel/): mask → grid targets, block choreography, lit windows and edge lights | ~0.44 s/frame |
+
 All are 1920×1080, 30 fps, 420 frames, first downbeat at frame 0, and end on
 an empty frame (Megastructure on its cream ground, the rest on black).
 

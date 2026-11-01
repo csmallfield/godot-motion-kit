@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="AKPattern" format=3]
+
+[ext_resource type="Script" path="res://addons/audio_kit/sequencer/pattern.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+steps = 32
+seed = 15
+lanes = Array[Dictionary]([{"name": "kick", "recipe": "res://demo/ftf/ftf_canyon/audio/music/kick.tres", "steps": "X...x...X...x...", "length": 16}, {"name": "clap", "recipe": "res://demo/ftf/ftf_canyon/audio/music/clap.tres", "steps": "....X.......X...", "length": 16, "gain_db": -6.0}, {"name": "hat", "recipe": "res://demo/ftf/ftf_canyon/audio/music/hat.tres", "steps": "o.x.o.x.o.x.o.xo", "length": 16, "gain_db": -13.0, "pan": 0.2}, {"name": "hiss", "recipe": "res://demo/ftf/ftf_canyon/audio/music/hiss.tres", "steps": "..x...x...x...x.", "length": 16, "gain_db": -17.0, "pan": -0.3}, {"name": "clank", "recipe": "res://demo/ftf/ftf_canyon/audio/music/clank.tres", "steps": "...x..x....x..x.", "length": 16, "gain_db": -15.0, "pan": -0.2}, {"name": "anvil", "recipe": "res://demo/ftf/ftf_canyon/audio/music/anvil.tres", "steps": "......x.......x.", "length": 16, "gain_db": -17.0, "pan": 0.3}, {"name": "bass", "recipe": "res://demo/ftf/ftf_canyon/audio/music/bass.tres", "steps": "XxoxXxoxXxoxXxoxXxoxXxoxXxoxXxox", "length": 32, "notes": [28, 40, 35, 40, 28, 40, 38, 35, 31, 43, 38, 43, 31, 43, 40, 38, 24, 36, 31, 36, 24, 36, 35, 31, 26, 38, 33, 38, 26, 38, 35, 33], "gate": 0.6, "gain_db": -1.0}, {"name": "arp", "recipe": "res://demo/ftf/ftf_canyon/audio/music/arp.tres", "steps": "x.xx.xx.x.xx.xx.", "length": 16, "notes": ["E5", "B4", "G4", "E5", "D5", "B4", "G4", "B4", "E5", "B4", "G4", "F#5", "D5", "B4"], "gate": 0.6, "gain_db": -16.0, "pan": 0.15}, {"name": "pad", "recipe": "res://demo/ftf/ftf_canyon/audio/music/pad.tres", "steps": "x...............................", "length": 32, "notes": ["E3", "C3"], "chord": [0, 3, 7, 10], "gate": 31.0, "gain_db": -15.0}])

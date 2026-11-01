@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="AKSong" format=3]
+
+[ext_resource type="Script" path="res://addons/audio_kit/sequencer/song.gd" id="1"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_canyon/audio/music/tempo.tres" id="2"]
+
+[resource]
+script = ExtResource("1")
+sections = Array[Dictionary]([{"name": "run", "bars": 1.0, "patterns": ["res://demo/ftf/ftf_canyon/audio/music/run.tres"], "automation": {"bass.cutoff_hz": [[0.0, 260.0], [1.0, 520.0]]}}, {"name": "plaza", "bars": 1.25, "patterns": ["res://demo/ftf/ftf_canyon/audio/music/plaza.tres"]}, {"name": "canyon", "bars": 0.75, "patterns": ["res://demo/ftf/ftf_canyon/audio/music/canyon.tres"], "automation": {"bass.cutoff_hz": [[0.0, 400.0], [1.0, 700.0]]}}, {"name": "lift", "bars": 0.75, "patterns": ["res://demo/ftf/ftf_canyon/audio/music/lift.tres"], "automation": {"bass.cutoff_hz": [[0.0, 220.0], [1.0, 1400.0]]}}, {"name": "roll", "bars": 0.25, "patterns": ["res://demo/ftf/ftf_canyon/audio/music/roll.tres"], "automation": {"bass.cutoff_hz": [[0.0, 1400.0], [1.0, 2000.0]]}}, {"name": "drop", "bars": 1.5, "patterns": ["res://demo/ftf/ftf_canyon/audio/music/drop.tres"], "automation": {"bass.cutoff_hz": [[0.0, 700.0], [0.5, 1100.0], [1.0, 800.0]], "arp.index": [[0.0, 2.0], [1.0, 4.5]]}}, {"name": "outro", "bars": 0.75, "patterns": ["res://demo/ftf/ftf_canyon/audio/music/outro.tres"], "automation": {"bass.gain_db": [[0.0, 0.0], [1.0, -14.0]], "kick.gain_db": [[0.0, 0.0], [1.0, -10.0]], "bass.cutoff_hz": [[0.0, 500.0], [1.0, 150.0]]}}, {"name": "tail", "bars": 0.3125, "patterns": ["res://demo/ftf/ftf_canyon/audio/music/silence.tres"]}])
+gain_db = -4.0
+tempo = ExtResource("2")

@@ -1,0 +1,276 @@
+{
+	"cues": [
+		{
+			"data": {
+
+			},
+			"frame": 0.0,
+			"intensity": 0.8,
+			"name": "open",
+			"time": 0.0
+		},
+		{
+			"data": {
+				"pitch": 1.0
+			},
+			"frame": 11.0,
+			"intensity": 0.75,
+			"name": "pass.walk",
+			"time": 0.366666666666667
+		},
+		{
+			"data": {
+				"pitch": 1.0
+			},
+			"frame": 11.0,
+			"intensity": 0.85,
+			"name": "pod",
+			"time": 0.366666666666667
+		},
+		{
+			"data": {
+				"pitch": 1.0
+			},
+			"frame": 22.0,
+			"intensity": 0.65,
+			"name": "pass.pipe",
+			"time": 0.733333333333333
+		},
+		{
+			"data": {
+				"pitch": 0.92
+			},
+			"frame": 27.0,
+			"intensity": 0.8,
+			"name": "pass.walk",
+			"time": 0.9
+		},
+		{
+			"data": {
+				"pitch": 0.89
+			},
+			"frame": 35.0,
+			"intensity": 0.85,
+			"name": "pod",
+			"time": 1.16666666666667
+		},
+		{
+			"data": {
+				"pitch": 1.12
+			},
+			"frame": 38.0,
+			"intensity": 0.65,
+			"name": "pass.pipe",
+			"time": 1.26666666666667
+		},
+		{
+			"data": {
+				"pitch": 1.06
+			},
+			"frame": 43.0,
+			"intensity": 0.85,
+			"name": "pass.walk",
+			"time": 1.43333333333333
+		},
+		{
+			"data": {
+				"pitch": 0.94
+			},
+			"frame": 54.0,
+			"intensity": 0.65,
+			"name": "pass.pipe",
+			"time": 1.8
+		},
+		{
+			"data": {
+
+			},
+			"frame": 56.0,
+			"intensity": 0.8,
+			"name": "mouth",
+			"time": 1.86666666666667
+		},
+		{
+			"data": {
+
+			},
+			"frame": 64.0,
+			"intensity": 1.0,
+			"name": "mh.reveal",
+			"time": 2.13333333333333
+		},
+		{
+			"data": {
+
+			},
+			"frame": 80.0,
+			"intensity": 0.9,
+			"name": "mh.unfold",
+			"time": 2.66666666666667
+		},
+		{
+			"data": {
+
+			},
+			"frame": 96.0,
+			"intensity": 0.9,
+			"name": "stamp",
+			"time": 3.2
+		},
+		{
+			"data": {
+
+			},
+			"frame": 104.0,
+			"intensity": 0.6,
+			"name": "stamp.small",
+			"time": 3.46666666666667
+		},
+		{
+			"data": {
+
+			},
+			"frame": 140.0,
+			"intensity": 0.9,
+			"name": "whip",
+			"time": 4.66666666666667
+		},
+		{
+			"data": {
+				"pitch": 1.06
+			},
+			"frame": 158.0,
+			"intensity": 0.65,
+			"name": "pass.pipe",
+			"time": 5.26666666666667
+		},
+		{
+			"data": {
+				"pitch": 0.97
+			},
+			"frame": 163.0,
+			"intensity": 0.75,
+			"name": "pass.walk",
+			"time": 5.43333333333333
+		},
+		{
+			"data": {
+
+			},
+			"frame": 173.0,
+			"intensity": 0.8,
+			"name": "bank",
+			"time": 5.76666666666667
+		},
+		{
+			"data": {
+				"pitch": 1.12
+			},
+			"frame": 179.0,
+			"intensity": 0.8,
+			"name": "pass.walk",
+			"time": 5.96666666666667
+		},
+		{
+			"data": {
+
+			},
+			"frame": 192.0,
+			"intensity": 0.9,
+			"name": "lift",
+			"time": 6.4
+		},
+		{
+			"data": {
+
+			},
+			"frame": 206.0,
+			"intensity": 0.9,
+			"name": "lens",
+			"time": 6.86666666666667
+		},
+		{
+			"data": {
+
+			},
+			"frame": 224.0,
+			"intensity": 0.8,
+			"name": "hatch",
+			"time": 7.46666666666667
+		},
+		{
+			"data": {
+
+			},
+			"frame": 228.0,
+			"intensity": 1.0,
+			"name": "ftf.rise",
+			"time": 7.6
+		},
+		{
+			"data": {
+
+			},
+			"frame": 256.0,
+			"intensity": 1.0,
+			"name": "ftf.lock",
+			"time": 8.53333333333333
+		},
+		{
+			"data": {
+				"pitch": 1.0
+			},
+			"frame": 280.0,
+			"intensity": 0.6,
+			"name": "crane",
+			"time": 9.33333333333333
+		},
+		{
+			"data": {
+				"pitch": 0.84
+			},
+			"frame": 312.0,
+			"intensity": 0.6,
+			"name": "crane",
+			"time": 10.4
+		},
+		{
+			"data": {
+
+			},
+			"frame": 352.0,
+			"intensity": 1.0,
+			"name": "city.sink",
+			"time": 11.7333333333333
+		},
+		{
+			"data": {
+
+			},
+			"frame": 372.0,
+			"intensity": 0.8,
+			"name": "ftf.sink",
+			"time": 12.4
+		},
+		{
+			"data": {
+
+			},
+			"frame": 384.0,
+			"intensity": 0.9,
+			"name": "hatch.shut",
+			"time": 12.8
+		},
+		{
+			"data": {
+
+			},
+			"frame": 392.0,
+			"intensity": 1.0,
+			"name": "cut",
+			"time": 13.0666666666667
+		}
+	],
+	"duration": 420.0,
+	"fps": 30.0
+}

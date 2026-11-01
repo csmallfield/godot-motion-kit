@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="AKRecipe" format=3]
+
+[ext_resource type="Script" path="res://addons/audio_kit/core/recipe.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+voice = &"whoosh"
+params = {"length_s": 0.6, "low_hz": 350.0, "high_hz": 6500.0, "peak": 0.4, "shape": 2.0, "mode": &"band", "q": 1.2}
+layers = Array[Dictionary]([{"voice": &"tone", "params": {"wave": &"saw", "freq_hz": 640.0, "end_hz": 260.0, "glide_s": 0.2, "attack_s": 0.2, "decay_s": 0.3, "sustain": 0.0, "gate_s": 0.35, "length_s": 0.6}, "gain_db": -15.0}])
+fx = Array[Dictionary]([{"type": "lowpass", "cutoff_hz": 5500.0}])
+bind = {"intensity": {"gain_db": [-14.0, -6.0]}, "data.pitch": "pitch_scale"}
+vary = {"high_hz": 0.12}
+send = 0.35
+seed = 606

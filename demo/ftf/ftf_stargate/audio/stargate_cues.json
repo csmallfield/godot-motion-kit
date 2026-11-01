@@ -1,0 +1,294 @@
+{
+	"cues": [
+		{
+			"data": {
+
+			},
+			"frame": 0.0,
+			"intensity": 0.8,
+			"name": "open",
+			"time": 0.0
+		},
+		{
+			"data": {
+
+			},
+			"frame": 8.0,
+			"intensity": 0.6,
+			"name": "slit",
+			"time": 0.266666666666667
+		},
+		{
+			"data": {
+
+			},
+			"frame": 40.0,
+			"intensity": 0.9,
+			"name": "smear",
+			"time": 1.33333333333333
+		},
+		{
+			"data": {
+
+			},
+			"frame": 40.0,
+			"intensity": 0.9,
+			"name": "snap",
+			"time": 1.33333333333333
+		},
+		{
+			"data": {
+
+			},
+			"frame": 46.0,
+			"intensity": 0.6,
+			"name": "presents",
+			"time": 1.53333333333333
+		},
+		{
+			"data": {
+				"pitch": 1.0
+			},
+			"frame": 60.0,
+			"intensity": 0.55,
+			"name": "ripple",
+			"time": 2.0
+		},
+		{
+			"data": {
+				"pitch": 0.89
+			},
+			"frame": 70.0,
+			"intensity": 0.6,
+			"name": "ripple",
+			"time": 2.33333333333333
+		},
+		{
+			"data": {
+				"pitch": 1.19
+			},
+			"frame": 80.0,
+			"intensity": 0.65,
+			"name": "ripple",
+			"time": 2.66666666666667
+		},
+		{
+			"data": {
+				"pitch": 1.33
+			},
+			"frame": 85.0,
+			"intensity": 0.7,
+			"name": "ripple",
+			"time": 2.83333333333333
+		},
+		{
+			"data": {
+
+			},
+			"frame": 96.0,
+			"intensity": 0.8,
+			"name": "unroll",
+			"time": 3.2
+		},
+		{
+			"data": {
+
+			},
+			"frame": 120.0,
+			"intensity": 1.0,
+			"name": "gate",
+			"time": 4.0
+		},
+		{
+			"data": {
+				"pitch": 1.0
+			},
+			"frame": 120.0,
+			"intensity": 0.75,
+			"name": "scanner",
+			"time": 4.0
+		},
+		{
+			"data": {
+				"pitch": 1.0
+			},
+			"frame": 130.0,
+			"intensity": 0.5,
+			"name": "blip",
+			"time": 4.33333333333333
+		},
+		{
+			"data": {
+
+			},
+			"frame": 140.0,
+			"intensity": 0.8,
+			"name": "flip",
+			"time": 4.66666666666667
+		},
+		{
+			"data": {
+
+			},
+			"frame": 150.0,
+			"intensity": 0.7,
+			"name": "stutter",
+			"time": 5.0
+		},
+		{
+			"data": {
+
+			},
+			"frame": 160.0,
+			"intensity": 0.9,
+			"name": "tunnel",
+			"time": 5.33333333333333
+		},
+		{
+			"data": {
+				"pitch": 1.5
+			},
+			"frame": 160.0,
+			"intensity": 0.8,
+			"name": "scanner",
+			"time": 5.33333333333333
+		},
+		{
+			"data": {
+				"pitch": 1.19
+			},
+			"frame": 170.0,
+			"intensity": 0.5,
+			"name": "blip",
+			"time": 5.66666666666667
+		},
+		{
+			"data": {
+				"pitch": 1.5
+			},
+			"frame": 180.0,
+			"intensity": 0.5,
+			"name": "blip",
+			"time": 6.0
+		},
+		{
+			"data": {
+
+			},
+			"frame": 190.0,
+			"intensity": 0.7,
+			"name": "stutter",
+			"time": 6.33333333333333
+		},
+		{
+			"data": {
+
+			},
+			"frame": 200.0,
+			"intensity": 1.0,
+			"name": "pour",
+			"time": 6.66666666666667
+		},
+		{
+			"data": {
+
+			},
+			"frame": 240.0,
+			"intensity": 1.0,
+			"name": "drop",
+			"time": 8.0
+		},
+		{
+			"data": {
+				"pitch": 1.0
+			},
+			"frame": 260.0,
+			"intensity": 0.65,
+			"name": "fringe",
+			"time": 8.66666666666667
+		},
+		{
+			"data": {
+				"pitch": 1.19
+			},
+			"frame": 280.0,
+			"intensity": 0.7,
+			"name": "fringe",
+			"time": 9.33333333333333
+		},
+		{
+			"data": {
+				"pitch": 1.0
+			},
+			"frame": 285.0,
+			"intensity": 0.5,
+			"name": "lane",
+			"time": 9.5
+		},
+		{
+			"data": {
+				"pitch": 0.89
+			},
+			"frame": 290.0,
+			"intensity": 0.65,
+			"name": "fringe",
+			"time": 9.66666666666667
+		},
+		{
+			"data": {
+				"pitch": 1.33
+			},
+			"frame": 300.0,
+			"intensity": 0.7,
+			"name": "fringe",
+			"time": 10.0
+		},
+		{
+			"data": {
+				"pitch": 1.0
+			},
+			"frame": 320.0,
+			"intensity": 0.65,
+			"name": "fringe",
+			"time": 10.6666666666667
+		},
+		{
+			"data": {
+				"pitch": 1.26
+			},
+			"frame": 325.0,
+			"intensity": 0.5,
+			"name": "lane",
+			"time": 10.8333333333333
+		},
+		{
+			"data": {
+				"pitch": 1.5
+			},
+			"frame": 330.0,
+			"intensity": 0.7,
+			"name": "fringe",
+			"time": 11.0
+		},
+		{
+			"data": {
+
+			},
+			"frame": 340.0,
+			"intensity": 1.0,
+			"name": "stretch",
+			"time": 11.3333333333333
+		},
+		{
+			"data": {
+
+			},
+			"frame": 372.0,
+			"intensity": 0.7,
+			"name": "drain",
+			"time": 12.4
+		}
+	],
+	"duration": 420.0,
+	"fps": 30.0
+}

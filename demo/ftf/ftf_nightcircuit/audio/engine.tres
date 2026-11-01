@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="AKRecipe" format=3]
+
+[ext_resource type="Script" path="res://addons/audio_kit/core/recipe.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+voice = &"follow"
+params = {"wave": &"saw", "length_s": 14.0, "pitch": [[0.0, 40.0], [14.0, 40.0]], "level": [[0.0, 1.0], [14.0, 1.0]], "glide": 0.3, "fade_s": 0.3}
+layers = Array[Dictionary]([{"voice": &"follow", "params": {"wave": &"square", "length_s": 14.0, "pitch": [[0.0, 40.0], [14.0, 40.0]], "level": [[0.0, 1.0], [14.0, 1.0]], "glide": 0.3, "fade_s": 0.3}, "gain_db": -9.0}, {"voice": &"follow", "params": {"wave": &"triangle", "length_s": 14.0, "pitch": [[0.0, 40.0], [14.0, 40.0]], "level": [[0.0, 1.0], [14.0, 1.0]], "glide": 0.3, "fade_s": 0.3}, "gain_db": -4.0}])
+fx = Array[Dictionary]([{"type": "drive", "amount": 0.55}, {"type": "lowpass", "cutoff_hz": 700.0, "slope_db": 24.0}, {"type": "highpass", "cutoff_hz": 30.0}])
+bind = {"intensity": {"gain_db": [-24.0, -15.0]}, "data.pitch": "pitch", "data.level": "level"}
+send = 0.15
+seed = 601

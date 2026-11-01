@@ -1,0 +1,32 @@
+[gd_resource type="Resource" script_class="AKCueMap" format=3]
+
+[ext_resource type="Script" path="res://addons/audio_kit/core/cue_map.gd" id="1"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_canyon/audio/open.tres" id="2"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_canyon/audio/pass_walk.tres" id="3"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_canyon/audio/pass_pipe.tres" id="4"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_canyon/audio/pod.tres" id="5"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_canyon/audio/mouth.tres" id="6"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_canyon/audio/mh_reveal.tres" id="7"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_canyon/audio/mh_unfold.tres" id="8"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_canyon/audio/stamp.tres" id="9"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_canyon/audio/stamp_small.tres" id="10"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_canyon/audio/whip.tres" id="11"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_canyon/audio/bank.tres" id="12"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_canyon/audio/lift.tres" id="13"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_canyon/audio/lens.tres" id="14"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_canyon/audio/hatch.tres" id="15"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_canyon/audio/ftf_rise.tres" id="16"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_canyon/audio/ftf_lock.tres" id="17"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_canyon/audio/crane.tres" id="18"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_canyon/audio/city_sink.tres" id="19"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_canyon/audio/ftf_sink.tres" id="20"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_canyon/audio/hatch_shut.tres" id="21"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_canyon/audio/cut.tres" id="22"]
+
+[resource]
+script = ExtResource("1")
+sounds = {"open": ExtResource("2"), "pass.walk": ExtResource("3"), "pass.pipe": ExtResource("4"), "pod": ExtResource("5"), "mouth": ExtResource("6"), "mh.reveal": ExtResource("7"), "mh.unfold": ExtResource("8"), "stamp": ExtResource("9"), "stamp.small": ExtResource("10"), "whip": ExtResource("11"), "bank": ExtResource("12"), "lift": ExtResource("13"), "lens": ExtResource("14"), "hatch": ExtResource("15"), "ftf.rise": ExtResource("16"), "ftf.lock": ExtResource("17"), "crane": ExtResource("18"), "city.sink": ExtResource("19"), "ftf.sink": ExtResource("20"), "hatch.shut": ExtResource("21"), "cut": ExtResource("22")}
+master_fx = Array[Dictionary]([{"type": "dcblock"}, {"type": "loudness", "target_lufs": -16.0}, {"type": "limit", "ceiling_db": -2.0}])
+reverb = {"room": 0.5, "damp": 0.45, "width": 1.0, "quality": &"full", "return_db": -4.0}
+end_fade_s = 0.3
+duck = {"depth_db": 7.0, "full_at_db": -20.0, "attack_s": 0.005, "release_s": 0.3}

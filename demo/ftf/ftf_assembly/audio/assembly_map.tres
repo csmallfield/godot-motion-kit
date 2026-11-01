@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="AKCueMap" format=3]
+
+[ext_resource type="Script" path="res://addons/audio_kit/core/cue_map.gd" id="1"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_assembly/audio/power.tres" id="2"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_assembly/audio/lights_on.tres" id="3"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_assembly/audio/wave.tres" id="4"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_assembly/audio/step.tres" id="5"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_assembly/audio/mh_lock.tres" id="6"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_assembly/audio/presents.tres" id="7"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_assembly/audio/disperse.tres" id="8"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_assembly/audio/settle.tres" id="9"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_assembly/audio/ftf_set.tres" id="10"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_assembly/audio/drop.tres" id="11"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_assembly/audio/lift.tres" id="12"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_assembly/audio/scatter.tres" id="13"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_assembly/audio/power_down.tres" id="14"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_assembly/audio/end.tres" id="15"]
+
+[resource]
+script = ExtResource("1")
+sounds = {"power": ExtResource("2"), "lights.on": ExtResource("3"), "wave": ExtResource("4"), "step": ExtResource("5"), "mh.lock": ExtResource("6"), "presents": ExtResource("7"), "disperse": ExtResource("8"), "settle": ExtResource("9"), "ftf.set": ExtResource("10"), "drop": ExtResource("11"), "lift": ExtResource("12"), "scatter": ExtResource("13"), "power.down": ExtResource("14"), "end": ExtResource("15")}
+master_fx = Array[Dictionary]([{"type": "dcblock"}, {"type": "loudness", "target_lufs": -16.0}, {"type": "limit", "ceiling_db": -2.0}])
+reverb = {"room": 0.7, "damp": 0.45, "width": 1.0, "quality": &"full", "return_db": -4.0}
+end_fade_s = 0.4
+duck = {"depth_db": 7.0, "full_at_db": -20.0, "attack_s": 0.005, "release_s": 0.3}

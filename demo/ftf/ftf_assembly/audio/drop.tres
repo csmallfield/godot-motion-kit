@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="AKRecipe" format=3]
+
+[ext_resource type="Script" path="res://addons/audio_kit/core/recipe.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+voice = &"kick"
+params = {"tune_hz": 41.0, "punch": 5.0, "drop_s": 0.04, "decay_s": 0.6, "click": 0.8, "drive": 0.5}
+layers = Array[Dictionary]([{"voice": &"boing", "params": {"start_hz": 110.0, "end_hz": 34.0, "drop_s": 0.14, "decay_s": 0.5, "sub": 1.0, "click": 0.0}, "gain_db": -5.0}, {"voice": &"mallet", "params": {"freq_hz": 174.61, "material": &"bar", "hardness": 1.0, "decay_s": 0.7}, "gain_db": -7.0}, {"voice": &"mallet", "params": {"freq_hz": 698.46, "material": &"glass", "hardness": 0.75, "decay_s": 1.6, "damping": 0.9}, "gain_db": -10.0, "offset_s": 0.0}, {"voice": &"mallet", "params": {"freq_hz": 1046.5, "material": &"glass", "hardness": 0.75, "decay_s": 1.4, "damping": 0.9}, "gain_db": -12.0, "offset_s": 0.02}, {"voice": &"snare", "params": {"tone_hz": 140.0, "tone": 0.3, "noise": 1.0, "noise_hz": 4500.0, "noise_decay_s": 0.18}, "gain_db": -7.0}])
+bind = {"intensity": {"gain_db": [-3.0, 0.0]}}
+send = 0.4
+seed = 510

@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="AKRecipe" format=3]
+
+[ext_resource type="Script" path="res://addons/audio_kit/core/recipe.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+voice = &"tone"
+params = {"wave": &"saw", "freq_hz": 220.0, "end_hz": 30.0, "glide_s": 0.35, "attack_s": 0.01, "decay_s": 0.3, "sustain": 0.7, "gate_s": 0.7, "release_s": 0.1, "length_s": 0.9}
+layers = Array[Dictionary]([{"voice": &"mallet", "params": {"freq_hz": 1046.5, "material": &"glass", "hardness": 0.75, "decay_s": 0.5, "damping": 0.9}, "gain_db": -12.0, "offset_s": 0.0}, {"voice": &"mallet", "params": {"freq_hz": 830.61, "material": &"glass", "hardness": 0.75, "decay_s": 0.5, "damping": 0.9}, "gain_db": -14.0, "offset_s": 0.12}, {"voice": &"mallet", "params": {"freq_hz": 698.46, "material": &"glass", "hardness": 0.75, "decay_s": 0.6, "damping": 0.9}, "gain_db": -16.0, "offset_s": 0.24}])
+fx = Array[Dictionary]([{"type": "lowpass", "cutoff_hz": 1100.0, "slope_db": 24.0}])
+bind = {"intensity": {"gain_db": [-11.0, -4.0]}}
+send = 0.4
+seed = 513

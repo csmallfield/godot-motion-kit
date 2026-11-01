@@ -1,0 +1,267 @@
+{
+	"cues": [
+		{
+			"data": {
+
+			},
+			"frame": 0.0,
+			"intensity": 0.7,
+			"name": "tape.start",
+			"time": 0.0
+		},
+		{
+			"data": {
+
+			},
+			"frame": 4.0,
+			"intensity": 0.9,
+			"name": "wave",
+			"time": 0.133333333333333
+		},
+		{
+			"data": {
+				"pitch": 1.0
+			},
+			"frame": 7.5,
+			"intensity": 0.5,
+			"name": "block",
+			"time": 0.25
+		},
+		{
+			"data": {
+				"pitch": 1.12
+			},
+			"frame": 11.25,
+			"intensity": 0.56,
+			"name": "block",
+			"time": 0.375
+		},
+		{
+			"data": {
+				"pitch": 1.26
+			},
+			"frame": 15.0,
+			"intensity": 0.62,
+			"name": "block",
+			"time": 0.5
+		},
+		{
+			"data": {
+				"pitch": 1.5
+			},
+			"frame": 18.75,
+			"intensity": 0.68,
+			"name": "block",
+			"time": 0.625
+		},
+		{
+			"data": {
+				"pitch": 1.68
+			},
+			"frame": 22.5,
+			"intensity": 0.74,
+			"name": "block",
+			"time": 0.75
+		},
+		{
+			"data": {
+				"pitch": 2.0
+			},
+			"frame": 26.25,
+			"intensity": 0.8,
+			"name": "block",
+			"time": 0.875
+		},
+		{
+			"data": {
+
+			},
+			"frame": 34.0,
+			"intensity": 0.9,
+			"name": "mh.rise",
+			"time": 1.13333333333333
+		},
+		{
+			"data": {
+
+			},
+			"frame": 60.0,
+			"intensity": 1.0,
+			"name": "snap",
+			"time": 2.0
+		},
+		{
+			"data": {
+
+			},
+			"frame": 75.0,
+			"intensity": 0.85,
+			"name": "stamp",
+			"time": 2.5
+		},
+		{
+			"data": {
+				"pitch": 0.89
+			},
+			"frame": 90.0,
+			"intensity": 0.6,
+			"name": "ripple",
+			"time": 3.0
+		},
+		{
+			"data": {
+
+			},
+			"frame": 97.5,
+			"intensity": 0.55,
+			"name": "stamp.small",
+			"time": 3.25
+		},
+		{
+			"data": {
+				"pitch": 1.19
+			},
+			"frame": 105.0,
+			"intensity": 0.6,
+			"name": "ripple",
+			"time": 3.5
+		},
+		{
+			"data": {
+
+			},
+			"frame": 120.0,
+			"intensity": 0.75,
+			"name": "sink",
+			"time": 4.0
+		},
+		{
+			"data": {
+
+			},
+			"frame": 128.0,
+			"intensity": 0.9,
+			"name": "crane",
+			"time": 4.26666666666667
+		},
+		{
+			"data": {
+
+			},
+			"frame": 165.0,
+			"intensity": 0.85,
+			"name": "arrive",
+			"time": 5.5
+		},
+		{
+			"data": {
+
+			},
+			"frame": 168.0,
+			"intensity": 0.7,
+			"name": "drain",
+			"time": 5.6
+		},
+		{
+			"data": {
+
+			},
+			"frame": 180.0,
+			"intensity": 1.0,
+			"name": "ftf.rise",
+			"time": 6.0
+		},
+		{
+			"data": {
+
+			},
+			"frame": 240.0,
+			"intensity": 1.0,
+			"name": "drop",
+			"time": 8.0
+		},
+		{
+			"data": {
+				"pitch": 1.0
+			},
+			"frame": 270.0,
+			"intensity": 0.7,
+			"name": "fringe",
+			"time": 9.0
+		},
+		{
+			"data": {
+				"pitch": 1.19
+			},
+			"frame": 285.0,
+			"intensity": 0.7,
+			"name": "fringe",
+			"time": 9.5
+		},
+		{
+			"data": {
+
+			},
+			"frame": 300.0,
+			"intensity": 0.9,
+			"name": "tear",
+			"time": 10.0
+		},
+		{
+			"data": {
+				"pitch": 0.89
+			},
+			"frame": 315.0,
+			"intensity": 0.7,
+			"name": "fringe",
+			"time": 10.5
+		},
+		{
+			"data": {
+
+			},
+			"frame": 330.0,
+			"intensity": 0.6,
+			"name": "pass",
+			"time": 11.0
+		},
+		{
+			"data": {
+				"pitch": 1.33
+			},
+			"frame": 345.0,
+			"intensity": 0.7,
+			"name": "fringe",
+			"time": 11.5
+		},
+		{
+			"data": {
+
+			},
+			"frame": 360.0,
+			"intensity": 1.0,
+			"name": "streak",
+			"time": 12.0
+		},
+		{
+			"data": {
+
+			},
+			"frame": 388.0,
+			"intensity": 0.8,
+			"name": "drain.out",
+			"time": 12.9333333333333
+		},
+		{
+			"data": {
+
+			},
+			"frame": 404.0,
+			"intensity": 0.8,
+			"name": "end",
+			"time": 13.4666666666667
+		}
+	],
+	"duration": 420.0,
+	"fps": 30.0
+}

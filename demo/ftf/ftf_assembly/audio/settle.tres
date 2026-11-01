@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="AKRecipe" format=3]
+
+[ext_resource type="Script" path="res://addons/audio_kit/core/recipe.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+voice = &"boing"
+params = {"start_hz": 90.0, "end_hz": 42.0, "drop_s": 0.05, "decay_s": 0.2, "sub": 0.6, "click": 0.5, "click_hz": 1800.0}
+bind = {"intensity": {"gain_db": [-12.0, -6.0]}}
+send = 0.3
+seed = 508

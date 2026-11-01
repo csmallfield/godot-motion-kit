@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="AKRecipe" format=3]
+
+[ext_resource type="Script" path="res://addons/audio_kit/core/recipe.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+voice = &"tone"
+params = {"wave": &"square", "width": 0.3, "freq_hz": 698.46, "decay_s": 0.08, "gate_s": 0.05, "release_s": 0.04, "length_s": 0.16}
+fx = Array[Dictionary]([{"type": "lowpass", "cutoff_hz": 5000.0}])
+bind = {"intensity": {"gain_db": [-22.0, -14.0]}, "data.pitch": "pitch_scale"}
+vary = {"decay_s": 0.15}
+vary_variants = 4
+send = 0.3
+seed = 512

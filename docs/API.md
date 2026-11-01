@@ -1009,3 +1009,482 @@ fields. Anything added under `mask_content` is rendered offscreen and becomes th
   unwarped vector drawn under the tiling (keep bulges away from a parted logo, or set
   `mask_warp` while the logo is cloth); `mask_pixel` blends two cell results by the
   mask's coverage, so a soft mask edge shows both for a pixel or two.
+
+## Added with the FTF mixture takes
+
+New techniques built for the five mixture takes (Night Circuit, Time City, Through the Megastructure, Stargate Board, Assembly); each has a working example in `demo/ftf/`.
+
+### Patterns and sky in 3D: MotionPattern3D, MotionSkyDome3D
+
+From the FTF intro take `demo/ftf/ftf_nightcircuit/` (notes: `demo/ftf/ftf_nightcircuit/KIT_NOTES.md`).
+
+The take mixes the Gantry take (a real 3D camera along a Curve3D in a
+`MotionStage3D`) with Checkerboard City (`MotionPatternPlane`). Choice: the
+checkerboard is **a pattern material on real geometry inside the stage**, not a
+`MotionPatternPlane` layered behind it. Reasons: one camera, one depth buffer and
+one fog for everything, so the FTF sign can rise out of the board (the board
+occludes what is still under it), towers hide the board behind them, and the
+board fogs into the horizon exactly like the track. No camera-sync helper is
+needed. The cost is that the pattern plane's analytic bends (curve, channel,
+hill, tube) are not available; a 3D take bends real geometry instead.
+
+New files in `addons/motion_kit/three/` (no existing kit file was edited):
+
+| File | Class / role |
+| --- | --- |
+| `motion_pattern_3d.gdshader` | box-filtered checker / stripes / grid / solid spatial material: world XZ, UV-in-metres or triplanar space, motion blur, face shading, sheen, ring shockwave, light window (UV2.x), sprouting by key |
+| `motion_pattern_3d.gd` | `MotionPattern3D` (RefCounted, static): material, endless ground, UV-mapped boxes and quads, ring and grow helpers |
+| `motion_sky_dome_3d.gdshader` | gradient sky + banded OutRun sun on a camera-centred dome |
+| `motion_sky_dome_3d.gd` | `MotionSkyDome3D` (MeshInstance3D): the sky dome with MotionPatternPlane's sky / sun controls |
+
+#### API rows (for docs/API.md)
+
+##### MotionPattern3D (static)
+
+| Member | Notes |
+| --- | --- |
+| `material(color_a, color_b, cell, space, pattern) -> ShaderMaterial` | `space`: `WORLD_XZ` (floors; world-locked, so the mesh can follow the camera), `UV` (UVs in metres, see `box()`: cells line up with each face's edges whatever its rotation), `TRIPLANAR` (XZ / ZY / XY by face normal). `pattern`: `CHECKER`, `STRIPES`, `GRID`, `SOLID`. Vertex colour tints `color_a` (one material, many building colours) |
+| Shader parameters | `cell` (m), `offset` (cells; scroll), `uv_scale` (UV to metres for `UV` space, e.g. an extruded logo's 0..1 UVs), `line_width`, `energy`, `energy_b`, `motion`, `face_shade` (brightness of faces facing x / y / z), `sheen_color` / `sheen_dir` / `sheen_power`, `ring` / `ring_color` / `ring_energy` / `ring_push`, `grow`, `lit_from` / `lit_to` / `lit_soft` / `dim` (as `MotionStage3D.unlit()`) |
+| `ground(parent, mat, size, y) -> MeshInstance3D`, `follow(floor, camera_pos)` | An endless floor: a big plane kept under the camera each frame; the pattern stays put |
+| `motion_for(a, b, shutter) -> Vector3` | The `motion` uniform for a camera moving a to b in a frame: the filter footprint widens by the movement while the shutter is open, so a fast board smears along the travel instead of strobing or running backwards |
+| `ring(mat, centre, radius, width, col, push)` | A shockwave ring on the floor (world centre; tints and pushes the pattern). `radius <= 0` turns it off |
+| `grow(mat, key, from, to)` | Sprouts geometry: model-space y is scaled by `1 - smoothstep(from, to, UV2.x - key)`. Towers keyed by track distance with `key` = the camera's distance lie flat far ahead and rise as you approach (keeps the horizon and the sun open down a long straight) |
+| `box(st, xform, size, col, uv2x, top)`, `quad(st, a, b, c, d, col, uv2x, uv0)` | Geometry for `UV` space: UVs in metres on every face (v from each side's base), UV2.x = a key for light windows and `grow` |
+
+##### MotionSkyDome3D (MeshInstance3D)
+
+| Member | Notes |
+| --- | --- |
+| `sky_top`, `sky_horizon`, `sky_spread`, `sky_curve` | Gradient (spread = elevation sine where it reaches the top; curve = exponent) |
+| `sun_elevation`, `sun_azimuth`, `sun_size` (degrees), `sun_top`, `sun_bottom`, `sun_bands`, `sun_glow`, `sun_energy`, `horizon_cut` | The MotionPatternPlane sun: a vertical gradient, OutRun bands (count, scroll, top of the banded area), glow; `horizon_cut` hides what has sunk below the horizon. Azimuth 0 looks down -Z, positive turns right |
+| `level`, `radius` | Fade to black; dome radius (inside the camera's far plane) |
+| `follow(camera)`, `sun_direction()`, `fog_to(environment)` | Centre on the camera each frame; unit vector to the sun (a floor's `sheen_dir`); set the fog colour to the horizon so fogged ground meets the sky without a seam |
+
+#### Frame purity
+
+Every uniform is set from `f` in `_frame`. The camera's distance along the circuit
+is a table integrated once (eighths of a frame) and looked up; the board's
+`motion` comes from the circuit at `s(f - 0.5)` and `s(f + 0.5)`; the sign's
+transform, the ring centre (the sign's position at the ring's start frame), `grow`
+and the light windows are functions of `f`. The ground plane and sky dome follow
+the camera, which is itself a function of `f`. Checked: frames 101, 197 and 333
+rendered by seeking are pixel-identical (max difference 0) to the same frames of
+the continuous render.
+
+#### Cost
+
+The pattern shader is a handful of ALU per pixel (one box-filtered checker, a
+derivative normal, optional sheen and ring) with no textures; the sky dome is one
+sphere. Towers, gantries and pylons merge into one ArrayMesh per material. The
+whole take (stage with MSAA 4x and glow, ~10 panel viewports, ~300 towers)
+renders at about 0.8 s a frame under Xvfb software GL on the shared 2 cores
+(5 min 40 s for the 420 frames, including Movie Maker PNG writes).
+
+#### Limits
+
+- The pattern's motion blur is a widened box filter along the world motion
+  (good for a board under a moving camera); it does not blur geometry edges.
+- `UV` space needs UVs in metres: use `box()` / `quad()`, or `uv_scale` for 0..1
+  UVs. Triplanar space is axis-aligned (rotated boxes get diagonal cells).
+- `grow` scales model-space y toward 0: keep the ground at the mesh's y = 0 and
+  key whole buildings with one UV2.x so they rise as one.
+- Face normals come from screen derivatives (flat faces only; no smoothing).
+- Fog is the environment's (exponential here): set `fog_to()` so the horizon and
+  fog agree; very low sun elevations need the ground to cover the dome below it.
+
+### Cheaper time slices: MotionViewRect, MotionTimeCache
+
+From the FTF intro take `demo/ftf/ftf_timecity/` (notes: `demo/ftf/ftf_timecity/KIT_NOTES.md`).
+
+Round 4, Time City (Megastructure x Slit-Scan). The city of take 2 (MotionExtrude,
+~600 solids) seen through MotionTimeSlices. Instanced naively that is one full
+city per band (24-32 bands, 40-75 ms of draw each, plus its own sort): several
+seconds a frame. Two new kit files and one pattern make it affordable. No
+existing kit file was changed.
+
+#### New: `addons/motion_kit/fx/motion_view_rect.gd` (`class_name MotionViewRect`)
+
+What part of a node's own space its viewport actually shows, for content that
+culls itself. Each MotionTimeSlices band renders its instance into a
+band-sized SubViewport with the content shifted to the band's source rect, so
+the content can ask which strip it is drawing and skip everything else.
+
+| Member | Notes |
+| --- | --- |
+| `of(item, pad = 0)` (static) | The rect of `item`'s local space its viewport shows (inverse canvas transform of the viewport's visible rect), grown by `pad`. In a band: that band's strip; at the root: the frame, through any shake or scale. Empty when not in the tree. Call it in `_frame` (MotionTimeSlices / MotionTimeCache place their holders before the walk reaches the content). |
+| `is_partial(item, full)` (static) | True when the item renders into something smaller than `full`. |
+| `box(cam, centre, half)` (static) | Screen bounds of a world box through an orthographic MotionExtrudeCamera: a cheap, exact per-cell cull before positioning anything. |
+
+#### New: `addons/motion_kit/fx/motion_time_cache.gd` (`class_name MotionTimeCache`)
+
+Slit-scan and channel splits that render each moment once. Where every band
+shows the same part of the content and only the moment differs, bands with an
+equal (quantised) delay share one render.
+
+| Member | Notes |
+| --- | --- |
+| `scene` / `builder`, `size` | As MotionTimeSlices. |
+| `layout` | `ROWS`, `COLUMNS` (slit-scan: every band shows the slit, stretched across the band) or `CHANNELS` (three full-frame copies tinted R, G, B and added). |
+| `bands`, `slots` | Number of bands; most distinct moments rendered per frame (one content instance each, built once). More distinct delays than slots are merged to `slots` evenly spaced levels. |
+| `delay`, `profile` (MotionTimeSlices.Profile), `waves`, `phase`, `seed_value`, `profile_fn`, `step` | As MotionTimeSlices; `step` (default 1 frame) is what makes bands share. |
+| `slit_pos`, `slit_width` | The slit each slot renders (a `slit_width`-pixel column or row): the slot viewport is that size, so a slot costs a line, not a frame. |
+| `channel_shares` | CHANNELS: delay share per channel. `[1, 0, 0]` = red lags, green and blue together: a red/cyan split in two renders instead of three. |
+| `reveal`, `reveal_from` | Show only some bands (as MotionTimeSlices). |
+| `region()`, `moments()`, `profile_at(u, k)`, `rebuild()` | Helpers. |
+
+Frame purity: the delays, their distinct sorted set and the slot each moment
+goes to are recomputed from f every frame; a slot is a nested composition with
+`start` = its delay. Nothing persists. Hand-over from MotionTimeSlices: fold the
+columns into the slit at delay 0 (every band then shows the same line), switch,
+then grow the delay: the switch is invisible.
+
+#### Pattern: shared world, per-band pose (in this take)
+
+`city_world.gd` holds the solids once (a static shared by every instance of
+`src_city.gd`). Each instance only stores its own `f` and view rect:
+
+- `_frame(f)`: `view = MotionViewRect.of(self, 6)`; a light pose (camera,
+  monument, logo slab: enough for SVG cap transforms and masks).
+- every draw_fn starts with `world.pose(f, view)`: camera, then each cell is
+  culled by `MotionViewRect.box` before its heights are computed, then
+  `MotionExtrude.cull_rect = view` and `prepare()` sorts only what the strip
+  shows. Posing is a pure function of (f, view) and is skipped when the world
+  is already posed for that pair, so it runs once per band per frame. Canvas
+  redraws run in queue order, so one band's canvases draw back to back.
+- decals that draw long strips (the platform's serial band) cull their items
+  to the view too.
+
+#### Cost (measured)
+
+Shared 2-core VM, Xvfb + llvmpipe. Full Movie Maker render of the take: 420
+frames in 233 s, **0.55 s a frame** on average. Per mode, from a harness that
+calls `render(f)` and forces a draw (script + draw_fns + GL, no PNG write):
+
+| Mode | Instances posed | Cost a frame |
+| --- | --- | --- |
+| plain (one city) | 1 | ~0.40 s |
+| 32 columns, time wave / ripple (MotionTimeSlices) | 27-32 | ~0.48 s |
+| 24 rows, crane / slab smear (MotionTimeSlices) | 24 | ~0.80-0.87 s |
+| 32 columns folding into the slit (MotionTimeSlices) | 32 | ~0.89 s |
+| red/cyan split (MotionTimeCache CHANNELS, 2 slots) | 2 | ~0.65-0.72 s |
+| 96-column slit-scan (MotionTimeCache, <= 15 slots of 3 px) | 13-17 | ~0.24 s |
+
+For comparison, the same 96-column streak through MotionTimeSlices measured
+1.9 s a frame (96 posed bands), and posing each band twice (once in `_frame`,
+once at draw) cost ~40 % more script time than the light-pose split above.
+Without the per-band cull every band would draw the whole city (40-75 ms of
+draw plus its sort each).
+
+Limits: MotionViewRect culling needs content that can cull (MotionExtrude,
+or your own bounds); BOXES bands each contain the centre, so culling helps
+them little. MotionTimeCache only covers the shared-slit and channel cases:
+for plain time displacement (each band its own place) MotionTimeSlices with a
+culling content is the cheaper one (band-sized renders). Slots are built once
+(`slots` instances), so keep `slots` to what the profile needs.
+
+### Graphic 3D: MotionLens3D, MotionFlat3D, MotionEdges3D, MotionDecalAtlas
+
+From the FTF intro take `demo/ftf/ftf_canyon/` (notes: `demo/ftf/ftf_canyon/KIT_NOTES.md`).
+
+New in round 4 (Canyon, "Through the Megastructure"). All new files live in
+`addons/motion_kit/three/`; **no existing kit file was edited**. Merge these
+rows into `docs/API.md` and `docs/techniques.md`.
+
+| File | Class / role |
+| --- | --- |
+| `motion_lens_3d.gd` | `MotionLens3D` (RefCounted): a camera pose that blends perspective into orthographic without a pop, and matches a `MotionExtrudeCamera` exactly |
+| `motion_flat_3d.gd` | `MotionFlat3D` (RefCounted): the MotionExtrude look in real 3D: face-tone materials, depth fog, frame-pure group motion, builders |
+| `motion_edges_3d.gd` | `MotionEdges3D` (RefCounted): screen-space crease and silhouette outlines |
+| `motion_decal_atlas.gd` | `MotionDecalAtlas` (Node): 2D kit drawings rendered once into an atlas for decals |
+| `motion_flat_3d.gdshaderinc` | shared group motion (sink rings, beat pulse) and depth fog |
+| `motion_flat_3d_faces.gdshaderinc` | the face-tone body |
+| `motion_flat_3d.gdshader` / `motion_flat_3d_double.gdshader` | face tones, back faces culled / two-sided |
+| `motion_edges_3d.gdshader` | constant-pixel-width outline ribbons |
+| `motion_decal_3d.gdshader` | tinted, alpha-blended atlas decals |
+
+#### API rows (for docs/API.md)
+
+##### MotionLens3D (RefCounted)
+
+A lens frames `target`: `frame_h` world units fill the screen height on the
+plane through the target. `persp` scales perspective strength k = tan(fov/2) ·
+persp; the camera sits at distance frame_h / 2k, so lowering persp is a dolly
+zoom that keeps the target the same size. Past `ortho_at` the lens becomes a
+true orthographic camera of size `frame_h` (the residual perspective there is
+depth range / distance, about 0.1 %, under a pixel at the frame edge).
+
+| Member | Notes |
+| --- | --- |
+| `target`, `basis`, `frame_h`, `persp`, `fov` | Framed point, orientation (−Z looks at the target), world units across the screen height, perspective strength 0..1, vertical FOV at persp 1 |
+| `offset` | Screen offset of the target in pixels (MotionExtrudeCamera `centre` − screen centre; also good for shakes). Perspective: a lens shift (frustum offset); orthographic: camera h/v offset |
+| `keep`, `depth`, `near_min`, `ortho_at`, `view_h` | Scene depth kept in front of the target (the near plane rides there once the camera backs away, clearing what would come between), behind it (far plane); smallest near plane; ortho switch distance (20000); screen height in px |
+| static `look(from, at, fov, up, roll)` | A free perspective camera as a lens |
+| static `from_transform(xf, fov, focus)` | Any camera transform, framing the point `focus` ahead |
+| static `extrude(yaw, pitch, scale, at, centre, screen)` | The exact orthographic view a `MotionExtrudeCamera` with these values draws (45 / 35.264 = true isometric), in Godot axes |
+| static `extrude_basis(yaw, pitch)`, `from_extrude(p)` | The matching camera basis; MotionExtrude (x east, y north, z up) → Godot (x, z, −y) |
+| `mix(b, t, t_lens = t)` | Blend: target lerp, basis slerp, frame_h in log space, k linear (an even flattening). A separate `t_lens` flattens later than the view turns, so the backing-away camera clears the scene |
+| `apply(camera)` | Sets projection (FRUSTUM for perspective: Camera3D clamps `fov` to ≥ 1°, the frustum's near-plane size has no limit), size, near/far, transform and offsets |
+| `k()`, `camera_distance()`, `is_ortho()`, `transform()`, `project(p)` | Helpers; `project` predicts screen positions without a camera |
+
+##### MotionFlat3D (RefCounted)
+
+| Member | Notes |
+| --- | --- |
+| `material(top, lit, dark, under, soft, moves = true, two_sided = false)` | Face tones by world normal: up-facing `top`, sides facing the horizontal `light` `lit`, sides facing away `dark`, down-facing `under`; `soft` 0 = a hard poster terminator. Vertex colour multiplies. `moves` false = ignores group motion (ground). `two_sided` for meshes without consistent winding (MotionSvgMesh: paint white tones so the part colours show) |
+| `edges(color, width_px, bias)`, `decals(atlas, moves)`, `register(m, moves)` | Outline / decal materials registered with the look; any shader including `motion_flat_3d.gdshaderinc` can be registered |
+| `light`, `energy`, `fog_color/begin/end/amount` | Horizontal light direction (Godot axes); brightness (fade to black); linear depth fog |
+| `fog(color, begin, end, amount)`, `fog_for(lens, color, before, after, amount)` | Depth fog; `fog_for` measures from a lens's target plane, so the dolly zoom keeps the same fog around what it frames |
+| `sink(origin, t, step, width, dur, depth)` | Rings sinking from `origin` (ground x, z): ring k = floor(d / width) starts at t = k·step and drops `depth` over `dur` frames (ease in). Into an opaque ground: the ground hides what sinks |
+| `pulse(origin, t, amp, speed, decay, reach)` | A bob running out at `speed` units/frame, `t` = frames since the beat |
+| `apply()` | Push everything to every registered material, once per frame |
+| `offset(key)` | The shader's group offset in GDScript, for nodes moved on the CPU (traffic) |
+| static `begin()`, `instance(mesh, mat)` | SurfaceTool / MeshInstance3D helpers |
+| static `box(st, p, size, key, col, edges, bottom)`, `cylinder(st, base, r, h, key, col, edges, seg)`, `pipe(st, a, b, r, key, col, edges, seg)`, `quad(...)`, `decal(st, c, half_u, half_v, uv, key, col)` | Builders with explicit normals, Godot winding, vertex colour and the group key in UV2; pass a `MotionEdges3D` to get the matching outline. Cylinders are flat-faceted (crisp terminator, identical in perspective and ortho) |
+
+Group key: every vertex's UV2 holds its object's ground anchor (x, z). The
+vertex stage adds the group offset to y, so faces, edges and decals of one
+object move together inside merged meshes; nodes using the same key (a crane
+on a tower) move with it too.
+
+##### MotionEdges3D (RefCounted)
+
+| Member | Notes |
+| --- | --- |
+| `add(a, b, na, nb, kind, key)`, `add_loop(...)`, `commit()`, `count()` | Edge a→b between faces with normals na, nb. Kinds: `SMOOTH` (silhouette only: one face toward the camera, one away), `CREASE` (when either face looks at the camera), `ALWAYS` (the depth test decides) |
+| static `material(color, width_px, bias)` | Constant pixel width in perspective and ortho; ends extended half a width so corners close; pulled `bias` units toward the camera to beat its own faces; near-plane clipping per segment |
+| static `from_mesh(mesh, {crease_deg, weld, kind, key, xform})` | Outline any mesh: welds vertices, keeps boundaries and creases (winding-proof |cos| test). Used on MotionSvgMesh logos (kind ALWAYS) |
+
+##### MotionDecalAtlas (Node)
+
+| Member | Notes |
+| --- | --- |
+| `MotionDecalAtlas.new(size)`, `add(px, fn) -> Rect2` | Shelf-packed cells drawn by `fn(c: MotionCanvas, size)`; returns the UV rect for `MotionFlat3D.decal()`. Draw in white; vertex colour tints |
+| `texture`, `viewport`, `pad`, `refresh()` | Renders once (UPDATE_ONCE); add it to the tree before the first frame (it renders before the 3D stage, so stills and seeks get their decals) |
+
+#### Frame purity
+
+Nothing integrates at runtime. The ride's distance along the route is a
+monotone cubic (Fritsch–Carlson) through (frame, place) anchors, tabulated per
+frame; walkways and pipe racks are built where the camera is on each beat
+(so fly-bys land on the cue frames). Lens, materials, group motion, cranes,
+traffic (positions modulo lane length), doors and the slab are set from `f`
+only. The atlas and panels render from `f` (atlas once). Verified: frames 90,
+230 and 300 rendered alone by seeking (`stills.sh`) are pixel-identical to the
+same frames of the full render (max difference 0).
+
+#### Cost
+
+- Build: every building and piece of street furniture is merged into one
+  mesh per palette colour, one edge mesh, two decal meshes and the ground;
+  plus monument, slab, 6 cranes and ~34 pods as small nodes.
+- Per frame: ~0 ms of GDScript beyond setting ~20 uniforms per material.
+- Render (software GL llvmpipe, 1920×1080, MSAA 4x, 2 shared cores): the
+  420-frame piece in 3 min 34 s, about 0.51 s a frame, including the city
+  build (a few seconds at startup).
+
+#### Limits
+
+- Face tones assume an unshaded graphic look: no cast shadows or AO.
+- Outlines are geometry: only edges that exist in the mesh (no screen-space
+  contour of arbitrary implicit shapes); silhouettes of smooth meshes need
+  consistent winding (the builders' meshes have it; MotionSvgMesh doesn't, so
+  logos get crease outlines only).
+- Decals are alpha-blended without mipmaps: very small far text shimmers
+  (fog hides it in perspective; in iso the atlas is drawn near 1:1).
+- `MotionLens3D` offsets are exact on the target plane; the ortho switch is
+  a ~0.1 % residual perspective (measured < 0.25 mean pixel difference at the
+  switch, flat-faceted geometry).
+
+### Slit-scan planes and time split: MotionPlaneScan, MotionTimeSplit
+
+From the FTF intro take `demo/ftf/ftf_stargate/` (notes: `demo/ftf/ftf_stargate/KIT_NOTES.md`).
+
+New files, no existing kit file changed:
+
+- `addons/motion_kit/plane/motion_plane_scan.gd` (`class_name MotionPlaneScan`, `@tool`, extends `MotionPatternPlane`)
+- `addons/motion_kit/plane/motion_plane_scan.gdshader`
+- `addons/motion_kit/fx/motion_time_split.gd` (`class_name MotionTimeSplit`, `@tool`, extends `Node2D`)
+
+#### MotionPlaneScan
+
+The plane's own time displacement, per pixel, in its one quad. Each pixel picks a
+source pixel (its own place, or the slit, optionally seen through a perspective wall)
+and a time (frames back), and the shader evaluates the plane there and then. What
+changes with time comes from a small float texture: the last `history` frames of the
+plane's state, sampled from a pure function of the frame. MotionTimeSlices does the
+same for any content by instancing it per band; for a pattern plane this is the same
+idea with every pixel its own band, at the cost of one plane render (three pattern
+evaluations while the RGB split is on).
+
+##### API (rows for docs/API.md, after MotionPatternPlane)
+
+Everything in MotionPatternPlane, plus:
+
+| Member | Notes |
+| --- | --- |
+| `history_fn: Callable`, `capture(f)`, `history` | `history_fn(t) -> Dictionary` is the plane's time-varying state at frame t (pure; must accept negative t). Keys, all optional (missing ones use the current property): `offset` (ground_offset), `cell`, `blur` (motion_blur), `color_a`, `color_b`, `accent` (accent_color), `sun` (sun size scale), `level`. `capture(f)` samples f, f-1 … f-(history-1) into a 5-row RGBAF texture (call it in `_frame`, then `sync_now()`). Camera, bends, fog, sky colours and the ring are shared by every time. |
+| `scan` | 0 = each pixel at its own place (pure time displacement: the delay grows with the distance from the slit line); 1 = every pixel reads the slit. In between the picture unrolls from the slit. |
+| `axis` | `VERTICAL` (a vertical slit through `slit_at.x`: walls left and right), `HORIZONTAL` (a horizontal slit through `slit_at.y`: walls above and below), `TUNNEL` (both, split along the diagonals of `wall_ref`: four walls). |
+| `slit_at` | Where the slit lines cross, in pixels: the vanishing point of the walls. |
+| `walls`, `wall_ref`, `wall_near` | 0 = flat streaks (the slit stretched sideways, as MotionTimeSlices COLUMNS/ROWS at slit = 1); 1 = perspective walls: along the slit the source is magnified by `wall_ref / distance` (so the slit is seen ever smaller toward the vanishing point, 1:1 at `wall_ref`), and the delay grows with log(distance / `wall_near`), full at `wall_ref`. What crosses the slit now is born at the vanishing point and rushes outward, accelerating. `wall_ref` = half the frame makes TUNNEL's four walls tile the frame. |
+| `gap`, `gap_color` | Walls: where the source leaves the frame (the wedges toward the vanishing point on two-wall axes), mix to this colour (black: the 2001 look; 0 shows the plane beyond the frame). |
+| `delay_span` | Flat: the distance from the slit line (pixels, per axis) where the delay reaches its full share. |
+| `delay`, `delay_curve`, `delay_step`, `ripple` | Frames back at the full share (keep below `history`); share = u ^ curve (u 0 at the slit, 1 at the span / near the camera) + `ripple.x * sin(2π(ripple.y·u − ripple.z))`; `delay_step` quantises (a stutter). Sweep `delay_curve` through a beat and snap `delay` on the next to make the profile breathe on the music. |
+| `split` | RGB time split: green reads `split` frames further back than red, blue twice as far. A fraction of a frame is plenty on a fast board (it is a fraction of a check). |
+| `delay_at(px)` | The shader's delay function in GDScript (for HUD readouts or 2D layers that should streak in step). |
+
+##### Motion blur across times
+
+The pattern's box filter is widened by the motion blur **of the moment each sample
+shows** (`blur` in the history), plus the screen-space derivative of the pattern
+coordinate, which now includes the change of time across the pixel. So a streak wall
+where neighbouring pixels are a frame apart filters across that frame's travel
+(no aliasing toward the vanishing point, where the time gradient is steep: it settles to
+the average colour), and a band showing a slower moment gets that moment's narrower blur.
+Checked on the take: no strobing or backward-running checks in the walls, the tunnel or
+the flat streaks.
+
+##### Frame purity
+
+`capture(f)` calls `history_fn` for f − i only; the history texture is rebuilt every
+frame; the shader reads only uniforms, the texture and the pixel. Travel is a table
+integrated once and extended linearly to negative frames. Seeked stills match the
+continuous render pixel-wise (see the take's report).
+
+##### Cost
+
+One full-screen quad: the plane's ray hit once per pixel, then 1 (or 3 with `split`)
+pattern evaluations with 5 history texel pairs each. Under Xvfb llvmpipe on the shared
+2 cores the take's whole frame (board, 160-column MotionTimeSlices for the logos, the
+time split, towers, HUD) renders at about 0.5 s; the scan itself is a small part of it.
+History capture is 100 Dictionary calls and 500 `set_pixel` per frame (about 2 ms).
+
+##### Limits
+
+- Only what the history carries changes with time. The camera, bends, sky colours, fog,
+  wave and ring are shared by every time, so a camera move shows on all walls at once.
+- The plane part of the shader is a copy of `motion_pattern_plane.gdshader`; keep the
+  two in step (a later refactor could move the shared part into a `.gdshaderinc`).
+- TUNNEL's diagonal seams have a derivative discontinuity: the filter widens there and
+  draws a thin average-colour line (reads as the tunnel's corners).
+- 2D geometry drawn on the plane (`draw_checker_quad` towers) does not scan: hide or sink
+  it while the scan is on, or put it in a MotionTimeSlices.
+
+#### MotionTimeSplit
+
+RGB time split for content on any background. MotionTimeSlices CHANNELS adds three tinted
+copies, which needs an opaque dark background. MotionTimeSplit renders the content three
+times (f, f − d, f − 2d by default) into region-sized SubViewports and draws three black
+silhouettes (normal blend) under the three channels (added): where the copies coincide the
+result is exactly the content, where it moves it fringes red/green/blue (cyan/magenta/yellow
+where two overlap) over whatever is behind. With `delay` 0 the viewports stop and one plain
+copy draws.
+
+| Member | Notes |
+| --- | --- |
+| `scene: PackedScene`, `builder: Callable` | The content (a MotionComposition, global timeline, accepts negative frames); four instances (three copies and the plain one). |
+| `region` | The part of the content's frame rendered (a logo's box plus its motion): the cost is three region-sized renders and six sprites while splitting. |
+| `delay`, `shares`, `tints` | Frames green lags red (blue 2×); per-channel shares of the delay; the tints (summing to white). |
+
+Frame purity: as MotionTimeSlices: each copy is a nested composition whose `start` is set
+in `_frame(f)` before the parent's walk renders it at f − start. Cost in the take: a split
+frame (1680×620 region) adds about 0.05 s under software GL; idle it costs one logo.
+Limits: the content's edges are slightly darkened where alpha is partial (viewport
+textures are drawn straight-alpha); content must move for the split to show.
+
+#### Kit bug found (not fixed, existing file)
+
+`MotionPatternPlane.draw_checker_quad` can recurse without end when a receding face
+crosses the near plane while the camera is pitched/yawed/rolled: it clips in world z but
+tests camera depth, so a clipped corner can still fail the test and is clipped again by
+zero. The take avoids it by clipping faces to z ≥ 3 itself. A fix would test camera depth
+in the clip (or recurse at most once).
+
+### Voxel choreography: MotionVoxelize, MotionBlockPlan, MotionFaceLights
+
+From the FTF intro take `demo/ftf/ftf_assembly/` (notes: `demo/ftf/ftf_assembly/KIT_NOTES.md`).
+
+New in round 4 (Assembly). Three classes, all `@tool`, pure GDScript, no
+shaders, no new nodes: they plug into the 2.5D extrusion classes
+(`MotionExtrude` / `MotionSolid` / `MotionExtrudeCamera`). No existing kit file
+was edited. Merge these rows into `docs/API.md` and `docs/techniques.md`.
+
+#### API
+
+##### MotionVoxelize (RefCounted)
+
+Sample a mask onto a grid of cells, once, at build time.
+
+| Member | Notes |
+| --- | --- |
+| `from_svg(data, cols, rows, parts = [], area = viewBox, ss = 3, threshold = 0.45, offsets = {})` (static) | Sample a MotionSvgData's parts (default: every filled part) with `ss`×`ss` samples per cell. Fill rules (nonzero/even-odd) are honoured, so counters stay open; later parts cover earlier ones. `offsets` (part → Vector2 in SVG units) shifts parts before sampling: pull stacked layers apart so each shows as its own band of cells (the MH M's three layers become three tiers). |
+| `from_image(img, cols, rows, area, ss, threshold, use_luma)` (static) | Sample an Image's alpha (or luminance). For a CanvasItem mask, render it once into a SubViewport and pass `get_texture().get_image()`. Part is 0. |
+| `from_fn(fn, cols, rows, ss, threshold)` (static) | `fn(uv: Vector2) -> int` over 0..1 (y down), a part id or -1. |
+| `cols`, `rows`, `rect`, `cover`, `part`, `threshold` | Coverage 0..1 per cell; the majority part per cell (-1 empty); cells with `cover >= threshold` are filled. Row 0 is the top of the mask. |
+| `filled(c, r)`, `part_at(c, r)` | |
+| `targets(height_fn)` | Every filled cell as `{cell: Vector2i, h: float, part: int}`; `height_fn(part, cover, cell) -> float` sets the height (letters tall, plate low; <= 0 drops the cell). |
+| `world(cell, origin)` | A cell's south-west corner on a ground grid (+y north, row 0 northmost), `origin` the grid's south-west cell. |
+| `inside(contours, pt, evenodd)` (static) | Point in a multi-contour shape. |
+| `ascii()` | The filled cells as text, one letter per part: check a resolution before building anything. |
+
+##### MotionBlockPlan (RefCounted)
+
+One move per block from layout A to layout B, in grid moves, in waves; a pure
+function of the frame.
+
+| Member | Notes |
+| --- | --- |
+| `MotionBlockPlan.new(n)`, `resize(n)`, `size()` | |
+| `start`, `waves`, `wave_step`, `dur`, `jitter` | Wave k starts at `start + k * wave_step` (a beat, so moves land on the beat); each move takes `dur` frames; inside a wave, up to `jitter` frames of delay follow the key, so a wave ripples instead of firing as one block (and never as a per-letter cascade). |
+| `lift`, `slide_max`, `sink_share`, `land`, `seed_v` | Flying cruise height (±40% per block, so crossing blocks fly at different heights); moves up to `slide_max` cells slide on the ground, longer ones fly (or, for `sink_share` of them, sink and rise); height overshoot on landing (servo telescoping). |
+| `set_move(i, a, b, key, style = -1)` | `a`, `b` = Vector3(x, y, height). `key` 0..1 picks the wave (e.g. the target's elliptical distance from the logo's centre: middle out). `style`: `STAY` (height only), `SLIDE` (two axis legs on the ground, x/y order seeded), `FLY` (lift, two legs in the air, drop), `SINK` (down at the source, up at the target); -1 picks. |
+| `pose(i, f)` | Vector4(x, y, lift above ground, height) at frame f. Clamped: before the move it returns `a`, after it `b`, so a chain of plans (A→B, B→C…) is evaluated by picking the latest plan whose `start` has passed. |
+| `progress(i, f)`, `starts(i)`, `lands(i)`, `target(i)`, `origin(i)`, `style(i)`, `wave_frames()` | Light switches on landing, cues on wave frames. |
+| `assign_nearest(blocks, targets, order = [], exclude = {})` (static) | Cheap matching: targets taken in `order` (default: farthest from their centroid first, so the rim claims blocks before the middle) each take the nearest free block, found with a bucketed ring search. Returns per target the block index (-1 when blocks ran out). Unassigned blocks are yours to park (crouch, sink). A block already standing on a target cell keeps it unless an earlier target took it, so the surplus never sits on a target. |
+
+##### MotionFaceLights (RefCounted, static helpers for decals)
+
+| Member | Notes |
+| --- | --- |
+| `windows(c, size, sd, f, col, level, lit, flicker, period, floor_px, pane, margin, palette)` | Rows of lit windows on a wall decal: one `draw_dashed_line` per lit floor. `lit` share of floors on, `flicker` chance a floor toggles every `period` frames (seeded, frame-pure), `level` dims all (power on/off), `palette` picks a colour per floor. |
+| `strip(c, a, b, col, w, glow, glow_alpha)` | A neon line: a wide faint glow under a thin core. |
+| `rim(c, size, col, w, glow, glow_alpha)` | A neon strip round a face (a roof's edge). |
+| `chase(c, size, phase, length, col, w, glow)`, `chase_path(c, pts, phase, length, col, w, glow)` | A dash of light running round a face's rim, or round any closed polyline (a logo outline in a `cap_transform`). |
+
+Decal sizes are decal units (100 per world unit). Small blocks need
+`MotionExtrude.min_decal_area` lowered (this piece uses 70 px²; the default
+600 skips faces under ~25 px).
+
+**Frame purity.** Sampling and matching run once in `_build`; every plan is a
+packed table of numbers and `pose()` is closed-form (cheap closed-form easings,
+no Callables). Windows flicker from `MK.rand(seed, floor, floor(f / period))`.
+Nothing accumulates. Checked pixel-wise: frames 77 and 381 rendered by seeking
+are identical to the full render (max difference 0); see the take's report for
+the MotionSvg first-frame raster note.
+
+**Cost.** Voxelising the two logos (72×20 and 68×16 cells, 3×3 samples) and
+matching 1,616 blocks to 827 and 1,073 targets: about 1 s at build, once.
+Per frame, the piece's `_frame` (posing every block, colours, the sort) is
+16–44 ms on the shared 2-core VM. The full 420-frame render (1,616 boxes, up
+to ~3,500 faces, window strips, roof strips and chases, ground grid, spill and
+traffic) took 187 s under software GL: **0.44 s a frame**, including the
+encoder.
+
+**Limits.** One block per cell: legibility is the grid's. Check with
+`ascii()`: 72 cells across the Minimal Humans lockup reads; 68 across the FTF
+logo gives the shapes, not the small text, which is why the real logo slab
+lands on it. Flying blocks are drawn in their own canvas above the city (the
+painter's key is a ground key, so a block in the air would otherwise sort
+behind towers it is above); two blocks sliding through the same cell overlap
+for a few frames. Matching is greedy, not optimal: paths can cross.
+
+#### Found while checking purity (existing kit, not changed)
+
+`MotionSvg` picks its raster density from the viewport's final transform at
+draw time. On the very first frame of a Movie Maker run that starts mid-piece
+(`render.sh … <start>`, `stills.sh`), that density lands in a different bucket
+than in a continuous run, so the slab artwork's edges differ by up to ~190/255
+on antialiased edge pixels (nothing else on the frame differs). Rendering from
+298 shows 298 differing and 299/300 identical to the full render: a cold-start
+raster choice, not state in the piece. A fix belongs in `MotionSvg` (resolve
+the viewport scale once the window is sized, or redraw on the second frame).

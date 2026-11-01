@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="AKRecipe" format=3]
+
+[ext_resource type="Script" path="res://addons/audio_kit/core/recipe.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+voice = &"mallet"
+seed = 605
+send = 0.5
+vary = {"freq_hz": 0.02}
+vary_variants = 4
+params = {"freq_hz": 2093.0, "material": &"glass", "hardness": 0.9, "decay_s": 0.12, "damping": 1.4}
+bind = {"intensity": {"gain_db": [-10.0, 0.0]}}

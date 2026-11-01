@@ -1,0 +1,31 @@
+[gd_resource type="Resource" script_class="AKCueMap" format=3]
+
+[ext_resource type="Script" path="res://addons/audio_kit/core/cue_map.gd" id="1"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_timecity/audio/tape_start.tres" id="2"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_timecity/audio/wave.tres" id="3"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_timecity/audio/block.tres" id="4"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_timecity/audio/mh_rise.tres" id="5"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_timecity/audio/snap.tres" id="6"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_timecity/audio/ripple.tres" id="7"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_timecity/audio/stamp.tres" id="8"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_timecity/audio/stamp_small.tres" id="9"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_timecity/audio/sink.tres" id="10"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_timecity/audio/crane.tres" id="11"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_timecity/audio/arrive.tres" id="12"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_timecity/audio/drain.tres" id="13"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_timecity/audio/ftf_rise.tres" id="14"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_timecity/audio/drop.tres" id="15"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_timecity/audio/fringe.tres" id="16"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_timecity/audio/tear.tres" id="17"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_timecity/audio/pass.tres" id="18"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_timecity/audio/streak.tres" id="19"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_timecity/audio/drain_out.tres" id="20"]
+[ext_resource type="Resource" path="res://demo/ftf/ftf_timecity/audio/end.tres" id="21"]
+
+[resource]
+script = ExtResource("1")
+sounds = {"tape.start": ExtResource("2"), "wave": ExtResource("3"), "block": ExtResource("4"), "mh.rise": ExtResource("5"), "snap": ExtResource("6"), "ripple": ExtResource("7"), "stamp": ExtResource("8"), "stamp.small": ExtResource("9"), "sink": ExtResource("10"), "crane": ExtResource("11"), "arrive": ExtResource("12"), "drain": ExtResource("13"), "ftf.rise": ExtResource("14"), "drop": ExtResource("15"), "fringe": ExtResource("16"), "tear": ExtResource("17"), "pass": ExtResource("18"), "streak": ExtResource("19"), "drain.out": ExtResource("20"), "end": ExtResource("21")}
+master_fx = Array[Dictionary]([{"type": "dcblock"}, {"type": "loudness", "target_lufs": -16.0}, {"type": "limit", "ceiling_db": -2.0}])
+reverb = {"room": 0.55, "damp": 0.35, "width": 1.0, "quality": &"full", "return_db": -3.0}
+end_fade_s = 0.3
+duck = {"depth_db": 7.0, "full_at_db": -20.0, "attack_s": 0.005, "release_s": 0.3}

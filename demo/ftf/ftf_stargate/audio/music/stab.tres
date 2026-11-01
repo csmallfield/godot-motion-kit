@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="AKRecipe" format=3]
+
+[ext_resource type="Script" path="res://addons/audio_kit/core/recipe.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+voice = &"fm"
+seed = 609
+send = 0.35
+params = {"ratio": 2.0, "index": 3.0, "index_end": 0.5, "index_decay_s": 0.15, "decay_s": 0.3, "gate_s": 0.2, "release_s": 0.1}
+transforms = Array[Dictionary]([{"type": "varispeed", "from": 1.0, "to": 0.55}])

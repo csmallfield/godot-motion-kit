@@ -1,0 +1,213 @@
+{
+	"cues": [
+		{
+			"data": {
+
+			},
+			"frame": 0.0,
+			"intensity": 0.8,
+			"name": "power",
+			"time": 0.0
+		},
+		{
+			"data": {
+				"pitch": 1.0
+			},
+			"frame": 9.0,
+			"intensity": 0.5,
+			"name": "lights.on",
+			"time": 0.3
+		},
+		{
+			"data": {
+				"pitch": 1.189
+			},
+			"frame": 13.5,
+			"intensity": 0.6,
+			"name": "lights.on",
+			"time": 0.45
+		},
+		{
+			"data": {
+				"pitch": 1.335
+			},
+			"frame": 18.0,
+			"intensity": 0.7,
+			"name": "lights.on",
+			"time": 0.6
+		},
+		{
+			"data": {
+				"pitch": 1.498
+			},
+			"frame": 22.5,
+			"intensity": 0.8,
+			"name": "lights.on",
+			"time": 0.75
+		},
+		{
+			"data": {
+
+			},
+			"frame": 36.0,
+			"intensity": 0.7,
+			"name": "wave",
+			"time": 1.2
+		},
+		{
+			"data": {
+				"pitch": 1.0
+			},
+			"frame": 54.0,
+			"intensity": 0.6,
+			"name": "step",
+			"time": 1.8
+		},
+		{
+			"data": {
+				"pitch": 1.122
+			},
+			"frame": 72.0,
+			"intensity": 0.7,
+			"name": "step",
+			"time": 2.4
+		},
+		{
+			"data": {
+				"pitch": 1.26
+			},
+			"frame": 90.0,
+			"intensity": 0.8,
+			"name": "step",
+			"time": 3.0
+		},
+		{
+			"data": {
+
+			},
+			"frame": 108.0,
+			"intensity": 1.0,
+			"name": "mh.lock",
+			"time": 3.6
+		},
+		{
+			"data": {
+
+			},
+			"frame": 117.0,
+			"intensity": 0.7,
+			"name": "presents",
+			"time": 3.9
+		},
+		{
+			"data": {
+
+			},
+			"frame": 162.0,
+			"intensity": 0.8,
+			"name": "disperse",
+			"time": 5.4
+		},
+		{
+			"data": {
+
+			},
+			"frame": 180.0,
+			"intensity": 0.6,
+			"name": "settle",
+			"time": 6.0
+		},
+		{
+			"data": {
+
+			},
+			"frame": 198.0,
+			"intensity": 0.8,
+			"name": "wave",
+			"time": 6.6
+		},
+		{
+			"data": {
+				"pitch": 1.122
+			},
+			"frame": 216.0,
+			"intensity": 0.7,
+			"name": "step",
+			"time": 7.2
+		},
+		{
+			"data": {
+				"pitch": 1.26
+			},
+			"frame": 234.0,
+			"intensity": 0.8,
+			"name": "step",
+			"time": 7.8
+		},
+		{
+			"data": {
+				"pitch": 1.335
+			},
+			"frame": 252.0,
+			"intensity": 0.9,
+			"name": "step",
+			"time": 8.4
+		},
+		{
+			"data": {
+
+			},
+			"frame": 270.0,
+			"intensity": 0.9,
+			"name": "ftf.set",
+			"time": 9.0
+		},
+		{
+			"data": {
+
+			},
+			"frame": 288.0,
+			"intensity": 1.0,
+			"name": "drop",
+			"time": 9.6
+		},
+		{
+			"data": {
+
+			},
+			"frame": 360.0,
+			"intensity": 0.8,
+			"name": "lift",
+			"time": 12.0
+		},
+		{
+			"data": {
+
+			},
+			"frame": 369.0,
+			"intensity": 0.8,
+			"name": "scatter",
+			"time": 12.3
+		},
+		{
+			"data": {
+
+			},
+			"frame": 378.0,
+			"intensity": 0.9,
+			"name": "power.down",
+			"time": 12.6
+		},
+		{
+			"data": {
+
+			},
+			"frame": 402.0,
+			"intensity": 0.7,
+			"name": "end",
+			"time": 13.4
+		}
+	],
+	"duration": 420.0,
+	"fps": 30.0
+}
