@@ -348,23 +348,39 @@ func draw_checker_quad(c: MotionCanvas, a: Vector3, b: Vector3, cc: Vector3, d: 
 	var pd := project(d)
 	var all_front := pa.z > near and pb.z > near and pc.z > near and pd.z > near
 	if not all_front:
-		# Receding side face crossing the near plane: shorten it in z.
+		# A receding face crossing the near plane: shorten it along a->b (and
+		# d->c) to where it reaches the plane. Clip by camera depth, which is
+		# affine in world position, so this is exact for any camera pitch, yaw
+		# or roll. (Clipping by world z looped forever with a rotated camera.)
 		var nz := near + 0.05
 		var aa := a
 		var bb := b
 		var c2 := cc
 		var dd := d
-		if a.z < nz and b.z > nz:
-			var k := (nz - a.z) / (b.z - a.z)
-			aa = a.lerp(b, k)
-			dd = d.lerp(cc, k)
-			cols = maxi(1, int(round(cols * (1.0 - k))))
-		elif b.z < nz and a.z > nz:
-			var k2 := (nz - b.z) / (a.z - b.z)
-			bb = b.lerp(a, k2)
-			c2 = cc.lerp(d, k2)
-			cols = maxi(1, int(round(cols * (1.0 - k2))))
+		var ka := 0.0
+		var kb := 0.0
+		if pa.z < nz and pb.z > nz:
+			ka = (nz - pa.z) / (pb.z - pa.z)
+		elif pb.z < nz and pa.z > nz:
+			kb = (nz - pb.z) / (pa.z - pb.z)
 		else:
+			return
+		var kd := 0.0
+		var kc := 0.0
+		if pd.z < nz and pc.z > nz:
+			kd = (nz - pd.z) / (pc.z - pd.z)
+		elif pc.z < nz and pd.z > nz:
+			kc = (nz - pc.z) / (pd.z - pc.z)
+		elif minf(pd.z, pc.z) < nz:
+			return
+		aa = a.lerp(b, ka)
+		bb = b.lerp(a, kb)
+		dd = d.lerp(cc, kd)
+		c2 = cc.lerp(d, kc)
+		cols = maxi(1, int(round(cols * (1.0 - maxf(maxf(ka, kb), maxf(kc, kd))))))
+		# Every corner is now at or beyond the plane, so this recursion
+		# takes the all-front path; the depth guard only absorbs rounding.
+		if minf(minf(project(aa).z, project(bb).z), minf(project(c2).z, project(dd).z)) < near:
 			return
 		draw_checker_quad(c, aa, bb, c2, dd, cols, rows, col_a, col_b, min_px, near)
 		return
