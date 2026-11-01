@@ -54,6 +54,18 @@ Defaults that worked for every SCF intro and FTF take: 1920×1080 reference, 30 
 ends on an empty frame** (black, paper or the game's background) so it can cut straight
 into the next shot; the outro is often the build-in in reverse.
 
+Notes from reviews of the FTF takes (what made pieces land, and what didn't):
+
+- Avoid letters springing in one after another (the bouncy staggered cascade is
+  overused) and grids of logos or cards; let the logo arrive through the piece's own
+  idea (a slit, a print plate, a camera move, a fill, a weave).
+- The drop must punch: the logo big and legible on the impact frame, not small and
+  growing into it afterwards. Prefer shake, rings and pulses to white flashes.
+- Holds stay alive (beat pulses, travelling light, small secondary motion), including
+  the first logo's hold; give each logo at least 1.5 s of clear reading time.
+- Photosensitivity: no large-area flashes faster than 3 per second, no saturated red
+  strobing.
+
 ## 2. The beat sheet
 
 Under the brief, list the beats with frame numbers. Every animation in the code starts
