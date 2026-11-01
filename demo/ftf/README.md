@@ -9,57 +9,51 @@ neo-futurist. The brief and the frame-by-frame beat sheet are in the header of
 | File | What it is |
 | --- | --- |
 | `ftf_intro.gd` / `.tscn` | The composition (1920×1080, 30 fps, 420 frames) and its cue sheet |
-| `ftf_kit.gd` | `FTFKit`: palette, fonts, the FTF logo's part map and drawn marks (chevrons, checkers, hatching, X boxes, crosshairs, barcodes, rounded ribbons, stripe bundles), for reuse in the menus |
+| `ftf_kit.gd` | `FTFKit`: palette, fonts, the FTF logo's part map; its drawn marks (chevrons, checkers, hatching, X boxes, crosshairs, barcodes, rounded ribbons, stripe bundles) forward to the kit's `MotionMarks` and `MotionPath`. Shared by the intro and every take |
 | `assets/ftf_logo.svg` | `FTF_logo_pink_v1.svg` from the FTF repo, imported as Motion SVG |
 | `assets/noto-jp-ftf-900.woff2` | Noto Sans JP Black, subset to the piece's Japanese (OFL, see `demo/assets/fonts/OFL-noto-sans-cjk-jp.txt`) |
 | `audio/make.py` | Writes every sound recipe, the cue map and the music (sound sheet in its docstring) |
 | `audio/ftf_intro_track.res` | The baked soundtrack, so the piece plays its sound without the audio kit |
 
-## Takes
+## Pieces
 
-Five more takes, each built around a technique added to the kit for it
-(API in `docs/API.md` under "Added with the FTF intro takes"; each folder's
-`KIT_NOTES.md` has cost and limits). Each has its own sound in `audio/`
-(`make.py`, the cue map and song, and the committed baked track); one tool,
-`tools/bake_audio.gd`, bakes any of them (see Sound).
+The intro plus nineteen takes on it, each built around a kit family; they are the kit's
+best working examples. Every take lives in its own folder with `<folder>.gd` /
+`<folder>.tscn`, a `KIT_NOTES.md` (cost, limits and frame-purity checks of the classes
+it introduced) and its sound in `audio/` (`make.py`, the cue map, the song and the
+committed baked track). The family links go to the API reference; the classes were
+added in four rounds (intro, five intro takes, eight title takes, five mixtures of the
+favourites), shown in the Round column.
 
-| Take | Folder | Tempo | New kit technique | Render cost (software GL) |
-| --- | --- | --- | --- | --- |
-| Slit-Scan | `ftf_slitscan/` | 180 bpm (10 f/beat) | `MotionTimeSlices` (fx/): time displacement, slit-scan, box tunnel, RGB time split | ~0.4 s/frame |
-| Megastructure | `ftf_megastructure/` | 120 bpm (15 f/beat) | `MotionExtrude`, `MotionSolid`, `MotionExtrudeCamera` (extrude/): 2.5D iso extrusion, iso→flat camera | ~0.4 s/frame |
-| Riso | `ftf_riso/` | 100 bpm (18 f/beat) | `MotionPlate`, `MotionPaper` (print/): overprinting colour plates, halftone, registration, ink texture, press roller | ~1 s/frame (up to 15 plates) |
-| Gantry | `ftf_gantry/` | 150 bpm (12 f/beat) | `MotionStage3D`, `MotionSvgMesh`, `MotionPanel3D` (three/): frame-driven 3D in a composition, extruded SVG meshes, 2D on 3D panels | ~0.65 s/frame |
-| Glyph Field | `ftf_glyphfield/` | 90 bpm (20 f/beat) | `MotionGlyphField` (glyph/): shader glyph grid lit by any mask, rain, fall, scan, solidify | ~0.4 s/frame |
-
-Eight more takes from titles (API in `docs/API.md` under "Added with the FTF
-title takes"):
-
-| Take | Folder | Tempo | New kit technique | Render cost (software GL) |
-| --- | --- | --- | --- | --- |
-| LSD Sunrise | `ftf_lsd/` | 100 bpm (18 f/beat) | `MotionWarpField` (warp/): banded fields, domain warp, kaleidoscope, mirror water, melting content | ~0.45 s/frame |
-| Insane Subway Map | `ftf_subway/` | 150 bpm (12 f/beat) | `MotionMetroMap` (metro/): octilinear routing, bundled corridors, draw-on, chases, trains, stations | ~0.23 s/frame |
-| Greebles | `ftf_greebles/` | 75 bpm (24 f/beat) | `MotionGreebler` (greeble/): recursive panels and greebles with level of detail by on-screen size | ~0.7 s/frame |
-| Cables | `ftf_cables/` | 90 bpm (20 f/beat) | `MotionCable`, `MotionCableSet` (cable/): sagging shaded cables, tugs, pulses, connectors, over/under weaving | ~0.4 s/frame |
-| Fuel Lines | `ftf_fuel/` | 180 bpm (10 f/beat) | `MotionFlow`, `MotionLiquidFill` (flow/): pipe networks with flow, liquid fill with analytic slosh | ~0.28 s/frame |
-| Warning | `ftf_warning/` | 200 bpm (9 f/beat) | `MotionTextPath` (text/), `MotionBeacon` (fx/): text along paths, rotating beacon lights | ~0.4 s/frame |
-| Checkerboard City | `ftf_checkercity/` | 112.5 bpm (16 f/beat) | `MotionPatternPlane` (plane/): ray-cast pattern plane with curve, tube, fold, motion blur | ~0.37 s/frame |
-| Houndstooth | `ftf_houndstooth/` | 120 bpm (15 f/beat) | `MotionTiling` (tiling/): woven houndstooth and other motifs, per-cell transforms driven by a logo mask | ~0.33 s/frame |
-
-Five mixtures of the favourites (API in `docs/API.md` under "Added with the FTF
-mixture takes"):
-
-| Take | Folder | Tempo | New kit technique | Render cost (software GL) |
-| --- | --- | --- | --- | --- |
-| Night Circuit (Gantry × Checkerboard City) | `ftf_nightcircuit/` | 150 bpm (12 f/beat) | `MotionPattern3D`, `MotionSkyDome3D` (three/): filtered patterns on 3D surfaces, OutRun sky dome | ~0.8 s/frame |
-| Time City (Megastructure × Slit-Scan) | `ftf_timecity/` | 120 bpm (15 f/beat) | `MotionViewRect`, `MotionTimeCache` (fx/): per-band culling, shared renders for equal delays | ~0.55 s/frame |
-| Through the Megastructure (Megastructure × Gantry) | `ftf_canyon/` | 112.5 bpm (16 f/beat) | `MotionLens3D`, `MotionFlat3D`, `MotionEdges3D`, `MotionDecalAtlas` (three/): perspective→isometric blend, poster shading, outlines, decals | ~0.5 s/frame |
-| Stargate Board (Checkerboard City × Slit-Scan) | `ftf_stargate/` | 180 bpm (10 f/beat) | `MotionPlaneScan` (plane/), `MotionTimeSplit` (fx/): per-pixel slit-scan of the pattern plane, RGB time split over any background | ~0.44 s/frame |
-| Assembly (Megastructure, night) | `ftf_assembly/` | 100 bpm (18 f/beat) | `MotionVoxelize`, `MotionBlockPlan`, `MotionFaceLights` (voxel/): mask → grid targets, block choreography, lit windows and edge lights | ~0.44 s/frame |
+| Piece | Folder | Round | Tempo | Family | Kit technique | Render cost (software GL) |
+| --- | --- | --- | --- | --- | --- | --- |
+| FTF intro | `ftf_intro.gd` | intro | 150 bpm (12 f/beat) | [Core](../../docs/API.md#core), [SVG and text](../../docs/API.md#svg-and-text), [Shapes](../../docs/API.md#shapes-and-drawing), [Effects](../../docs/API.md#effects) | `MotionSvg`, `MotionText`, `MotionMarks`, `MotionPath`, `MotionFX`: glitch, liveries, logo slam, HUD | n/a |
+| Slit-Scan | `ftf_slitscan/` | intro take | 180 bpm (10 f/beat) | [Time](../../docs/API.md#time) | `MotionTimeSlices` (fx/): time displacement, slit-scan, box tunnel, RGB time split | ~0.4 s/frame |
+| Megastructure | `ftf_megastructure/` | intro take | 120 bpm (15 f/beat) | [2.5D](../../docs/API.md#25d-extrusion-and-cities) | `MotionExtrude`, `MotionSolid`, `MotionExtrudeCamera` (extrude/), `MotionCityPlan` (city/): 2.5D iso extrusion, iso→flat camera | ~0.4 s/frame |
+| Riso | `ftf_riso/` | intro take | 100 bpm (18 f/beat) | [Print](../../docs/API.md#print) | `MotionPlate`, `MotionPaper` (print/): overprinting colour plates, halftone, registration, ink texture, press roller | ~1 s/frame (up to 15 plates) |
+| Gantry | `ftf_gantry/` | intro take | 150 bpm (12 f/beat) | [3D](../../docs/API.md#3d) | `MotionStage3D`, `MotionSvgMesh`, `MotionPanel3D`, `MotionTrack3D` (three/): frame-driven 3D in a composition, extruded SVG meshes, 2D on 3D panels | ~0.65 s/frame |
+| Glyph Field | `ftf_glyphfield/` | intro take | 90 bpm (20 f/beat) | [Fields and patterns](../../docs/API.md#fields-and-patterns) | `MotionGlyphField` (glyph/): shader glyph grid lit by any mask, rain, fall, scan, solidify | ~0.4 s/frame |
+| LSD Sunrise | `ftf_lsd/` | title take | 100 bpm (18 f/beat) | [Fields and patterns](../../docs/API.md#fields-and-patterns) | `MotionWarpField` (warp/): banded fields, domain warp, kaleidoscope, mirror water, melting content | ~0.45 s/frame |
+| Insane Subway Map | `ftf_subway/` | title take | 150 bpm (12 f/beat) | [Diagrams and flow](../../docs/API.md#diagrams-and-flow) | `MotionMetroMap` (metro/): octilinear routing, bundled corridors, draw-on, chases, trains, stations | ~0.23 s/frame |
+| Greebles | `ftf_greebles/` | title take | 75 bpm (24 f/beat) | [2.5D](../../docs/API.md#25d-extrusion-and-cities) | `MotionGreebler` (greeble/): recursive panels and greebles with level of detail by on-screen size | ~0.7 s/frame |
+| Cables | `ftf_cables/` | title take | 90 bpm (20 f/beat) | [Diagrams and flow](../../docs/API.md#diagrams-and-flow) | `MotionCable`, `MotionCableSet` (cable/): sagging shaded cables, tugs, pulses, connectors, over/under weaving | ~0.4 s/frame |
+| Fuel Lines | `ftf_fuel/` | title take | 180 bpm (10 f/beat) | [Diagrams and flow](../../docs/API.md#diagrams-and-flow) | `MotionFlow`, `MotionLiquidFill` (flow/): pipe networks with flow, liquid fill with analytic slosh | ~0.28 s/frame |
+| Warning | `ftf_warning/` | title take | 200 bpm (9 f/beat) | [SVG and text](../../docs/API.md#svg-and-text), [Effects](../../docs/API.md#effects) | `MotionTextPath` (text/), `MotionBeacon` (fx/), `MotionTape` (shapes/): text along paths, rotating beacon lights, hazard tape | ~0.4 s/frame |
+| Checkerboard City | `ftf_checkercity/` | title take | 112.5 bpm (16 f/beat) | [Fields and patterns](../../docs/API.md#fields-and-patterns) | `MotionPatternPlane` (plane/): ray-cast pattern plane with curve, tube, fold, motion blur | ~0.37 s/frame |
+| Houndstooth | `ftf_houndstooth/` | title take | 120 bpm (15 f/beat) | [Fields and patterns](../../docs/API.md#fields-and-patterns) | `MotionTiling` (tiling/): woven houndstooth and other motifs, per-cell transforms driven by a logo mask | ~0.33 s/frame |
+| Night Circuit (Gantry × Checkerboard City) | `ftf_nightcircuit/` | mixture | 150 bpm (12 f/beat) | [3D](../../docs/API.md#3d) | `MotionPattern3D`, `MotionSkyDome3D` (three/): filtered patterns on 3D surfaces, OutRun sky dome | ~0.8 s/frame |
+| Time City (Megastructure × Slit-Scan) | `ftf_timecity/` | mixture | 120 bpm (15 f/beat) | [Time](../../docs/API.md#time) | `MotionViewRect`, `MotionTimeCache` (fx/): per-band culling, shared renders for equal delays | ~0.55 s/frame |
+| Through the Megastructure (Megastructure × Gantry) | `ftf_canyon/` | mixture | 112.5 bpm (16 f/beat) | [3D](../../docs/API.md#3d) | `MotionLens3D`, `MotionFlat3D`, `MotionEdges3D`, `MotionDecalAtlas` (three/): perspective→isometric blend, poster shading, outlines, decals | ~0.5 s/frame |
+| Stargate Board (Checkerboard City × Slit-Scan) | `ftf_stargate/` | mixture | 180 bpm (10 f/beat) | [Fields and patterns](../../docs/API.md#fields-and-patterns), [Time](../../docs/API.md#time) | `MotionPlaneScan` (plane/), `MotionTimeSplit` (fx/): per-pixel slit-scan of the pattern plane, RGB time split over any background | ~0.44 s/frame |
+| Assembly (Megastructure, night) | `ftf_assembly/` | mixture | 100 bpm (18 f/beat) | [2.5D](../../docs/API.md#25d-extrusion-and-cities) | `MotionVoxelize`, `MotionBlockPlan`, `MotionFaceLights` (voxel/): mask → grid targets, block choreography, lit windows and edge lights | ~0.44 s/frame |
 
 All are 1920×1080, 30 fps, 420 frames, first downbeat at frame 0, and end on
-an empty frame (Megastructure on its cream ground, the rest on black).
+an empty frame (Megastructure on its cream ground, the rest on black). A beat is
+`1800 / bpm` frames (most takes keep `BPM` and `BEAT` constants and set `bpm = BPM`), so
+music at the same tempo with its first downbeat at 0.0 s can replace a piece's song. Render costs are Movie Maker
+under Xvfb software GL on two shared cores.
 
-## Timing
+## Timing (intro)
 
 150 bpm, 4/4, first downbeat at frame 0: a beat is exactly 12 frames, a bar 48.
 Every animation and cue starts from the constants at the top of the script, so
@@ -74,9 +68,10 @@ cut straight to the menu.
 ## Sound
 
 Link the audio kit (`tools/link_audio_kit.sh`, a git-ignored symlink to
-`../godot-audio-kit`) and the piece scores itself through an `AKCueBridge`;
-without it, it plays the committed bake. After changing recipes, the song or any
-cue timing:
+`../godot-audio-kit`) and each piece scores itself through an `AKCueBridge`;
+without it, it plays its committed bake. After changing recipes, the song or any
+cue timing, regenerate and re-bake (the intro shown; for a take use its folder,
+e.g. `demo/ftf/ftf_gantry/audio/make.py` and `--piece=res://demo/ftf/ftf_gantry`):
 
 ```sh
 tools/link_audio_kit.sh
@@ -100,8 +95,13 @@ convention (the one `*_map.tres`, `music/*song.tres`, `*_track.res` and
 
 ```sh
 tools/render.sh res://demo/ftf/ftf_intro.tscn out/ftf 420
+tools/render.sh res://demo/ftf/ftf_gantry/ftf_gantry.tscn out/gantry 420
 ffmpeg -framerate 30 -i out/ftf/f%08d.png -i out/ftf/f.wav -c:v libx264 -pix_fmt yuv420p -crf 18 -shortest ftf_intro.mp4
 ```
+
+The 3D takes (Gantry, Night Circuit, Through the Megastructure) were made and rendered
+with the Compatibility renderer; their fog, glow and MSAA look different under Forward+
+(see [Three ways to do 3D](../../docs/techniques.md#three-ways-to-do-3d)).
 
 The FTF and Minimal Humans logos are Minimal Humans trademarks and are not
 covered by the repository's Apache-2.0 grant.

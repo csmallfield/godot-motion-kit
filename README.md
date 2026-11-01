@@ -2,7 +2,9 @@
 
 Motion graphics for Godot (written for 4.5+, tested on 4.7.2): compositions that are a pure function of the frame,
 Remotion-exact springs and easing, part-level SVG logo animation, kinetic type,
-glitch and CRT effects, scene transitions, and spring feedback for UI.
+glitch and CRT effects, scene transitions, and spring feedback for UI; and beyond the
+browser, slit-scan time effects, shader fields and pattern planes, print plates,
+isometric extrusion, frame-driven 3D, transit maps, pipes and cables.
 It is pure GDScript, with no GDExtension and no build step.
 
 You make pieces directly in Godot: write a brief, turn it into a beat sheet in frames,
@@ -66,25 +68,24 @@ and rendered offline frame-exactly with Movie Maker.
 
 ## What's in the kit
 
-| Piece | What it does |
-| --- | --- |
-| `MK` | `spring`, `bezier` and named easings, `map`/`interp`, `prog`, `win`, `rand`, `shake`, `typed`, `crt_off`, `timecode`; `rot_x`, `rot_y`, `project` for hand-rolled 3D |
-| `MotionComposition` | Root of a piece: fps, duration, markers, play / seek / reverse / segments, process, audio or manual clock, fit-to-viewport |
-| `MotionCue`, `MotionCuePlayer` | Cue sheets: declared moments (name, intensity, data) that fire as playback crosses them, relayed on one global bus, exportable as JSON; a stand-in player that maps cues to WAVs |
-| `MotionSvg` + `MotionSvgData` | SVG kept as vector parts; per-part move, scale, rotate, recolour, fade, blur, self-drawing outline |
-| `MotionText`, `MotionFonts`, `MotionPill` | Glyph-by-glyph type with CSS-style tracking, line height, text stroke and browser-exact line boxes; vertical Japanese; tag pills |
-| `MotionShape` | SDF circle, rect, pill, ring, arc, with dashes, borders and exact Gaussian blur (box-shadow) |
-| `MotionGradient` | CSS linear, radial, conic and repeating gradients (hazard stripes), concentric ring stacks (moiré), scrollable, with add / multiply / screen / overlay blending |
-| `MotionCanvas` | Immediate-mode lines, dashes, polygons, circles, ellipses for loop-built SVG (wireframes, track floors, particle dust) |
-| `MotionMarks`, `MotionTape` | Loop-built marks for any CanvasItem (chevrons, arrows, checker, hatch, barcodes, crosshairs, warning triangles, hazard clamps, ribbons and stripe bundles along paths); hazard tape along a path with stripes in path space, torn ends and a whip wave |
-| `MotionPath`, `MotionPoly` | Measured polylines (point, tangent and sub-path by arc length or fraction, rounded corners, true arcs, offsets); signed area, bounds, nonzero / even-odd point-in-polygon and hole detection |
-| `MotionCells` | Palette-indexed byte grid in one quad with exact sub-pixel coverage: cellular automata, LED boards, pixel mosaics, minimaps |
-| `MotionFX`, `MotionOverlay`, `MotionPixelGrid` | Offscreen group: Gaussian blur, glow, drop/text shadow, slice glitch with RGB split, pixelate, brightness, invert, SVG-exact goo (metaballs, flood fill, colour-keeping atop); TV static, CRT; pixel builds from an SVG |
-| `MotionSpring`, `MotionReactive` | Stateful springs for input; drop-in hover, focus and press feedback for any Control |
-| `MotionTransition` (autoload) | `change_scene(path, style)` with circle, bars, clock, fade, glitch, crt |
+The kit is grouped into families; [docs/API.md](docs/API.md) uses the same grouping.
 
-See [docs/techniques.md](docs/techniques.md) for what to use when (with examples and
-best practices), [docs/API.md](docs/API.md) for the reference, and
+| Family | Classes | What it does |
+| --- | --- | --- |
+| Core | `MK`, `MotionComposition`, `MotionCue`, `MotionCuePlayer`, `MotionTravel`, `MotionPath`, `MotionPoly`, `MotionOffscreen` | Remotion-exact springs, easings and `interp`, seeded randomness, shakes, beat pulses; the root of a piece (fps, duration, markers, play / seek / reverse / segments, audio or manual clock, fit-to-viewport); cue sheets that fire as playback crosses them, on one global bus, exportable as JSON; distance-over-time tables; measured paths and polygon maths; offscreen viewport setup |
+| SVG and text | `MotionSvg`, `MotionSvgData`, `MotionText`, `MotionFonts`, `MotionPill`, `MotionTextPath` | SVG kept as vector parts (per-part move, scale, rotate, recolour, fade, blur, self-drawing outline); glyph-by-glyph type with CSS tracking, line height, text stroke, browser-exact line boxes and vertical Japanese; font fallbacks and zoom-proof canvas text; tag pills; text along any path |
+| Shapes and drawing | `MotionShape`, `MotionGradient`, `MotionCanvas`, `MotionCells`, `MotionMarks`, `MotionTape` | SDF shapes with exact Gaussian blur; CSS gradients, hazard stripes, moiré ring stacks and blend modes; immediate-mode drawing; palette byte grids; chevrons, hatching, barcodes, warning signs and ribbons for any CanvasItem; hazard tape along a path |
+| Effects | `MotionFX`, `MotionOverlay`, `MotionPixelGrid`, `MotionBeacon` | Offscreen group: blur, glow, shadows, slice glitch with RGB split, pixelate, invert, SVG-exact goo; TV static and CRT; pixel builds from an SVG; rotating beacon lights |
+| Time | `MotionTimeSlices`, `MotionTimeCache`, `MotionTimeSplit`, `MotionViewRect` | Time displacement, slit-scan, box tunnels and RGB time splits of any composition, with shared renders and per-band culling for heavy content |
+| Fields and patterns | `MotionGlyphField`, `MotionWarpField`, `MotionTiling`, `MotionPatternPlane`, `MotionPlaneScan` | One-quad shader fields lit by any 2D mask: cycling glyphs, warped and kaleidoscoped colour fields, op-art tilings, ray-cast pattern planes with an OutRun sun, and their per-pixel slit-scan |
+| Print | `MotionPlate`, `MotionPaper` | Overprinting ink plates with halftone, misregistration, press roller and ink texture on paper |
+| 2.5D extrusion and cities | `MotionExtrude`, `MotionSolid`, `MotionExtrudeCamera`, `MotionCityPlan`, `MotionGreebler`, `MotionVoxelize`, `MotionBlockPlan`, `MotionFaceLights` | Vector-crisp isometric extrusion (iso to flat elevation), procedural machine cities, greebles with zoom level of detail, voxel logo assembly with lit windows |
+| 3D | `MotionStage3D`, `MotionLens3D`, `MotionSvgMesh`, `MotionPanel3D`, `MotionFlat3D`, `MotionEdges3D`, `MotionDecalAtlas`, `MotionPattern3D`, `MotionSkyDome3D`, `MotionTrack3D` | Frame-driven 3D inside a composition: perspective-to-isometric lens, extruded SVG logos, 2D panels, poster shading with outlines and decals, patterned worlds, sky domes, banked tracks |
+| Diagrams and flow | `MotionMetroMap`, `MotionFlow`, `MotionLiquidFill`, `MotionCable`, `MotionCableSet` | Octilinear transit maps, pipe networks with flowing fluid, logos filling with sloshing liquid, sagging shaded cables with plugs |
+| Game layer | `MotionSpring`, `MotionReactive`, `MotionTransition` (autoload) | Stateful springs for input; hover, focus and press feedback for any Control; `change_scene(path, style)` with circle, bars, clock, fade, glitch, crt |
+
+See [docs/techniques.md](docs/techniques.md) for what to use when (with examples, best
+practices and the three ways to do 3D), [docs/API.md](docs/API.md) for the reference, and
 [docs/porting-from-remotion.md](docs/porting-from-remotion.md) only if you need to match
 an existing browser animation exactly.
 
@@ -93,6 +94,12 @@ an existing browser animation exactly.
 Open the project and run it. The menu builds in, reacts to mouse, keyboard and gamepad,
 and plays the eighteen remade intros through transitions. Its TRANSITIONS item cycles
 through the six styles. The intros are in `demo/scf/`.
+
+`demo/ftf/` holds the Full Throttle Flux boot intro and nineteen takes on it, each built
+around a kit family (slit-scan, isometric cities, risograph plates, 3D gantries, glyph
+fields, transit maps, cables, pattern planes and more) with its own baked soundtrack:
+see [demo/ftf/README.md](demo/ftf/README.md) for the list with tempo, technique, render
+cost and how to re-bake the sound.
 
 ## Tests and comparisons
 

@@ -9,24 +9,31 @@ The Godot Motion Kit (`addons/motion_kit`, repo `csmallfield/godot-motion-kit`) 
 pure-GDScript addon for authored motion: compositions that are a pure function of the
 frame number, springs and easing, part-level SVG animation, browser-exact type,
 analytic shapes and gradients, offscreen effects (blur, glow, glitch, goo), reveals and
-scene transitions. Pieces are made **directly in Godot**: write a brief, turn it into a
-beat sheet in frames, build it, render it, look at the frames, and revise.
+scene transitions, plus larger families grown from the Full Throttle Flux pieces: time
+effects (slit-scan), shader fields and patterns, print, 2.5D extrusion and cities, real
+3D stages, and diagrams (metro maps, pipes, cables). Pieces are made **directly in
+Godot**: write a brief, turn it into a beat sheet in frames, build it, render it, look at
+the frames, and revise.
 
 This skill covers that loop. The repo's `docs/techniques.md` catalogues every technique
-with a working example, and `docs/API.md` has the full reference; read them when the
-repo is available.
+with a working example (and compares the three ways to do 3D), and `docs/API.md` has
+the full reference, grouped by the same families as section 4; read them when the repo
+is available.
 
 ## 0. Before starting
 
 - Check the project has `addons/motion_kit/` and the plugin is enabled (Project Settings
   → Plugins → Motion Kit; it registers the `MotionTransition` autoload and the Motion SVG
   importer). If it's missing, copy the folder from the repo, along with `tools/render.sh`
-  and `tools/sheet/` for rendering and review (section 5).
+  and `tools/sheet/` for rendering and review (section 5), and `tools/bake_audio.gd` if
+  the piece will have a baked soundtrack (section 6).
 - Find the Godot 4 binary (`godot` on PATH, or ask). Rendering needs a display; headless
-  machines use Xvfb with software GL (correct, slow for blur-heavy pieces).
+  machines use Xvfb with software GL (correct, slow for blur-heavy pieces). The project
+  uses the Compatibility renderer.
 - Look at what the project already has: brand SVGs, fonts, colour constants, shared
-  helpers from earlier pieces (for example `demo/scf/brand.gd`, `PrintKit`, `GooKit`). A
-  new piece in an existing family should reuse them.
+  helpers from earlier pieces (for example `demo/scf/brand.gd`, `PrintKit`, `GooKit`,
+  `demo/ftf/ftf_kit.gd`'s `FTFKit`). A new piece in an existing family should reuse
+  them; anything generic belongs in the kit, not in a family helper.
 
 ## 1. The brief
 
@@ -42,10 +49,10 @@ Let the person pick (or pick the strongest and say why). Then write the brief as
 header comment of the script: what happens, in order, in plain words, and the
 end state.
 
-Defaults that worked for every SCF intro: 1920×1080 reference, 30 fps, 10–14 s
-(300–420 frames); **build-in → a long hold with subtle motion → an outro that ends on an
-empty frame** (black, paper or the game's background) so it can cut straight into the next
-shot; the outro is often the build-in in reverse.
+Defaults that worked for every SCF intro and FTF take: 1920×1080 reference, 30 fps,
+10–14 s (300–420 frames); **build-in → a long hold with subtle motion → an outro that
+ends on an empty frame** (black, paper or the game's background) so it can cut straight
+into the next shot; the outro is often the build-in in reverse.
 
 ## 2. The beat sheet
 
@@ -130,7 +137,8 @@ Rules that keep a piece correct:
 
 - **Pure function of `f`.** `_frame(f)` reads only `f` and constants. No accumulating
   state, no `randf()`, no timers. If something must evolve step by step (a cellular
-  automaton), cache each step by frame and replay from the cache.
+  automaton), cache each step by frame and replay from the cache; anything that
+  integrates a speed (a camera along a track) is a `MotionTravel` table built once.
 - **Build once.** Create nodes in `_build()`; `_frame` only sets properties. Keep the
   `_built` guard (`@tool` scripts also run in the editor, where the preview slider
   calls `_frame`).
@@ -150,80 +158,132 @@ Rules that keep a piece correct:
 
 ## 4. Technique quick reference
 
-Pick techniques from the brief; `docs/techniques.md` gives each one an example.
+Pick techniques from the brief; `docs/techniques.md` gives each one an example, and
+`docs/API.md` the members. Every class appears once, grouped as in the API.
 
-**Time (MK, static).** `spring(f, at, damping=10, stiffness=100)` 0→1 with overshoot;
-`interp(f, inputs, outputs, easing)` multi-key; `map(f, in, out, easing=ease_out)` clamped;
-`prog(f, start, dur)`, `win(f, a, b)`, `rise(f, start)`; easings `ease_out`, `ease_in_out`,
-`ease_in_back`, `ease_out_back`, `ease_in_quad`, `bezier(x1, y1, x2, y2)`; `rand(seed)`;
-`step(f, n)` (on twos); `shake(f, at)` / `shakes(f, [ats], amp, dur)`;
-`typed(text, f, start, cps)`; `crt_off(f, at)`; `timecode(f)`; `rot_x`, `rot_y`,
-`project` for wireframe 3D.
+**Core.** `MK` (static): `spring(f, at, damping=10, stiffness=100)` 0→1 with overshoot,
+`interp(f, inputs, outputs, easing)`, `map`, `prog(f, start, dur)`, `win(f, a, b)`,
+`rise`; easings `ease_out`, `ease_in_out`, `ease_in_back`, `ease_out_back`,
+`ease_in_quad`, `bezier(x1, y1, x2, y2)`; `rand(seed)`, `step(f, n)`, `shake` /
+`shakes(f, [ats], amp, dur)`, `typed`, `crt_off`, `timecode`; beats `beat_pulse`,
+`decay_kick`, `accent`, `flicker`; `rot_x`, `rot_y`, `project` for wireframes.
+`MotionComposition`: `play()`, `play_segment("in", "hold")`, `play_backwards(0)`,
+`seek`, `render(f)`, `clock = AUDIO`, nested compositions see `f - start`,
+`fit_to_viewport`, `preview_frame`, `bpm`, `as_source()` (content for time effects).
+Cues: `cue(at, name, intensity, data)`, `beats(bpm, from, to)`, `cues_between`,
+`export_cue_sheet`, global `MotionCue.bus`; `MotionCuePlayer` plays WAVs on cues.
+`MotionTravel` tables distance over time (`from_speed` / `from_keys` / `from_anchors`,
+`at(f)`). `MotionPath` measures polylines (`point_at(s)`, `tangent_at`, `sub` /
+`sub_fraction`, `rounded`, `offset`); `MotionPoly` area, bounds, point-in-polygon.
+`MotionOffscreen` (`make`, `fit`, `gate`) for any new node that renders offscreen.
 
-**Composition.** `play()`, `play_segment("in", "hold")`, `play_backwards(0)` (reverse
-outro), `seek(f)`, `render(f)`; `clock = AUDIO` with `audio` locks to the soundtrack;
-nested compositions see `f - start`; `fit_to_viewport`; `preview_frame` scrubs in the
-editor. Cues: `cue(at, name, intensity, data)`, `beats(bpm, from, to)`,
-`cues_between(a, b)`, `export_cue_sheet(path)`, signals `cue_fired` and `cue_sync`,
-global `MotionCue.bus`; `MotionCuePlayer` plays WAVs on cues.
-
-**SVG.** Import as Motion SVG; `MotionSvg` with `data`, `width`, `only`, `crop`;
+**SVG and text.** `MotionSvg` (import as Motion SVG; `data`, `width`, `only`, `crop`;
 `apply(func(i): return {...})` per frame with keys `tx ty s sx sy rot pivot o fill stroke
-draw draw_width fill_o hide blur`. `draw` 0→1 traces outlines; single-colour parts recolour
-for free via `fill`. Fade a whole logo as one layer inside a `CanvasGroup`.
+draw draw_width fill_o hide blur`; `draw` 0→1 traces outlines, `fill` recolours for
+free; fade a whole logo inside a `CanvasGroup`). `MotionSvgData.load_any(path)`,
+`contours(parts, k, tl)`, `find`, `sorted_by_x` (parsed by `MotionSvgParser`).
+`MotionText` (`font`, `font_size`, `color`, `tracking` em, `line_height`, `align` +
+`box_width`, `visible_chars`, `stroke_width`, `vertical`, `glyph_fn(i, f)`,
+`get_text_size()`, `get_baseline()`; `MotionText.make(parent, font, size, col, text,
+tracking)`). `MotionFonts.font(path, false, [fallback_fonts])` (never assign
+`.fallbacks` on its fonts: they are shared), `draw_screen_text` for zoom-proof canvas
+text. `MotionPill` tags. `MotionTextPath` text along a path (`offset` scrolls, `repeat`,
+`show_from` / `show_to`).
 
-**Type.** `MotionText`: `font` (`MotionFonts.font(path)`), `font_size`, `color`,
-`tracking` (em), `line_height`, `align` + `box_width`, `visible_chars`, `uppercase`,
-`stroke_width`/`stroke_color`, `vertical`; `glyph_fn = func(i, f)` per character;
-`get_text_size()`, `get_baseline()`. `MotionText.make(parent, font, size, col, text,
-tracking)` in one line. `MotionPill` for tags. For symbols or scripts the main font
-lacks, ask for a font with fallbacks: `MotionFonts.font(path, false, [jp_font])`; never
-assign `.fallbacks` on a MotionFonts font (it is shared). Load logos with
-`MotionSvgData.load_any(path)`.
-
-**Shapes and drawing.** `MotionShape` (CIRCLE, RECT, RING, ARC; `MotionShape.circle(d,
-col)`, `pill(w, h, col)`; dashes, borders, box-shadow `blur`). `MotionGradient.linear`,
-`radial`, `stripes` (animate `shift`), `rings` (moiré), with `blend` MULTIPLY / SCREEN /
-OVERLAY / ADD. `MotionCanvas.draw_fn = func(c, f)` with `line`, `polyline`, `polygon`,
-`circle`, `ring`, `ellipse`, `rect`, `dashed_polyline` for anything built from loops.
+**Shapes and drawing.** `MotionShape` (CIRCLE, RECT, RING, ARC; `circle(d, col)`,
+`pill(w, h, col)`; dashes, borders, box-shadow `blur`). `MotionGradient` (`linear`,
+`radial`, `stripes` + animated `shift`, `rings` moiré; `blend` MULTIPLY / SCREEN /
+OVERLAY / ADD). `MotionCanvas.draw_fn = func(c, f)` with `line`, `polyline`, `polygon`,
+`circle`, `ring`, `ellipse`, `rect`, `dashed_polyline`. `MotionCells` palette byte grids.
 `MotionMarks` (static, any CanvasItem, with opacity): chevrons, arrows, checker, hatch,
 barcode, crosshair, warning triangles, hazard clamps, ribbons and stripe bundles along
-paths. `MotionPath` measures a polyline (`point_at(s)`, `tangent_at`, `sub(a, b)` /
-`sub_fraction`, `rounded`, `offset`); `MotionPoly` has signed area, bounds and
-point-in-polygon; `MotionTape` poses and draws hazard tape along a path.
-`MotionTravel` tables distance over time (camera along a track: `from_keys` speed keys,
-`from_anchors` landmarks on frames; `at(f)` per frame). `MotionTrack3D` builds banked
-track curves and ribbons for MotionStage3D worlds. `MotionCityPlan` plans a machine city
-as data (grid, streets, hashed kinds and materials, parts per lot) and emits it as
-MotionExtrude solids (`solids`) or MotionFlat3D meshes (`to_flat3d`); decals per `part.role`.
-`MotionCells` for palette byte grids.
+paths. `MotionTape` hazard tape along a path (`pose(spec, f)`, `draw`).
 
-**Effects.** `MotionFX` (put nodes under `.content`; size it to the frame plus room for
-blur): `blur` (sigma), `glow` + `glow_strength`, `shadow_color`/`shadow_blur`/
-`shadow_offset`, `set_slices(amount, split, count, seed)` (glitch + RGB split),
-`pixel_size`, `brightness`, `invert`, goo (`blur` + `alpha_matrix = Vector2(26, -11)` +
-`flood_color`; `source_atop = true` keeps each shape's colour), `render_scale`. One
-`MotionFX` has one blur radius; nest two for two. `MotionOverlay` kind STATIC or CRT.
-`MotionPixelGrid.cells_from_svg()` for pixel builds. A new node that renders a subtree
-offscreen uses `MotionOffscreen` (`make(self, content)`, `fit(vp, size, scale)`,
-`gate(vp, visible)`); new shaders take noise from `shaders/motion_noise.gdshaderinc`
-(`mk_hash21(p, seed * k)`, `mk_vnoise2/3`, `mk_fbm3`) and patterns / the banded sun from
-`plane/motion_pattern.gdshaderinc` and `shaders/motion_sun.gdshaderinc`.
+**Effects.** `MotionFX` (nodes under `.content`; size it to the frame plus 3σ): `blur`
+(σ), `glow` + `glow_strength`, `shadow_color` / `shadow_blur` / `shadow_offset`,
+`set_slices(amount, split, count, seed)` (glitch + RGB split), `pixel_size`,
+`brightness`, `invert`, goo (`blur` + `alpha_matrix = Vector2(26, -11)` + `flood_color`;
+`source_atop = true` keeps colours), `render_scale`; one blur radius per MotionFX, nest
+two for two. `MotionOverlay` STATIC or CRT. `MotionPixelGrid.cells_from_svg()` pixel
+builds. `MotionBeacon` rotating beacon light (`angle = spin(f, period)`).
+
+**Time.** `MotionTimeSlices` (content instanced per band at `f - delay`: COLUMNS / ROWS /
+BOXES / CHANNELS, `profile`, `slit` 0→1 = slit-scan, `reveal`); `MotionTimeCache`
+(slit-scan and channel splits that render each distinct delay once); `MotionTimeSplit`
+(RGB time split over any background); `MotionViewRect.of(self)` lets heavy content cull
+to its band.
+
+**Fields and patterns.** `MotionGlyphField` (cycling glyphs lit by a logo under
+`mask_content`; `reveal`, `scan_y`, `ring_r`, `rain`, `fall_t`, `solidify`);
+`MotionWarpField` (banded, domain-warped, kaleidoscoped colour fields, melting `content`,
+mirror horizon); `MotionTiling` (houndstooth and other motifs whose cells rotate, scale,
+invert and switch by mask, halo, ring and sweep); `MotionPatternPlane` (ray-cast endless
+patterned ground with sky, banded sun, bends, sandwich `clip` layers, `project()`,
+`draw_checker_box()`); `MotionPlaneScan` (the plane's own per-pixel slit-scan:
+`history_fn`, `scan`, `walls`, `split`).
+
+**Print.** `MotionPaper`, then one `MotionPlate` per ink (artwork in black, knockouts in
+white; plates overprint by multiplying; halftone `cell` / `angle_deg`, `register()`,
+`print_in()`, `thunk()`, `roughness` / `grain` / `slur`).
+
+**2.5D extrusion and cities.** `MotionExtrudeCamera` (orthographic yaw / pitch: iso →
+flat elevation; `to_lens()` for the matching 3D camera), `MotionSolid` (box, cylinder,
+pipe, wedge, `from_svg` slab; `clip_z` to rise out of the ground; `add_decal`),
+`MotionExtrude` (`prepare()`, `draw(canvas, filter)`, `cap_transform`, `draw_text`).
+`MotionCityPlan` (seeded machine city as data → `solids()` or `to_flat3d()`).
+`MotionGreebler` (panels and greebles that resolve as the camera pushes in). Voxels:
+`MotionVoxelize` (mask → cells), `MotionBlockPlan` (blocks moving in waves,
+`pose(i, f)`), `MotionFaceLights` (windows, neon rims and chases in decals).
+
+**3D.** `MotionStage3D` (a World3D in the composition; camera from `f`: `ride()`,
+`blend()`, `to_screen()`, `night()`, `unlit()`), `MotionLens3D` (perspective →
+orthographic blend that ends on a MotionExtrudeCamera view), `MotionSvgMesh` (extruded
+logos), `MotionPanel3D` (kit 2D on a 3D quad), `MotionFlat3D` (poster face tones, depth
+fog, beat pulse and sink in the shader, builders) with `MotionEdges3D` (outlines) and
+`MotionDecalAtlas` (decals), `MotionPattern3D` (checker / grid materials on geometry,
+endless `ground()`, `grow()`), `MotionSkyDome3D` (sky with banded sun), `MotionTrack3D`
+(banked circuits, ribbons, trails). Pieces are made under the Compatibility renderer;
+fog, glow and MSAA differ under Forward+, so check 3D pieces there.
+
+**Diagrams and flow.** `MotionMetroMap` (octilinear transit maps: `add_line`, `build()`,
+`draw_line(c, i, a, b)`, trains, interchanges, `label`); `MotionFlow` (pipes: `draw`,
+`fill`, `drain`, `flow`, pulses; `state_fn`); `MotionLiquidFill` (a logo filling with
+sloshing liquid: `fill_level`, `kicks`); `MotionCable` + `MotionCableSet` (sagging shaded
+cables: `reveal`, `tension`, `tugs`, `pulses`, plugs, over / under `z_ranges`).
+
+**Shaders.** New shaders take noise from `shaders/motion_noise.gdshaderinc`
+(`mk_hash21(p, seed * k)`, `mk_vnoise2/3`, `mk_fbm3`), patterns from
+`plane/motion_pattern.gdshaderinc` and the banded sun from
+`shaders/motion_sun.gdshaderinc`.
+
+**Game layer.** `MotionTransition.change_scene(path, style)` (circle, bars, clock, fade,
+glitch, crt), `cover()` / `uncover()`; `MotionReactive` under any Control for spring
+hover / focus / press; `MotionSpring` for input-driven values.
 
 **Naming.** Partial drawing is `reveal` (0..1, the drawn end) and `reveal_from` (its
 start); random seeds are `seed`; alpha is `opacity` (`set_opacity(id, a)` per greeble
 structure); `level` is brightness or a fade, except `MotionLiquidFill.fill_level` (how
 full). Nodes given a pure per-frame function run it in their own `_frame`
-(`MotionPlaneScan.history_fn`, `MotionFlow.state_fn(i, f)`). A `MotionExtrudeCamera`
-view becomes a matching 3D camera with `cam.to_lens()` (a `MotionLens3D`).
+(`MotionPlaneScan.history_fn`, `MotionFlow.state_fn(i, f)`). Old names still work; the
+API's "Deprecated aliases" table lists them.
 
 **Reveals.** `clip_children = CanvasItem.CLIP_CHILDREN_ONLY` on a `MotionCanvas` that
 draws the mask (strips, comb teeth, random blocks, an iris), children inside it. Polygons
 with animated edges for floods and wipes.
 
-**Game layer.** `MotionTransition.change_scene(path, style)` (circle, bars, clock, fade,
-glitch, crt), `cover()` / `uncover()`; `MotionReactive` under any Control for spring
-hover / focus / press; `MotionSpring` for input-driven values.
+**Examples by family.** The FTF pieces in `demo/ftf/` (listed with tempo and technique
+in `demo/ftf/README.md`) are the best working examples; read the matching one before
+using a family for the first time:
+
+- Core, type, SVG, marks, effects: `ftf_intro.gd` (+ `ftf_kit.gd`), `demo/examples/race_ident.gd`;
+  goo, glitch and reveals: `demo/scf/` (F1–F5, G1–G5, D1)
+- Time: `ftf_slitscan`, `ftf_timecity`, `ftf_stargate`
+- Fields and patterns: `ftf_glyphfield`, `ftf_lsd`, `ftf_houndstooth`, `ftf_checkercity`, `ftf_stargate`
+- Print: `ftf_riso`
+- 2.5D extrusion and cities: `ftf_megastructure`, `ftf_timecity`, `ftf_assembly`, `ftf_greebles`
+- 3D: `ftf_gantry`, `ftf_nightcircuit`, `ftf_canyon`
+- Diagrams and flow: `ftf_subway`, `ftf_fuel`, `ftf_cables`
+- Text on paths, tape, beacons: `ftf_warning`
 
 ## 5. Render and review
 
@@ -289,6 +349,14 @@ func _init() -> void:
   adds music (a song whose sections follow the picture, notes optionally emitted back
   as cues) and measured review renders. Prefer it to MotionCuePlayer for anything
   beyond a few stock sounds.
+- Bake the score into the project so the piece plays its sound without the audio kit:
+  link it (`tools/link_audio_kit.sh`), then
+  `godot --headless --path . -s res://tools/bake_audio.gd -- --piece=res://path/to/piece_folder`.
+  By convention the piece folder holds `<folder name>.tscn` and its sound in `audio/`
+  (one `*_map.tres`, `music/*song.tres`); the tool writes `*_track.res` and `*_cues.json`
+  there. Override any path with `--scene= --map= --song= --track= --cues=` (a scratch
+  `--track=` compares a re-bake without touching the committed one). Re-bake after
+  changing recipes, the song or any cue timing. `demo/ftf/README.md` has the full loop.
 - For sound design outside Godot, `export_cue_sheet(path)` writes every cue as JSON
   (frames, seconds, names, intensities, data).
 - Playback fires each crossed cue once, in order; seeking fires none (listeners get a
@@ -299,7 +367,7 @@ func _init() -> void:
 ## 7. Deliver
 
 - The scene and script, the brief and beat sheet in the header, the cue sheet in
-  `_init`, assets in the project.
+  `_init`, assets in the project (and the baked track, if there is sound).
 - A contact sheet of the beat frames and a video for review:
   `ffmpeg -framerate 30 -i out/piece/f%08d.png -i out/piece/f.wav -c:v libx264 -pix_fmt yuv420p -crf 18 -shortest piece.mp4`
 - In the game: instantiate the scene and `play()`, or `play_segment("in", "hold")` and
@@ -317,6 +385,11 @@ func _init() -> void:
 - Blend modes read the backdrop of the viewport they draw in; isolate a group in a
   `MotionFX`.
 - Indexed writes to a packed-array property (`cells[i] = v`) don't run its setter.
+- `const X := SomeClass` is a parse error; `MK` has no `ease_in` (use `ease_in_quad` or
+  `bezier`).
+- Time-effect content (MotionTimeSlices, MotionTimeCache, MotionTimeSplit) is instanced
+  several times: keep it light or cull it with `MotionViewRect`, and make it accept
+  negative frames (`as_source()`).
 - Software-GL renders of goo or many blurs take minutes per piece; render one at a time
   and split long ones with a start frame.
 - Only when matching an existing browser animation exactly (porting a Remotion/CSS/SVG
