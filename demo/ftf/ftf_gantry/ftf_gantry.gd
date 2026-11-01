@@ -36,7 +36,7 @@
 #   384     sign cuts; black by 396
 #
 # Sound: cue sheet in _init; demo/ftf/ftf_gantry/audio/make.py writes the
-# recipes and a 150 bpm song, bake.gd bakes them (see the FTF README).
+# recipes and a 150 bpm song, tools/bake_audio.gd bakes them (see the FTF README).
 @tool
 extends MotionComposition
 
@@ -69,7 +69,7 @@ const BEAUTY_D := 39.5       # hold: camera distance in front of the FTF sign
 var _built := false
 var _stage: MotionStage3D
 var _curve: Curve3D
-var _s := PackedFloat64Array()     # camera distance along the circuit per frame
+var _travel: MotionTravel   # camera distance along the circuit per frame
 var _len := 0.0
 var _s_mh := 0.0
 var _s_gates: Array[float] = []
@@ -150,30 +150,17 @@ const SPEED_KEYS := [[0.0, 0.0], [40.0, 0.12], [48.0, 0.25], [60.0, 1.7], [80.0,
 
 
 static func _speed(f: float) -> float:
-	for k in range(1, SPEED_KEYS.size()):
-		var a: Array = SPEED_KEYS[k - 1]
-		var b: Array = SPEED_KEYS[k]
-		if f <= b[0]:
-			var t := clampf((f - a[0]) / (b[0] - a[0]), 0.0, 1.0)
-			return lerpf(a[1], b[1], t * t * (3.0 - 2.0 * t))
-	return SPEED_KEYS[SPEED_KEYS.size() - 1][1]
+	return MotionTravel.keyed_speed(SPEED_KEYS, f)
 
 
 func _make_table() -> void:
-	_s.resize(END + 64)
-	var s := 0.0
-	_s[0] = 0.0
-	for i in range(1, _s.size()):
-		for k in 8:   # integrate on eighths of a frame
-			s += _speed(i - 1 + (k + 0.5) / 8.0) / 8.0
-		_s[i] = s
+	# integrated on eighths of a frame, Float64 (a long circuit)
+	_travel = MotionTravel.from_speed(_speed, END + 64, 8, true)
 
 
 ## Camera distance along the circuit at frame f (pure: a table lookup).
 func s_at(f: float) -> float:
-	var fc := clampf(f, 0.0, _s.size() - 1.001)
-	var i := int(fc)
-	return lerpf(_s[i], _s[i + 1], fc - i)
+	return _travel.at(f)
 
 
 # ================================================================== build
@@ -241,7 +228,7 @@ func _build() -> void:
 		m.set_shader_parameter("lit_soft", 18.0)
 		m.set_shader_parameter("lit_to", -100.0)
 		_m_trails.append(m)
-		_add_mesh(GB.trail_lane(_curve, _len, trail_x[i], 0.7, trail_cols[i]), m)
+		_add_mesh(MotionTrack3D.trail_lane(_curve, _len, trail_x[i], 0.7, trail_cols[i]), m)
 
 	_build_signs()
 	_build_overlay()
@@ -299,7 +286,7 @@ func _build_signs() -> void:
 		p.world_size = Vector2(18.2, 1.99)
 		p.background = b[3]
 		p.animated = false
-		var fr := GB.frame_at(_curve, _s_gates[i])
+		var fr := MotionTrack3D.frame(_curve, _s_gates[i])
 		p.transform = fr * Transform3D(Basis(), Vector3(0, 6.4 + 0.95, 0.53))
 		_stage.world.add_child(p)
 		var fg: Color = b[4]
@@ -328,7 +315,7 @@ func _build_signs() -> void:
 	for i in bills.size():
 		var bl: Array = bills[i]
 		var bs := lerpf(corner_a, corner_b, bl[0])
-		var fr := GB.frame_at(_curve, bs)
+		var fr := MotionTrack3D.frame(_curve, bs)
 		var side: float = bl[1]
 		var bp := MotionPanel3D.new()
 		bp.pixel_size = Vector2i(512, 768)
@@ -493,15 +480,6 @@ func _camera(f: float) -> Array:
 
 # ================================================================== frame
 
-func _flicker(f: float, at: float, seed_v: float) -> float:
-	if f < at:
-		return 0.0
-	var t := f - at
-	if t > 8.0:
-		return 1.0
-	return 1.0 if MK.rand(floorf(t) * 3.1 + seed_v) > 0.45 - t * 0.05 else 0.15
-
-
 func _frame(f: float) -> void:
 	if not _built:
 		return
@@ -545,10 +523,10 @@ func _frame(f: float) -> void:
 	_grid_mat.set_shader_parameter("energy", sky * (1.0 - MK.map(f, [CUTS[0], CUTS[0] + 6.0], [0, 1], MK.linear) * 0.6))
 
 	# ---- signs
-	var mh_e := _flicker(f, MH_ON, 7.0)
+	var mh_e := MK.flicker(f, MH_ON, 7.0)
 	var mh_off := 1.0 - MK.map(f, [CUTS[2], CUTS[2] + 2.0], [0, 1], MK.linear)
 	_m_mh.set_shader_parameter("energy", lerpf(0.06, 1.15, mh_e) * mh_off)
-	_presents.energy = (0.08 + 1.3 * _flicker(f, PRESENTS, 11.0)) * mh_off
+	_presents.energy = (0.08 + 1.3 * MK.flicker(f, PRESENTS, 11.0)) * mh_off
 	_presents_text.visible_chars = int(MK.map(f, [PRESENTS, PRESENTS + 10.0], [0, 8], MK.linear))
 	_presents_jp.visible = f >= PRESENTS + 10.0
 	var boards_on := MK.map(f, [LAUNCH, LAUNCH + 6.0], [0, 1], MK.linear) * mh_off
@@ -557,14 +535,14 @@ func _frame(f: float) -> void:
 		_boards[i].energy = boards_on * (1.05 + 0.8 * hit)
 	for bp in _billboards:
 		bp.energy = 1.1 * city
-	var sign_e := _flicker(f, DROP - 2.0, 3.0)
+	var sign_e := MK.flicker(f, DROP - 2.0, 3.0)
 	var accent := 0.0
 	for a in [288.0, 324.0]:
 		if f >= a and f < a + 3.0:
 			accent = 1.0
 	var sign_cut := 1.0 - MK.map(f, [SIGN_CUT, SIGN_CUT + 3.0], [0, 1], MK.linear)
 	_m_ftf.set_shader_parameter("energy", lerpf(0.05, 1.12, sign_e) * (1.0 + 0.5 * accent) * sign_cut)
-	_beam_panel.energy = lerpf(0.05, 1.2, _flicker(f, DROP + 6.0, 5.0)) * sign_cut
+	_beam_panel.energy = lerpf(0.05, 1.2, MK.flicker(f, DROP + 6.0, 5.0)) * sign_cut
 
 	# ---- light trails: a ship ahead in the corner, ships under the sign in the hold
 	_trail(0, f, 146.0, s_at(146.0) + 150.0, 4.45, 45.0)

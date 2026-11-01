@@ -709,14 +709,14 @@ func _stencil(c: CanvasItem, sr: Rect2, it: Dictionary, a: float, hz: float) -> 
 	var fs := sr.size.y * 0.62
 	if fs < 7.0:
 		return
-	fs = pow(1.08, roundf(log(fs) / log(1.08)))
+	fs = MotionFonts.ladder_size(fs, 1.08)   # ladder: zooming reuses glyph rasters
 	var txt: String = it.txt
 	var w := font.get_string_size(txt, HORIZONTAL_ALIGNMENT_LEFT, -1, int(fs)).x
 	if w > sr.size.x:
 		fs *= sr.size.x / w
 		if fs < 7.0:
 			return
-		fs = pow(1.08, floorf(log(fs) / log(1.08)))
+		fs = MotionFonts.ladder_size(fs, 1.08, true)
 	c.draw_string(font, Vector2(sr.position.x, sr.position.y + sr.size.y * 0.5 + fs * 0.36), txt, HORIZONTAL_ALIGNMENT_LEFT, -1, int(fs), _h(it.c, a, hz))
 
 

@@ -14,8 +14,8 @@ const STEEL := Color("#8a93a8")
 const DUSK := Color("#5d5788")      # the hold's board: dusky violet checks, so the white plate reads
 
 const BPM := 180.0
-const BEAT := 10.0                  # frames per beat at 180 bpm, 30 fps
-const BAR := 40.0
+const BEAT := 1800.0 / BPM          # frames per beat at 30 fps
+const BAR := 4.0 * BEAT
 
 # ---- I: Minimal Humans
 const SLIT_OPEN := 8.0              # the centre slit draws; the board starts to shear in time
@@ -36,22 +36,3 @@ const ACCENTS := [260.0, 280.0, 290.0, 300.0, 320.0, 330.0]   # time-split fring
 const STRETCH := 340.0              # bar 8.5: the board stretches into streaks
 const DARK := 396.0                 # black from here
 const END := 420
-
-
-static func decay_kick(f: float, ats: Array, amp: float, rate := 0.45, alternate := true) -> float:
-	var v := 0.0
-	for i in ats.size():
-		var at: float = ats[i]
-		if f >= at:
-			v += amp * exp(-(f - at) * rate) * (1.0 if (i % 2 == 0 or not alternate) else -1.0)
-	return v
-
-
-## 0..1, 1 right after the most recent accent, decaying.
-static func accent(f: float, ats: Array, rate := 0.3) -> float:
-	var v := 0.0
-	for a in ats:
-		var at: float = a
-		if f >= at:
-			v = maxf(v, exp(-(f - at) * rate))
-	return v

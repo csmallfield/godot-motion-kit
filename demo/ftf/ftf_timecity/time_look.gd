@@ -4,8 +4,8 @@
 extends RefCounted
 
 const BPM := 120.0
-const BEAT := 15.0                  # frames per beat at 120 bpm, 30 fps
-const BAR := 60.0
+const BEAT := 1800.0 / BPM          # frames per beat at 30 fps
+const BAR := 4.0 * BEAT
 
 # ---- palette (MC-202: red, cream, black, grey on paper)
 const PAPER := Color("#efece4")

@@ -173,8 +173,8 @@ func _build() -> void:
 	_font_mono = FTFKit.font("mono")
 	_font_wide = FTFKit.font("wide")
 	_font_jp = FTFKit.font("jp")
-	_mh_data = _svg("res://demo/assets/logos/mh_logoFull_standard.svg")
-	_ftf_data = _svg(FTFKit.LOGO)
+	_mh_data = MotionSvgData.load_any("res://demo/assets/logos/mh_logoFull_standard.svg")
+	_ftf_data = MotionSvgData.load_any(FTFKit.LOGO)
 
 	var bg := ColorRect.new()
 	bg.color = PAPER
@@ -217,11 +217,6 @@ func _build() -> void:
 
 func _msdf(path: String) -> FontFile:
 	return MotionFonts.font(path, true)
-
-
-func _svg(path: String) -> MotionSvgData:
-	var res: Resource = load(path) if ResourceLoader.exists(path) else null
-	return res if res is MotionSvgData else MotionSvgData.from_file(path)
 
 
 func _canvas(parent: Node, fn: Callable) -> MotionCanvas:

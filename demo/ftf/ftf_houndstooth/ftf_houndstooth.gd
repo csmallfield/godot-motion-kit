@@ -45,8 +45,9 @@
 @tool
 extends MotionComposition
 
-const BEAT := 15.0
-const BAR := 60.0
+const BPM := 120.0
+const BEAT := 1800.0 / BPM          # frames per beat at 30 fps
+const BAR := 4.0 * BEAT
 # ---- Act I
 const OPEN := 0.0
 const MH_WEAVE := 15.0
@@ -107,6 +108,7 @@ var _ftf_k := 1.0
 
 func _init() -> void:
 	duration = END
+	bpm = BPM
 	fps = 30
 	markers = {"in": 0.0, "logo": DROP, "hold": 252.0, "out": OUT}
 	cue(OPEN, &"open", 0.8)
@@ -148,14 +150,9 @@ func _ready() -> void:
 
 # ================================================================== build
 
-func _svg(path: String) -> MotionSvgData:
-	var res: Resource = load(path) if ResourceLoader.exists(path) else null
-	return res if res is MotionSvgData else MotionSvgData.from_file(path)
-
-
 func _logo(path: String, w: float, pos: Vector2) -> MotionSvg:
 	var s := MotionSvg.new()
-	s.data = _svg(path)
+	s.data = MotionSvgData.load_any(path)
 	s.width = w
 	s.position = pos
 	return s
@@ -223,10 +220,6 @@ func _add_sound() -> void:
 		clock = Clock.AUDIO
 
 
-func _text(parent: Node, key: String, sz: float, col: Color, s: String, tracking := 0.0) -> MotionText:
-	return FTFKit.text(parent, key, sz, col, s, tracking)
-
-
 ## A woven label: a solid rectangle with a stitched border, origin top-left.
 func _woven(parent: Node, w: float, h: float, bg: Color, thread: Color) -> MotionCanvas:
 	var c := MotionCanvas.new()
@@ -246,9 +239,9 @@ func _make_presents() -> Node2D:
 	var n := Node2D.new()
 	_stage.add_child(n)
 	_woven(n, 640, 150, FTFKit.INK, FTFKit.CREAM)
-	var t := _text(n, "ext", 50, FTFKit.CREAM, "PRESENTS", 0.36)
+	var t := FTFKit.text(n, "ext", 50, FTFKit.CREAM, "PRESENTS", 0.36)
 	t.position = Vector2(320 - t.get_text_size().x * 0.5 + 9.0, 28)
-	var s := _text(n, "mono", 20, FTFKit.MH_AMBER, "提供  //  MINIMAL HUMANS  //  100% FOSS", 0.08)
+	var s := FTFKit.text(n, "mono", 20, FTFKit.MH_AMBER, "提供  //  MINIMAL HUMANS  //  100% FOSS", 0.08)
 	s.position = Vector2(320 - s.get_text_size().x * 0.5, 100)
 	return n
 
@@ -257,12 +250,12 @@ func _make_care_label() -> Node2D:
 	var n := Node2D.new()
 	_stage.add_child(n)
 	_woven(n, 560, 190, FTFKit.INK, FTFKit.CREAM)
-	var a := _text(n, "ext", 28, FTFKit.CREAM, "100% ANTI-GRAVITY", 0.06)
+	var a := FTFKit.text(n, "ext", 28, FTFKit.CREAM, "100% ANTI-GRAVITY", 0.06)
 	a.position = Vector2(32, 34)
-	var b := _text(n, "mono", 22, FTFKit.CREAM, "WASH AT 9000°\nDO NOT TUMBLE BELOW MACH 1\nMADE IN BERLIN // F-9000", 0.06)
+	var b := FTFKit.text(n, "mono", 22, FTFKit.CREAM, "WASH AT 9000°\nDO NOT TUMBLE BELOW MACH 1\nMADE IN BERLIN // F-9000", 0.06)
 	b.line_height = 1.35
 	b.position = Vector2(32, 82)
-	var j := _text(n, "jp", 26, FTFKit.PINK, "反重力")
+	var j := FTFKit.text(n, "jp", 26, FTFKit.PINK, "反重力")
 	j.position = Vector2(560 - 30 - j.get_text_size().x, 78)
 	return n
 
@@ -280,11 +273,11 @@ func _make_size_tag() -> Node2D:
 		cv.ring(Vector2(0, 92), 13, FTFKit.CREAM, 2.0)
 		MotionMarks.checker(cv, Vector2(-100, 300), 10, 1, 20, FTFKit.INK)
 	n.add_child(c)
-	var s := _text(n, "mono", 20, FTFKit.WHITE, "SIZE / CLASS", 0.12)
+	var s := FTFKit.text(n, "mono", 20, FTFKit.WHITE, "SIZE / CLASS", 0.12)
 	s.position = Vector2(-s.get_text_size().x * 0.5, 124)
-	var big := _text(n, "wide", 96, FTFKit.WHITE, "S", 0.0)
+	var big := FTFKit.text(n, "wide", 96, FTFKit.WHITE, "S", 0.0)
 	big.position = Vector2(-big.get_text_size().x * 0.5, 150)
-	var cls := _text(n, "ext", 20, FTFKit.INK, "SPARROW", 0.1)
+	var cls := FTFKit.text(n, "ext", 20, FTFKit.INK, "SPARROW", 0.1)
 	cls.position = Vector2(-cls.get_text_size().x * 0.5 + 2.0, 262)
 	return n
 
@@ -325,9 +318,9 @@ func _make_symbols() -> Node2D:
 		x = 470.0
 		cv.ring(Vector2(x, y), 26, ink, 4.0)
 	n.add_child(c)
-	var f := _text(n, "ext", 26, FTFKit.INK, "F", 0.0)
+	var f := FTFKit.text(n, "ext", 26, FTFKit.INK, "F", 0.0)
 	f.position = Vector2(470 - f.get_text_size().x * 0.5, 54 - f.get_text_size().y * 0.5)
-	var t := _text(n, "mono", 18, FTFKit.INK, "9000", 0.0)
+	var t := FTFKit.text(n, "mono", 18, FTFKit.INK, "9000", 0.0)
 	t.position = Vector2(56 - t.get_text_size().x * 0.5, 50)
 	return n
 

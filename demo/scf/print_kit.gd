@@ -50,13 +50,13 @@ static func big(text: String, size: float, c: Color) -> MotionText:
 static func mono_font(weight := 700) -> Font:
 	var key := "mono%d" % weight
 	if not _fonts.has(key):
-		var f := MotionFonts.font("res://demo/assets/fonts/space-mono-latin-%d-normal.woff2" % weight)
 		# Chromium's synthetic bold for a face without a bold: the outline grows
 		# by size / 32 px; Godot's embolden grows it by embolden * size / 16.
 		var wqy := FontVariation.new()
 		wqy.base_font = MotionFonts.font("res://demo/assets/fonts/wqy-zenhei-mono-subset.ttf")
 		wqy.variation_embolden = 0.5 if weight >= 600 else 0.0
-		f.fallbacks = [MotionFonts.font("res://demo/assets/fonts/dejavu-sans-mono-bold-symbols.ttf"), wqy]
+		var f := MotionFonts.font("res://demo/assets/fonts/space-mono-latin-%d-normal.woff2" % weight, false,
+			[MotionFonts.font("res://demo/assets/fonts/dejavu-sans-mono-bold-symbols.ttf"), wqy])
 		_fonts[key] = f
 	return _fonts[key]
 
@@ -64,8 +64,8 @@ static func mono_font(weight := 700) -> Font:
 ## Archivo Black with the browser's sans-serif fallback for ✱ (DejaVu Sans).
 static func archivo() -> Font:
 	if not _fonts.has("archivo"):
-		var f := MotionFonts.font("res://demo/assets/fonts/archivo-black-latin-400-normal.woff2")
-		f.fallbacks = [MotionFonts.font("res://demo/assets/fonts/dejavu-sans-symbols.ttf")]
+		var f := MotionFonts.font("res://demo/assets/fonts/archivo-black-latin-400-normal.woff2", false,
+			[MotionFonts.font("res://demo/assets/fonts/dejavu-sans-symbols.ttf")])
 		_fonts["archivo"] = f
 	return _fonts["archivo"]
 

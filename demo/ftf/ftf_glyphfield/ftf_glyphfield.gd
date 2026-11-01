@@ -48,8 +48,9 @@ extends MotionComposition
 
 const W := 1920.0
 const H := 1080.0
-const BEAT := 20.0
-const BAR := 80.0
+const BPM := 90.0
+const BEAT := 1800.0 / BPM          # frames per beat at 30 fps
+const BAR := 4.0 * BEAT
 
 const IN := 0.0
 const SCAN := 20.0
@@ -109,6 +110,7 @@ var _flash: ColorRect
 
 func _init() -> void:
 	duration = END
+	bpm = BPM
 	fps = 30
 	markers = {"in": 0.0, "logo": DROP, "hold": 250.0, "out": DECAY}
 	cue(IN, &"field.in", 0.6)
@@ -177,7 +179,7 @@ func _build() -> void:
 
 	# mask: the MH lockup, PRESENTS, the FTF logo and the katakana line
 	_mh = MotionSvg.new()
-	_mh.data = _svg("res://demo/assets/logos/mh_logoFull_standard.svg")
+	_mh.data = MotionSvgData.load_any("res://demo/assets/logos/mh_logoFull_standard.svg")
 	_mh.width = MH_W
 	_mh.position = MH_POS
 	_field.mask_content.add_child(_mh)
@@ -187,7 +189,7 @@ func _build() -> void:
 	_ftf_pivot.position = LOGO_C
 	_field.mask_content.add_child(_ftf_pivot)
 	_ftf = MotionSvg.new()
-	_ftf.data = _svg(FTFKit.LOGO)
+	_ftf.data = MotionSvgData.load_any(FTFKit.LOGO)
 	_ftf.width = LOGO_W
 	_ftf.position = -_ftf.data.view_box.size * (LOGO_W / _ftf.data.view_box.size.x) * 0.5
 	_ftf_pivot.add_child(_ftf)
@@ -220,11 +222,6 @@ func _build() -> void:
 	_flash.color = WHITE
 	add_child(_flash)
 	_add_sound()
-
-
-func _svg(path: String) -> MotionSvgData:
-	var res: Resource = load(path) if ResourceLoader.exists(path) else null
-	return res if res is MotionSvgData else MotionSvgData.from_file(path)
 
 
 func _add_sound() -> void:

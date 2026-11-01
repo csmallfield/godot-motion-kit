@@ -188,7 +188,15 @@ func rebuild() -> void:
 
 ## 0..1 share of `delay` for a band at u (0..1 across the bands).
 func profile_at(u: float, k: int) -> float:
-	match profile:
+	return profile_value(profile, u, k, waves, phase, seed_value, profile_fn)
+
+
+## A profile's 0..1 share of `delay` for band k at u (0..1 across the bands):
+## the shared shape table of MotionTimeSlices and MotionTimeCache. `waves` and
+## `phase` shape SINE, `seed_v` RANDOM, `fn(u)` CUSTOM.
+static func profile_value(shape: Profile, u: float, k: int, waves_v := 1.0, phase_v := 0.0,
+		seed_v := 1.0, fn := Callable()) -> float:
+	match shape:
 		Profile.LINEAR:
 			return u
 		Profile.REVERSE:
@@ -198,11 +206,11 @@ func profile_at(u: float, k: int) -> float:
 		Profile.EDGES:
 			return absf(2.0 * u - 1.0)
 		Profile.SINE:
-			return 0.5 + 0.5 * sin(TAU * (waves * u + phase))
+			return 0.5 + 0.5 * sin(TAU * (waves_v * u + phase_v))
 		Profile.RANDOM:
-			return MK.rand(k * 7.13 + seed_value * 31.7)
+			return MK.rand(k * 7.13 + seed_v * 31.7)
 		Profile.CUSTOM:
-			return float(profile_fn.call(u)) if profile_fn.is_valid() else 0.0
+			return float(fn.call(u)) if fn.is_valid() else 0.0
 	return 0.0
 
 

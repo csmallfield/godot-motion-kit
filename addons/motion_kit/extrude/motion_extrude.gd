@@ -260,16 +260,8 @@ func cap_unclipped(s: MotionSolid) -> bool:
 ## the baseline start in decal units. Leaves `xf` set when it returns.
 static func draw_text(c: CanvasItem, xf: Transform2D, font: Font, pos: Vector2, text: String, size: float,
 		col: Color, align := HORIZONTAL_ALIGNMENT_LEFT, width := -1.0) -> void:
-	var k := maxf(xf.x.length(), xf.y.length())
-	var want := size * k
-	if want < min_text_px:
-		return
-	# Snap to a ladder of sizes (about 6% apart) so a moving camera reuses glyph rasters.
-	var px := clampi(int(round(pow(1.06, round(log(want) / log(1.06))))), 1, 1024)
-	var s := float(px) / size
-	c.draw_set_transform_matrix(xf * Transform2D(0.0, pos) * Transform2D.IDENTITY.scaled(Vector2.ONE / s))
-	c.draw_string(font, Vector2.ZERO, text, align, width * s if width > 0.0 else -1.0, px, col)
-	c.draw_set_transform_matrix(xf)
+	# a ladder of sizes about 6% apart, so a moving camera reuses glyph rasters
+	MotionFonts.draw_screen_text(c, xf, font, pos, text, size, col, align, 1.06, min_text_px, width)
 
 
 # ---------------------------------------------------------------- geometry

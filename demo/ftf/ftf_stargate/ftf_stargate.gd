@@ -43,7 +43,7 @@
 #   396-420  black
 #
 # Sound: cues in _init; recipes, cue map and a 180 bpm drum & bass song in audio/
-# (make.py); audio/bake.gd bakes audio/stargate_track.res, which plays when the
+# (make.py); tools/bake_audio.gd bakes audio/stargate_track.res, which plays when the
 # audio kit isn't linked.
 @tool
 extends MotionComposition
@@ -64,7 +64,7 @@ const LANE_BARS := [240.0, 280.0, 320.0]
 const GATE_DELAYS := [64.0, 40.0, 76.0, 48.0, 64.0, 34.0, 80.0, 52.0]
 
 var _built := false
-var _travel := PackedFloat32Array()
+var _tr: MotionTravel
 
 var _board: MotionPlaneScan
 var _glow: MotionCanvas
@@ -83,6 +83,7 @@ var _flash: ColorRect
 
 func _init() -> void:
 	duration = L.END
+	bpm = L.BPM
 	fps = 30
 	markers = {"in": 0.0, "logo": L.POUR, "hold": L.DROP, "out": L.STRETCH}
 	_table()
@@ -123,39 +124,29 @@ func _init() -> void:
 
 # ------------------------------------------------------------------ timing
 
+const SPEED_FRAMES := [0, 40, 100, 120, 200, 240, 340, 400]
+## World units per frame: flat out from the first frame (absurd: two camera heights a frame).
+const SPEED := [3.0, 2.5, 2.5, 3.2, 3.2, 3.4, 3.4, 5.5]
+
+
 func _speed_at(f: float) -> float:
-	# world units per frame: flat out from the first frame (absurd: two camera heights a frame)
-	return MK.interp(f, [0, 40, 100, 120, 200, 240, 340, 400],
-		[3.0, 2.5, 2.5, 3.2, 3.2, 3.4, 3.4, 5.5], MK.ease_in_out)
+	return _tr.speed(f)
 
 
 func _table() -> void:
 	# Integrate the speed once (on eighths of a frame): travel(f) is a lookup.
-	_travel.resize(L.END + 2)
-	var acc := 0.0
-	for i in L.END + 2:
-		_travel[i] = acc
-		for k in 8:
-			acc += _speed_at(i + (k + 0.5) / 8.0) / 8.0
+	# Past the end it runs on at the final speed (the stretch keeps flying).
+	_tr = MotionTravel.from_keys(SPEED_FRAMES, SPEED, L.END + 2, MK.ease_in_out)
+	_tr.extrapolate = true
+	_tr.end = L.END
 
 
 func travel(f: float) -> float:
-	if f < 0.0:
-		return f * _speed_at(0.0)
-	if f >= L.END:
-		return _travel[L.END] + (f - L.END) * _speed_at(L.END)
-	var i := int(floorf(f))
-	return lerpf(_travel[i], _travel[i + 1], f - i)
+	return _tr.at(f)
 
 
 func _lateral(f: float) -> float:
 	return 3.2 * sin(TAU * f / (L.BAR * 2.0))
-
-
-func _beat_pulse(f: float, from: float, to: float, decay := 0.3) -> float:
-	if f < from or f >= to:
-		return 0.0
-	return exp(-fmod(f - from, L.BEAT) * decay)
 
 
 func _in(f: float, a: float, b: float) -> bool:
@@ -177,7 +168,7 @@ func _lane_cycle(i: int) -> Color:
 func _state(t: float) -> Dictionary:
 	var sp := _speed_at(t)
 	var lat_v := 3.2 * TAU / (L.BAR * 2.0) * cos(TAU * t / (L.BAR * 2.0))
-	var pulse := _beat_pulse(t, L.MH_SNAP, L.MH_FOLD) * 0.8 + _beat_pulse(t, L.GATE, L.POUR) + 0.6 * _beat_pulse(t, L.DROP, L.STRETCH)
+	var pulse := MK.beat_pulse(t, L.BEAT, L.MH_SNAP, L.MH_FOLD, 0.3) * 0.8 + MK.beat_pulse(t, L.BEAT, L.GATE, L.POUR, 0.3) + 0.6 * MK.beat_pulse(t, L.BEAT, L.DROP, L.STRETCH, 0.3)
 	var a := FTFKit.MH_CREAM
 	var b := Color("#0c0b10")
 	var acc := Color(FTFKit.MH_AMBER, 0.9)
@@ -354,7 +345,7 @@ func _frame_board(f: float) -> void:
 	p.sun_top = Color("#ffe9a6").lerp(L.CYAN, gate).lerp(Color("#ffe14a"), hold)
 	p.sun_bottom = FTFKit.MH_RED.lerp(L.PINK, maxf(gate, hold))
 	p.sun_bands = Vector3(9.0, f * 0.02, 0.3)
-	p.sun_glow = 0.14 + 0.16 * _beat_pulse(f, L.DROP, L.STRETCH, 0.25)
+	p.sun_glow = 0.14 + 0.16 * MK.beat_pulse(f, L.BEAT, L.DROP, L.STRETCH, 0.25)
 	# ---- shockwave from the logo's foot on the drop
 	var ring := Vector4(0, 0, -1, 2)
 	var rcol := Color(1, 1, 1, 0)
@@ -395,7 +386,7 @@ func _frame_scan(f: float) -> void:
 			p.delay_curve = 1.4
 		else:
 			p.axis = MotionPlaneScan.Axis.HORIZONTAL
-			var k := L.decay_kick(f, L.MH_KICKS, 1.0, 0.22, false)
+			var k := MK.decay_kick(f, L.MH_KICKS, 1.0, 0.22, false)
 			p.delay = 9.0 * minf(k, 1.6)
 			p.delay_span = Vector2(960, 420)
 			p.delay_curve = 1.0
@@ -437,7 +428,7 @@ func _frame_scan(f: float) -> void:
 			p.walls = 0.0
 			p.delay = 0.0
 			# a fraction of a frame: at this speed that is a fraction of a check
-			p.split = 0.22 * L.accent(f, L.ACCENTS, 0.28)
+			p.split = 0.22 * MK.accent(f, L.ACCENTS, 0.28)
 			if p.split < 0.02:
 				p.split = 0.0
 		else:
@@ -467,7 +458,7 @@ func _frame_mh(f: float) -> void:
 		m.profile = MotionTimeSlices.Profile.SINE
 		m.waves = 1.2
 		m.phase = -f * 0.05
-		m.delay = 12.0 * minf(L.decay_kick(f, L.MH_KICKS, 1.0, 0.25, false), 1.6)
+		m.delay = 12.0 * minf(MK.decay_kick(f, L.MH_KICKS, 1.0, 0.25, false), 1.6)
 	else:
 		m.profile = MotionTimeSlices.Profile.EDGES
 		m.delay = MK.map(f, [L.MH_FOLD, 112.0], [0, 30], MK.ease_in_quad)
@@ -494,7 +485,7 @@ func _frame_logo(f: float) -> void:
 			_pour.reveal = 1.0 - MK.map(f, [362.0, 388.0], [0, 1], MK.ease_in_quad)
 			_pour.modulate.a = 1.0 - MK.map(f, [372.0, 392.0], [0, 1])
 	if _split.visible:
-		_split.delay = 3.2 * L.accent(f, L.ACCENTS, 0.3)
+		_split.delay = 3.2 * MK.accent(f, L.ACCENTS, 0.3)
 		if _split.delay < 0.08:
 			_split.delay = 0.0
 
@@ -550,7 +541,7 @@ func _draw_glow(c: MotionCanvas, f: float) -> void:
 	var on := MK.map(f, [L.MH_FOLD + 6.0, L.GATE], [0, 1]) * (1.0 - MK.map(f, [L.UNFOLD, L.DROP], [0, 1]))
 	if on <= 0.0:
 		return
-	var pulse := _beat_pulse(f, L.GATE, L.POUR, 0.35)
+	var pulse := MK.beat_pulse(f, L.BEAT, L.GATE, L.POUR, 0.35)
 	var col := L.CYAN.lerp(L.PAPER, 0.4)
 	var ctr := _board.slit_at
 	# a radial fan with vertex colours: smooth, no rings
@@ -624,19 +615,10 @@ func _draw_towers(c: MotionCanvas, f: float) -> void:
 		var zf: float = zn + d
 		if zf < 3.0:
 			continue
-		var zc := maxf(zn, 3.0)   # keep every corner well in front of the camera (yaw / pitch / roll)
 		var side := 1 if float(lot.x) > 0.0 else -1
 		var a := Color("#d9d4f0")
 		if lot.accent:
 			a = _lane_cycle(int(lot.idx) + bar_i)
-		var xi := x0 if side > 0 else x1
-		var s0 := p.ground_point(xi - _lateral(f), zc)
-		var s1 := p.ground_point(xi - _lateral(f), zf)
-		var rows := maxi(1, int(round(hh / BCELL)))
-		p.draw_checker_quad(c, s0 + Vector3(0, hh, 0), s1 + Vector3(0, hh, 0), s1, s0,
-			maxi(1, int(round((zf - zc) / BCELL))), rows, a * Color(0.6, 0.6, 0.68), L.INK, 4.0)
-		if zn >= 3.0:
-			var f0 := p.ground_point(x0 - _lateral(f), zn)
-			var f1 := p.ground_point(x1 - _lateral(f), zn)
-			p.draw_checker_quad(c, f0 + Vector3(0, hh, 0), f1 + Vector3(0, hh, 0), f1, f0,
-				maxi(1, int(round(w / BCELL))), rows, a, L.INK, 4.0)
+		# the side face starts 3 units out: every corner stays well in front of the camera (yaw / pitch / roll)
+		p.draw_checker_box(c, x0 - _lateral(f), x1 - _lateral(f), zn, zf, hh, BCELL, a, L.INK, side,
+			Color(0.6, 0.6, 0.68), 3.0, true)

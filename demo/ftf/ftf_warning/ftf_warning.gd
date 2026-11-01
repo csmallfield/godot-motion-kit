@@ -44,8 +44,9 @@ const Signs := preload("res://demo/ftf/ftf_warning/warning_signs.gd")
 
 const W := 1920.0
 const H := 1080.0
-const BEAT := 9.0
-const BAR := 36.0
+const BPM := 200.0
+const BEAT := 1800.0 / BPM          # frames per beat at 30 fps
+const BAR := 4.0 * BEAT
 
 const INTRO_TAPES := [0.0, 9.0, 18.0, 27.0]
 const PLACARD := 36.0
@@ -118,6 +119,7 @@ var _flash: ColorRect
 
 func _init() -> void:
 	duration = END
+	bpm = BPM
 	fps = 30
 	markers = {"in": 0.0, "logo": DROP, "hold": 216.0, "out": CLOSE}
 	cue(0.0, &"alarm", 0.8)
@@ -262,7 +264,7 @@ func _build_placard() -> void:
 	_plac_border = {pts = pts, closed = true, width = 30.0, style = "stripes", col_a = Look.YELLOW, col_b = Look.BLACK,
 		period = L / roundf(L / 62.0), slant = 15.0, scroll = 0.0}
 	_mh = MotionSvg.new()
-	_mh.data = _svg("res://demo/assets/logos/mh_logoFull_standard.svg")
+	_mh.data = MotionSvgData.load_any("res://demo/assets/logos/mh_logoFull_standard.svg")
 	_mh.width = 860.0
 	var mh_h := 860.0 * _mh.data.view_box.size.y / _mh.data.view_box.size.x
 	_mh.position = Vector2(-430, 790 - mh_h * 0.5 - 10.0)
@@ -342,7 +344,7 @@ func _build_logo() -> void:
 	_tape(_logo_grp, {pts = frame_pts, closed = true, width = 46.0, style = "text", col_a = Look.YELLOW, col_b = Look.BLACK,
 		text = NAME_TEXT, text_size = 25, text_scroll = 3.0, at = CLAMP, dur = 18.0, seed = 60.0, edge_w = 3.0, edge_inset = 5.0, font = Look.FONT_WARN})
 	_logo = MotionSvg.new()
-	_logo.data = _svg(FTFKit.LOGO)
+	_logo.data = MotionSvgData.load_any(FTFKit.LOGO)
 	_logo.width = LOGO_W
 	var k := LOGO_W / _logo.data.view_box.size.x
 	_logo.position = LOGO_C - _logo.data.view_box.size * k * 0.5
@@ -414,11 +416,6 @@ func _build_hud() -> void:
 	var t := Look.text(self, Look.FONT_MONO, 20, Look.STONE, "MINIMAL HUMANS // SAFETY NOTICE 01", 0.1)
 	t.position = Vector2(64, 28)
 	_hud = [l, r, t]
-
-
-func _svg(path: String) -> MotionSvgData:
-	var res: Resource = load(path) if ResourceLoader.exists(path) else null
-	return res if res is MotionSvgData else MotionSvgData.from_file(path)
 
 
 func _add_sound() -> void:

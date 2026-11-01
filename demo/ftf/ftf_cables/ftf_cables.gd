@@ -46,8 +46,9 @@ extends MotionComposition
 
 const W := 1920.0
 const H := 1080.0
-const BEAT := 20.0
-const BAR := 80.0
+const BPM := 90.0
+const BEAT := 1800.0 / BPM          # frames per beat at 30 fps
+const BAR := 4.0 * BEAT
 
 # ---- Act I
 const PLUG := [20.0, 40.0, 60.0]
@@ -138,6 +139,7 @@ const OUT_ORDER := [[3, 4], [2, 5], [1, 6], [0, 7]]
 
 func _init() -> void:
 	duration = END
+	bpm = BPM
 	fps = 30
 	markers = {"in": 0.0, "logo": DROP, "hold": DROP + 20.0, "out": OUT[0]}
 	cue(0.0, &"snake", 0.6)
@@ -262,7 +264,7 @@ func _build_mh() -> void:
 	_strip.draw_fn = _draw_strip
 	_mh_group.add_child(_strip)
 	_mh = MotionSvg.new()
-	_mh.data = _svg("res://demo/assets/logos/mh_logoFull_standard.svg")
+	_mh.data = MotionSvgData.load_any("res://demo/assets/logos/mh_logoFull_standard.svg")
 	_mh.width = MH_W
 	_mh.position = MH_POS
 	_mh_group.add_child(_mh)
@@ -294,7 +296,7 @@ func _build_ftf() -> void:
 	_pivot.position = LOGO_C
 	_fx.content.add_child(_pivot)
 	_logo = MotionSvg.new()
-	_logo.data = _svg(FTFKit.LOGO)
+	_logo.data = MotionSvgData.load_any(FTFKit.LOGO)
 	_logo.width = LOGO_W
 	_logo_k = LOGO_W / _logo.data.view_box.size.x
 	_logo.position = -_logo.data.view_box.size * _logo_k * 0.5
@@ -404,11 +406,6 @@ func _build_suspension() -> void:
 		c.bands = [{u = 0.9, len = 22.0, color = Color("#111114")}, {u = 0.2, len = 30.0, color = Color("#111114")}]
 		_sus.append(c)
 	_back_set.cables = _back_set.cables + _sus
-
-
-func _svg(path: String) -> MotionSvgData:
-	var res: Resource = load(path) if ResourceLoader.exists(path) else null
-	return res if res is MotionSvgData else MotionSvgData.from_file(path)
 
 
 func _add_sound() -> void:

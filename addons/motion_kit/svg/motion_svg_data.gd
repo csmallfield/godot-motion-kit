@@ -47,6 +47,14 @@ static func from_file(path: String) -> MotionSvgData:
 	return MotionSvgParser.parse(text, path)
 
 
+## The document at `path` however it is available: the imported resource
+## when the file was imported as Motion SVG (the only option in an exported
+## game), else parsed from the .svg on disk (an .svg imported as a texture).
+static func load_any(path: String) -> MotionSvgData:
+	var res: Resource = load(path) if ResourceLoader.exists(path) else null
+	return res if res is MotionSvgData else MotionSvgData.from_file(path)
+
+
 func part_count() -> int:
 	return parts.size()
 
@@ -92,6 +100,26 @@ func outline(i: int, tolerance := 0.02) -> Array[PackedVector2Array]:
 			pts.append(pts[0])
 		out.append(pts)
 		k += 1
+	return out
+
+
+## Flattened outlines of `parts` (one index or an Array of them) placed in
+## world space (svg units * k + tl), all in one list. `clean` drops a closing
+## point that repeats the first (within 0.01) and contours of 2 points or fewer.
+func contours(part_ids: Variant, k := 1.0, tl := Vector2.ZERO, tolerance := 0.25, clean := false) -> Array[PackedVector2Array]:
+	var ids: Array = part_ids if part_ids is Array else [part_ids]
+	var out: Array[PackedVector2Array] = []
+	for i in ids:
+		for c in outline(int(i), tolerance):
+			var pts := PackedVector2Array()
+			for p in c:
+				pts.append(tl + p * k)
+			if clean:
+				if pts.size() > 2 and pts[0].distance_to(pts[pts.size() - 1]) < 0.01:
+					pts.remove_at(pts.size() - 1)
+				if pts.size() <= 2:
+					continue
+			out.append(pts)
 	return out
 
 

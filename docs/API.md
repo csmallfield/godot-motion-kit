@@ -24,6 +24,11 @@ functions are evaluated between whole frames.
 | `crt_off(f, at) -> {scale: Vector2, bright, dot}` | Tube power-off curve. |
 | `timecode(f, fps=30)` | HH:MM:SS:FF; negative frames read as 0. |
 | `springy`, `wob` | Smaller helpers from the SCF pieces. |
+| `beat_frames(bpm, fps=30)` | Frames per beat (150 bpm -> 12). |
+| `beat_pulse(f, beat, from=0, to=INF, rate=0.3, tau=0)` | 0..1 pulse on every beat in `[from, to)`: 1 on the beat, decaying `exp(-t * rate)` (or `exp(-t / tau)` with `tau` > 0). |
+| `decay_kick(f, ats, amp, rate=0.45, alternate=true)` | Sum of decaying kicks from each frame in `ats`, alternating sign (camera jolts one way, then the other). |
+| `accent(f, ats, rate=0.3)` | 0..1: 1 right after the latest of `ats`, decaying. |
+| `flicker(f, at, seed_v, settle=8, low=0.15)` | A lamp striking on at `at`: a seeded stutter between 1 and `low` for `settle` frames, then 1. |
 | `rot_x(p, a)`, `rot_y(p, a)` | Rotate a `Vector3` about the X or Y axis (radians). |
 | `project(p, cam_z, focal, centre, near=40) -> Vector3 or null` | Pinhole projection seen from `z = cam_z`: (screen x, screen y, depth), or null nearer than `near`. For wireframes drawn with `MotionCanvas`; use Godot's 3D nodes for real 3D. |
 
@@ -42,6 +47,8 @@ nodes inside a `MotionFX`. A nested composition receives `f - start` and, like a
 | `markers: Dictionary` | Named frames for `play_segment("in", "hold")`. |
 | `ignore_time_scale` | Default true: hit-stop and slow motion don't slow the UI. A root composition runs while paused unless you set its process mode. |
 | `size`, `fit_to_viewport` | Reference size; letterbox-fit into the viewport. |
+| `bpm`, `beat_frames()`, `bar_frames(beats=4)`, `beat_at(f, from=0)` | Tempo (0 = none); frames per beat and bar; the fractional beat number at f. Pieces keep `const BEAT := 1800.0 / BPM` for constant expressions and set `bpm = BPM`. |
+| `as_source() -> self` | Make this a source sampled by another composition (slit-scan, time effects): `duration` 100000, `autoplay` and `hide_outside` off. |
 | `preview_frame` | Editor scrub slider (scripts must be `@tool`). |
 | `play(from=-1)`, `play_backwards(to=0)`, `play_segment(a, b)`, `stop()`, `seek(f)`, `render(f)` | |
 | signals `finished`, `segment_finished(name)` | |
@@ -109,7 +116,11 @@ the volume (linear) and `data.volume_db` / `data.pitch` adjust it. Signal
 ## MotionSvg (Node2D) and MotionSvgData (Resource)
 
 Import an `.svg` as **Motion SVG** (Import dock → Import As), or build one with
-`MotionSvgData.from_string(text)` / `from_file(path)`.
+`MotionSvgData.from_string(text)` / `from_file(path)`; `MotionSvgData.load_any(path)` loads
+the imported resource when there is one, else parses the .svg (one call for pieces that
+must work either way). `data.contours(parts, k=1, tl=ZERO, tolerance=0.25, clean=false)`
+flattens one part index or a list of them into world-space polygons (`svg * k + tl`);
+`clean` drops a repeated closing point and degenerate contours.
 
 `MotionSvgData`: `view_box`, `parts` (tag, id, classes, groups, fill, stroke, bbox, cubic
 contours), `find(name)` (by id, class or group id), `sorted_by_x()`, `centre(i)`,
@@ -173,9 +184,22 @@ counts when one of its glyphs is on the line), and each face's ascent and descen
 rounded to whole pixels, as Chromium rounds them. FreeType rounds those metrics up, so the
 kit recovers the exact values from several large sizes and rounds them itself.
 
-`MotionFonts.font(path, msdf=false)` loads ttf/otf/woff/woff2 with browser-like settings
+`MotionFonts.font(path, msdf=false, fallbacks=[])` loads ttf/otf/woff/woff2 with browser-like settings
 (no hinting, sub-pixel positioning). MSDF keeps glyphs sharp while they scale up, but
-small sizes can show corner artefacts, so it is off by default.
+small sizes can show corner artefacts, so it is off by default. `fallbacks` (Fonts tried
+for missing glyphs, e.g. a Japanese subset) give a font of its own per combination: never
+assign `.fallbacks` on a font from `MotionFonts`, it is shared with every other caller of
+that file (before this, two pieces' fallbacks could overwrite each other by load order).
+
+`MotionText.make(parent, font, size, col, text, tracking=0, pos=ZERO)` is the one-line
+factory (adds the node to `parent`).
+
+`MotionFonts.draw_screen_text(c, xf, font, pos, text, size, col, align, ladder=1.06,
+min_px=0, width=-1, anchor=0, screen_scale=0)` draws canvas text rasterised at its
+on-screen size (measured from `xf`, or `screen_scale`), snapped to a geometric `ladder` of
+sizes so a zooming camera reuses glyph rasters; `MotionFonts.ladder_size(px, ladder,
+floor_steps)` is the snap alone. MotionExtrude.draw_text (ladder 1.06) and
+MotionMetroMap.label (1.08) use it; MotionGreebler's stencils use the ladder.
 
 `MotionPill`: text on a rounded background with CSS-style padding and an optional
 `border_width` / `border_color` (outside the padding). Its origin is the centre, so
@@ -297,6 +321,21 @@ Tape along any path, as a Dictionary spec posed per frame: `MotionTape.pose(spec
 `wave_len`, `wave_decay`, `wave_speed`, `seed`. The pose holds `path` (a MotionPath), `pts`,
 `lengths`, `closed`, `total` and `pieces`; give a MotionTextPath `pose.pts` to set text on
 the tape. `edge(pose, s, side)` and `edge_run(...)` place things across it.
+
+## Travel tables: MotionTravel (RefCounted, `core/motion_travel.gd`)
+
+Distance over time, tabled once in `_build()` so every frame is a lookup (a camera flying
+a track, a pump's spin). Entry i is the distance at frame i; `at(f)` interpolates.
+
+| Member | Notes |
+| --- | --- |
+| static `from_speed(fn, size, substeps=8, precise=false, midpoint=true)` | Integrate `fn(f)` (units per frame) on `substeps` midpoint slices per frame (`midpoint=false`: left sum, e.g. one sample a frame). |
+| static `from_keys(keys, values, size, easing=ease_in_out, substeps=8, precise=false)` | The speed as `MK.interp` keys. |
+| static `from_anchors(frames, distances, size, precise=true)` | A monotone (Fritsch-Carlson) cubic through hand-placed (frame, distance) anchors: passes each landmark on its frame, never overshoots; linear past the last. |
+| static `keyed_speed(pairs, f)` | Speed from `[[frame, speed], ...]`, smoothstepped between pairs (a speed function for `from_speed`). |
+| `at(f)`, `speed(f)`, `frame_speed(f)` | Distance; speed (the function, or the table's slope for anchors); speed sampled at whole frames at table precision (speedometers, motion blur). |
+| `extrapolate`, `end` | Outside the table clamp (default) or run on at the end speeds: `f * speed(0)` before 0, `at(end) + (f - end) * speed(end)` after `end`. |
+| `precise` | Float64 table (long tracks) instead of Float32. |
 
 ## MotionCells (Node2D)
 
@@ -517,7 +556,7 @@ From the FTF intro take `demo/ftf/ftf_gantry/` (notes: `demo/ftf/ftf_gantry/KIT_
 | `set_camera(xform, fov)` | Place the camera (vertical FOV in degrees) |
 | `night(sky, fog, fog_density, glow)` | Background, exponential fog and HDR glow in one call |
 | `to_screen(p) -> Vector2`, `in_front(p)` | Project a world point into composition pixels (pin 2D callouts to 3D objects) |
-| static `path_frame(curve, s, height, side) -> Transform3D` | The frame of a Curve3D at distance s: -Z along travel, Y = the curve's up vector with tilt (banking); continues straight past the ends |
+| static `path_frame(curve, s, height, side) -> Transform3D` (track builders: `MotionTrack3D`) | The frame of a Curve3D at distance s: -Z along travel, Y = the curve's up vector with tilt (banking); continues straight past the ends |
 | static `ride(curve, s, height, look_ahead, look_height, side)` | A camera riding a curve, looking a set distance ahead |
 | static `look(from, to, up, roll)`, `blend(a, b, t)` | Look-at transform; position-lerp / rotation-slerp between two camera transforms |
 | static `unlit(tint, energy, dim) -> ShaderMaterial` | The kit's flat 3D material. Parameters: `tint`, `energy` (above 1 glows), `lit_from`/`lit_to`/`lit_soft`/`dim` (UV2.x window: a light chase or a moving light trail) |
@@ -1003,6 +1042,7 @@ above the ground.
 | `copy_from(other)`, `sync_now()` | Mirror every setting of another plane (a front layer); push the uniforms immediately (they are otherwise pushed once per frame, deferred). |
 | `project(p) -> Vector3`, `to_camera(p)`, `scale_at(depth)`, `focal()`, `centre()` | The shader's camera in GDScript: a camera-relative world point to (screen x, screen y, depth); pixels per world unit at a depth (place 2D nodes facing the camera). |
 | `ground_y(x, z)`, `ground_point(gx, z, up)`, `rel_z(world_z)`, `fog_at(dist)` | The ground's height with the bends; a point on the ground for a pattern-space lateral position (follows `curve`, `channel`, `hill`); an absolute travel position to camera-relative z; the shader's fog amount. |
+| `draw_checker_box(c, x0, x1, z0, z1, h, cell, col, ink, side, side_tint, near_z=0.6, clip_side=false, min_px=4)` | A checker building on the ground: its inner side face (toward the road, tinted) and its front face when in front of `near_z`; `clip_side` starts the side at `near_z` (rolling cameras). |
 | `draw_checker_quad(c, a, b, cc, d, cols, rows, col_a, col_b, min_px, near)` | Draw a planar quad of camera-relative corners into a `MotionCanvas` as a perspective-correct checkerboard (projected vertex by vertex), fogged like the plane, clipped at the near plane, falling back to one flat polygon when cells get smaller than `min_px`. Checker skyscrapers are two calls per building. |
 
 ##### Sandwich layers
@@ -1128,6 +1168,20 @@ New files in `addons/motion_kit/three/` (no existing kit file was edited):
 | `grow(mat, key, from, to)` | Sprouts geometry: model-space y is scaled by `1 - smoothstep(from, to, UV2.x - key)`. Towers keyed by track distance with `key` = the camera's distance lie flat far ahead and rise as you approach (keeps the horizon and the sun open down a long straight) |
 | `box(st, xform, size, col, uv2x, top)`, `quad(st, a, b, c, d, col, uv2x, uv0)` | Geometry for `UV` space: UVs in metres on every face (v from each side's base), UV2.x = a key for light windows and `grow` |
 
+##### MotionTrack3D (static, `three/motion_track_3d.gd`)
+
+Track builders shared by the Gantry and Night Circuit takes (unlit vertex colour, UV2.x =
+distance along the track for `lit_from` / `lit_to` chases):
+
+| Member | Notes |
+| --- | --- |
+| `circuit(points, tilts, handle=0.17, bake_interval=0.5) -> Curve3D` | Smooth banked curve through points (handles `handle` x neighbour-to-neighbour, flat ends) |
+| `frame(curve, s, height, side)`, `level_frame(curve, s, side)` | Banked frame at distance s (MotionStage3D.path_frame); heading only, no bank (things standing beside the track) |
+| `strip(st, curve, s0, s1, x0, y0, x1, y1, col, step=2)`, `quad(st, a, b, c, d, col, uv2x)` | Ribbons along the curve (deck, barriers, light strips), raw quads |
+| `trail_lane(curve, length, x, y, col, half_w=0.35, half_h=0.25, step=1) -> ArrayMesh` | A cross-section ribbon to light as a moving ship trail |
+
+Checkered faces use `MotionPattern3D.box / quad` (UVs in metres) instead.
+
 ##### MotionSkyDome3D (MeshInstance3D)
 
 | Member | Notes |
@@ -1191,6 +1245,9 @@ the content can ask which strip it is drawing and skip everything else.
 | `of(item, pad = 0)` (static) | The rect of `item`'s local space its viewport shows (inverse canvas transform of the viewport's visible rect), grown by `pad`. In a band: that band's strip; at the root: the frame, through any shake or scale. Empty when not in the tree. Call it in `_frame` (MotionTimeSlices / MotionTimeCache place their holders before the walk reaches the content). |
 | `is_partial(item, full)` (static) | True when the item renders into something smaller than `full`. |
 | `box(cam, centre, half)` (static) | Screen bounds of a world box through an orthographic MotionExtrudeCamera: a cheap, exact per-cell cull before positioning anything. |
+
+Both time effects share one profile table: static `MotionTimeSlices.profile_value(shape,
+u, k, waves, phase, seed_v, fn)` (their `profile_at(u, k)` call it).
 
 #### New: `addons/motion_kit/fx/motion_time_cache.gd` (`class_name MotionTimeCache`)
 

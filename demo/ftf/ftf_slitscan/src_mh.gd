@@ -21,9 +21,7 @@ var _jp: MotionText
 
 
 func _init() -> void:
-	duration = 100000
-	autoplay = false
-	hide_outside = false
+	as_source()
 
 
 func _ready() -> void:
@@ -69,7 +67,7 @@ func _frame(f: float) -> void:
 	if not _built:
 		return
 	var y := _rise(f)
-	var kick := L.decay_kick(f, L.MH_KICKS, 60.0, 0.4)
+	var kick := MK.decay_kick(f, L.MH_KICKS, 60.0, 0.4)
 	_box.position = MH_POS + Vector2(kick, y)
 	var acid := _acid(f)
 	_svg.apply(func(i: int) -> Variant:
@@ -117,5 +115,5 @@ func _paint(c: MotionCanvas, f: float) -> void:
 	# PRESENTS rule
 	var rw := MK.map(f, [L.PRESENTS_AT - 2, L.PRESENTS_AT + 8], [0, 1060], MK.ease_out)
 	if rw > 0.0:
-		var p := MH_POS + Vector2(145.0 * _k, 128.9 * _k + 30.0 + y) + Vector2(L.decay_kick(f, L.MH_KICKS, 60.0, 0.4), 0)
+		var p := MH_POS + Vector2(145.0 * _k, 128.9 * _k + 30.0 + y) + Vector2(MK.decay_kick(f, L.MH_KICKS, 60.0, 0.4), 0)
 		c.rect(Rect2(p, Vector2(rw, 6)), L.MAGENTA if acid else FTFKit.MH_AMBER)

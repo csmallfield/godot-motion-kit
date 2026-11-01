@@ -27,22 +27,10 @@ static var _fonts := {}
 static func font(path: String) -> Font:
 	if _fonts.has(path):
 		return _fonts[path]
-	var f := MotionFonts.font(path)
-	if path != FONT_JP:
-		var fb: Array[Font] = [MotionFonts.font(FONT_JP), MotionFonts.font(FONT_SYMBOLS)]
-		for x in fb:
-			if not f.fallbacks.has(x):
-				f.fallbacks = f.fallbacks + [x]
+	var f := MotionFonts.font(path) if path == FONT_JP else MotionFonts.font(path, false, [MotionFonts.font(FONT_JP), MotionFonts.font(FONT_SYMBOLS)])
 	_fonts[path] = f
 	return f
 
 
 static func text(parent: Node, path: String, size: float, col: Color, s: String, tracking := 0.0) -> MotionText:
-	var t := MotionText.new()
-	t.font = font(path)
-	t.font_size = size
-	t.color = col
-	t.tracking = tracking
-	t.text = s
-	parent.add_child(t)
-	return t
+	return MotionText.make(parent, font(path), size, col, s, tracking)

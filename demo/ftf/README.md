@@ -13,7 +13,6 @@ neo-futurist. The brief and the frame-by-frame beat sheet are in the header of
 | `assets/ftf_logo.svg` | `FTF_logo_pink_v1.svg` from the FTF repo, imported as Motion SVG |
 | `assets/noto-jp-ftf-900.woff2` | Noto Sans JP Black, subset to the piece's Japanese (OFL, see `demo/assets/fonts/OFL-noto-sans-cjk-jp.txt`) |
 | `audio/make.py` | Writes every sound recipe, the cue map and the music (sound sheet in its docstring) |
-| `audio/bake.gd` | Bakes the soundtrack to `audio/ftf_intro_track.res` and writes `audio/ftf_intro_cues.json` |
 | `audio/ftf_intro_track.res` | The baked soundtrack, so the piece plays its sound without the audio kit |
 
 ## Takes
@@ -21,7 +20,8 @@ neo-futurist. The brief and the frame-by-frame beat sheet are in the header of
 Five more takes, each built around a technique added to the kit for it
 (API in `docs/API.md` under "Added with the FTF intro takes"; each folder's
 `KIT_NOTES.md` has cost and limits). Each has its own sound in `audio/`
-(`make.py`, a bake script and the committed baked track).
+(`make.py`, the cue map and song, and the committed baked track); one tool,
+`tools/bake_audio.gd`, bakes any of them (see Sound).
 
 | Take | Folder | Tempo | New kit technique | Render cost (software GL) |
 | --- | --- | --- | --- | --- |
@@ -81,12 +81,20 @@ cue timing:
 ```sh
 tools/link_audio_kit.sh
 python3 demo/ftf/audio/make.py
-godot --headless --path . -s res://demo/ftf/audio/bake.gd
+godot --headless --path . -s res://tools/bake_audio.gd -- --piece=res://demo/ftf/ftf_intro.tscn
 godot --headless --path . -s res://addons/audio_kit/tools/review.gd -- \
     --cues demo/ftf/audio/ftf_intro_cues.json --map res://demo/ftf/audio/ftf_map.tres \
     --song res://demo/ftf/audio/music/ftf_song.tres --out out/review/ftf
 python3 ../godot-audio-kit/tools/analyze/analyze.py out/review/ftf
 ```
+
+`tools/bake_audio.gd` bakes any piece: `--piece=` names its folder
+(`res://demo/ftf/ftf_gantry`, scene `<folder>/<folder name>.tscn`) or its
+`.tscn` (the intro). It finds the piece's sound in `<folder>/audio/` by
+convention (the one `*_map.tres`, `music/*song.tres`, `*_track.res` and
+`*_cues.json`), writes the track and the cue sheet there, and takes
+`--scene= --map= --song= --track= --cues=` overrides (e.g. a scratch
+`--track=/tmp/t.res` to compare a re-bake without touching the committed one).
 
 ## Render
 

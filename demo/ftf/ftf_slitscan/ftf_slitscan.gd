@@ -42,7 +42,7 @@
 #   392-420 black
 #
 # Sound: cues in _init; recipes, cue map and a 180 bpm d&b song in audio/
-# (make.py); audio/bake.gd bakes audio/ftf_slitscan_track.res, which plays when
+# (make.py); tools/bake_audio.gd bakes audio/ftf_slitscan_track.res, which plays when
 # the audio kit isn't linked. Replacement music: 180 bpm, downbeat at 0.0 s.
 @tool
 extends MotionComposition
@@ -67,6 +67,7 @@ var _flash: ColorRect
 
 func _init() -> void:
 	duration = L.END
+	bpm = L.BPM
 	fps = 30
 	markers = {"in": 0.0, "logo": L.SCAN, "hold": L.LOGO_SNAP, "out": L.EXIT}
 	cue(0, &"slit", 0.6)

@@ -51,6 +51,9 @@ enum Clock { PROCESS, AUDIO, MANUAL }
 ## When nested: hide outside [0, duration) of its own time, like a Remotion
 ## <Sequence>; `loop` then repeats it within the parent's time.
 @export var hide_outside := true
+## Tempo in beats per minute (0: none). Read by beat_frames(), bar_frames()
+## and beat_at(); pieces derive their beat timing from it.
+@export var bpm := 0.0
 
 @export_group("Layout")
 ## Reference size the composition is authored in (1920x1080 for the SCF pieces).
@@ -274,12 +277,12 @@ func cue(at: float, name: StringName, intensity := 1.0, data := {}) -> float:
 	return at
 
 
-## Declare a cue on every beat at `bpm` from frame `from` to `to` (inclusive):
+## Declare a cue on every beat at `tempo` bpm from frame `from` to `to` (inclusive):
 ## `name` with `data.beat` (0, 1, 2...), intensity 1 on every `accent_every`th
 ## beat and `intensity` otherwise. Returns the frames.
-func beats(bpm: float, from: float, to: float, name: StringName = &"beat", intensity := 0.6, accent_every := 4) -> PackedFloat32Array:
+func beats(tempo: float, from: float, to: float, name: StringName = &"beat", intensity := 0.6, accent_every := 4) -> PackedFloat32Array:
 	var out := PackedFloat32Array()
-	var step := fps * 60.0 / bpm
+	var step := fps * 60.0 / tempo
 	var i := 0
 	var at := from
 	while at <= to + 1e-6:
@@ -288,6 +291,33 @@ func beats(bpm: float, from: float, to: float, name: StringName = &"beat", inten
 		i += 1
 		at = from + i * step
 	return out
+
+
+## Frames per beat at `bpm` and `fps` (0 when no bpm is set).
+func beat_frames() -> float:
+	return MK.beat_frames(bpm, fps) if bpm > 0.0 else 0.0
+
+
+## Frames per bar of `beats_per_bar` beats.
+func bar_frames(beats_per_bar := 4) -> float:
+	return beat_frames() * beats_per_bar
+
+
+## The beat number at frame f, fractional (beat 0 starts at frame `from`):
+## floor() it for the beat index, fposmod(.., 1.0) for the phase within it.
+func beat_at(f: float, from := 0.0) -> float:
+	var b := beat_frames()
+	return (f - from) / b if b > 0.0 else 0.0
+
+
+## Make this composition a source driven by another (a slit-scan or time
+## effect samples it at many frames): effectively endless, never playing on
+## its own, never hidden by its parent's timeline. Returns itself.
+func as_source() -> MotionComposition:
+	duration = 100000
+	autoplay = false
+	hide_outside = false
+	return self
 
 
 ## Remove every cue this composition declared (not its children's).

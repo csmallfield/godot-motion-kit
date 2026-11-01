@@ -51,13 +51,6 @@ func _ready() -> void:
 	super._ready()
 
 
-## Pulse after each beat: 1 on the beat, decaying.
-static func _pulse(f: float, from: float, to: float) -> float:
-	if f < from or f >= to:
-		return 0.0
-	return exp(-fmod(f - from, BEAT) / 4.5)
-
-
 ## A ferro blob: a core with tapering spikes. `bias` (when not NAN) leans the
 ## spikes toward an angle.
 static func _spiky(cx: float, cy: float, R: float, L: float, seed: float, f: float, bias := NAN, bias_amt := 0.0) -> Array:
@@ -183,7 +176,7 @@ func _frame(f: float) -> void:
 	var b1 := f < 162
 	_b1.visible = b1
 	_b2.visible = not b1
-	var spikes := 260 * _pulse(f, 15, 60) + 70 * _pulse(f, 60, 75)
+	var spikes := 260 * MK.beat_pulse(f, BEAT, 15, 60, 0.0, 4.5) + 70 * MK.beat_pulse(f, BEAT, 60, 75, 0.0, 4.5)
 	var relax := MK.map(f, [232, 246], [0, 1], MK.ease_in_out)
 	if b1:
 		_frame_b1(f, spikes)
@@ -242,7 +235,7 @@ func _frame_b2(f: float, relax: float) -> void:
 		var d: Dictionary = _g.discs[k]
 		var enter := MK.map(f, [164 + k * 6, 192 + k * 6], [0, 1], MK.ease_in_out)
 		var x := lerpf(-400, d.x, enter) + tear * 2600
-		var bristle := (1 - relax) * (60 + 90 * _pulse(f, 195, 240)) + (280 * exp(-maxf(0.0, o - 2) / 10) if o > 0 else 0.0)
+		var bristle := (1 - relax) * (60 + 90 * MK.beat_pulse(f, BEAT, 195, 240, 0.0, 4.5)) + (280 * exp(-maxf(0.0, o - 2) / 10) if o > 0 else 0.0)
 		var bias := atan2(0, mag_x - x)
 		var out := _spiky(x, d.y, d.r * (0.82 if f < 246 else 1.0) + relax * d.r * 0.18, bristle * enter, k * 3 + 1, f, bias if f < 240 else NAN, 0.8)
 		for i in _g.nodes.size():

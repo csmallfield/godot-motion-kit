@@ -163,6 +163,57 @@ static func shakes(f: float, ats: Array, amp := 18.0, dur := 10.0) -> Vector2:
 	return s
 
 
+# ------------------------------------------------------------------ beats
+
+## Frames per beat at `bpm` (at 30 fps: 150 bpm -> 12, 120 -> 15, 180 -> 10).
+static func beat_frames(bpm: float, fps := 30.0) -> float:
+	return fps * 60.0 / bpm
+
+
+## 0..1 pulse on every beat of length `beat` frames from `from` (inclusive) to
+## `to` (exclusive): 1 on the beat, decaying as exp(-t * rate), t frames after
+## it; or exp(-t / tau) when `tau` > 0 (a time constant in frames). 0 outside.
+static func beat_pulse(f: float, beat: float, from := 0.0, to := INF, rate := 0.3, tau := 0.0) -> float:
+	if f < from or f >= to:
+		return 0.0
+	var t := fmod(f - from, beat)
+	return exp(-t / tau) if tau > 0.0 else exp(-t * rate)
+
+
+## Sum of decaying kicks: each frame in `ats` adds amp * exp(-(f - at) * rate)
+## from that frame on, alternating sign (+, -, +...) when `alternate` (a
+## camera that jolts one way, then the other). 0 before the first.
+static func decay_kick(f: float, ats: Array, amp: float, rate := 0.45, alternate := true) -> float:
+	var v := 0.0
+	for i in ats.size():
+		var at: float = ats[i]
+		if f >= at:
+			v += amp * exp(-(f - at) * rate) * (1.0 if (i % 2 == 0 or not alternate) else -1.0)
+	return v
+
+
+## 0..1: 1 right after the most recent of `ats`, decaying as exp(-t * rate).
+static func accent(f: float, ats: Array, rate := 0.3) -> float:
+	var v := 0.0
+	for a in ats:
+		var at: float = a
+		if f >= at:
+			v = maxf(v, exp(-(f - at) * rate))
+	return v
+
+
+## A light striking on at `at`: 0 before, then a seeded stutter between 1 and
+## `low` (more often on as it settles) for `settle` frames, then steady 1.
+## `seed_v` picks the stutter pattern (different lamps, different flicker).
+static func flicker(f: float, at: float, seed_v: float, settle := 8.0, low := 0.15) -> float:
+	if f < at:
+		return 0.0
+	var t := f - at
+	if t > settle:
+		return 1.0
+	return 1.0 if rand(floorf(t) * 3.1 + seed_v) > 0.45 - t * 0.05 else low
+
+
 ## Typewriter: characters of `text` revealed at `cps` characters per second.
 static func typed(text: String, f: float, start: float, cps := 38.0, fps := 30.0) -> String:
 	return text.substr(0, maxi(0, int(floorf(((f - start) * cps) / fps))))

@@ -13,6 +13,8 @@ const SUITES := [
 	"res://tests/test_polygons.gd",
 	"res://tests/test_motion_path.gd",
 	"res://tests/test_motion_poly.gd",
+	"res://tests/test_motion_travel.gd",
+	"res://tests/test_kit_helpers.gd",
 ]
 
 func _init() -> void:

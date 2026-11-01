@@ -45,8 +45,9 @@ extends MotionComposition
 
 const W := 1920.0
 const H := 1080.0
-const BEAT := 18.0
-const BAR := 72.0
+const BPM := 100.0
+const BEAT := 1800.0 / BPM          # frames per beat at 30 fps
+const BAR := 4.0 * BEAT
 
 const HORIZON := 720.0
 const PEEK := 18.0
@@ -96,6 +97,7 @@ var _grad_ftf: Gradient
 
 func _init() -> void:
 	duration = END
+	bpm = BPM
 	fps = 30
 	markers = {"in": 0.0, "logo": DROP, "hold": DROP + BAR, "out": MELT_OUT}
 	cue(0.0, &"dawn", 0.6)
@@ -158,7 +160,7 @@ func _build() -> void:
 	_mh.seed = 7.0
 	_stage.add_child(_mh)
 	_mh_logo = MotionSvg.new()
-	_mh_logo.data = _svg("res://demo/assets/logos/mh_logoFull_standard.svg")
+	_mh_logo.data = MotionSvgData.load_any("res://demo/assets/logos/mh_logoFull_standard.svg")
 	_mh_logo.width = MH_W
 	_mh.content.add_child(_mh_logo)
 	var k := MH_W / _mh_logo.data.view_box.size.x
@@ -179,7 +181,7 @@ func _build() -> void:
 	pivot.position = LOGO_C
 	_ftf.content.add_child(pivot)
 	_ftf_logo = MotionSvg.new()
-	_ftf_logo.data = _svg(FTFKit.LOGO)
+	_ftf_logo.data = MotionSvgData.load_any(FTFKit.LOGO)
 	_ftf_logo.width = LOGO_W
 	_ftf_logo.position = -_ftf_logo.data.view_box.size * (LOGO_W / _ftf_logo.data.view_box.size.x) * 0.5
 	pivot.add_child(_ftf_logo)
@@ -211,11 +213,6 @@ func _cols(hexes: Array) -> Array:
 	for h in hexes:
 		out.append(Color(h))
 	return out
-
-
-func _svg(path: String) -> MotionSvgData:
-	var res: Resource = load(path) if ResourceLoader.exists(path) else null
-	return res if res is MotionSvgData else MotionSvgData.from_file(path)
 
 
 func _add_sound() -> void:
@@ -254,13 +251,6 @@ func _beat_phase(f: float, from: float, to: float, kick := 0.5) -> float:
 	return p
 
 
-## 0..1 decaying pulse on each beat in [from, to).
-func _beat_pulse(f: float, from: float, to: float) -> float:
-	if f < from or f >= to:
-		return 0.0
-	return exp(-fmod(f - from, BEAT) / 3.5)
-
-
 # ================================================================== frame
 
 func _frame(f: float) -> void:
@@ -288,7 +278,7 @@ func _frame_field(f: float) -> void:
 	var sun_y := MK.interp(f, [0, PEEK, SET, TRIP, DROP, MELT_OUT, SINK, LAST],
 		[HORIZON + 140.0, HORIZON + 70.0, HORIZON - 10.0, 600.0, LOGO_C.y + 20.0, LOGO_C.y + 40.0, 520.0, HORIZON + 150.0], MK.ease_in_out)
 	fd.centre = Vector2(960, sun_y)
-	var beat := _beat_pulse(f, SET, MELT_OUT)
+	var beat := MK.beat_pulse(f, BEAT, SET, MELT_OUT, 0.0, 3.5)
 	fd.sun_r = MK.interp(f, [PEEK, SET, TRIP, DROP, DROP + 8.0, MELT_OUT, LAST], [120.0, 170.0, 150.0, 150.0, 300.0, 300.0, 220.0], MK.ease_out) * (1.0 + (0.1 if f >= DROP else 0.04) * beat)
 	fd.sun_glow = 0.6
 	fd.sun_slit_scroll = f / 60.0 + (f / 12.0 if f >= POUR and f < DROP else 0.0)

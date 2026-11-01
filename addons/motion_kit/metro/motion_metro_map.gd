@@ -475,14 +475,8 @@ func draw_interchange(c: CanvasItem, n: Vector2i, s := 1.0, r := -1.0, fill := C
 ## `align` 0 left, 0.5 centre, 1 right; `pos` is the baseline start. Labels
 ## smaller than `min_px` on screen are skipped (dense maps stay cheap).
 static func label(c: CanvasItem, font: Font, pos: Vector2, text: String, size: float, zoom: float, col: Color, align := 0.0, min_px := 4.0) -> void:
-	var on_screen := size * zoom
-	if on_screen < min_px or col.a <= 0.0:
+	if size * zoom < min_px or col.a <= 0.0:
 		return
-	# snap raster sizes to a ladder so a zooming camera reuses glyphs
-	var px_size := maxi(1, int(round(pow(1.08, round(log(on_screen) / log(1.08))))))
-	var w := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, px_size).x
-	# the drawn size is the snapped raster size; scale so it matches `size` in map pixels
-	var k := on_screen / float(px_size)
-	c.draw_set_transform(pos, 0.0, Vector2.ONE * (k / zoom))
-	c.draw_string(font, Vector2(-w * align, 0), text, HORIZONTAL_ALIGNMENT_LEFT, -1, px_size, col)
-	c.draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+	# raster sizes snap to a ladder 8% apart so a zooming camera reuses glyphs
+	MotionFonts.draw_screen_text(c, Transform2D.IDENTITY, font, pos, text, size, col,
+		HORIZONTAL_ALIGNMENT_LEFT, 1.08, min_px, -1.0, align, zoom)

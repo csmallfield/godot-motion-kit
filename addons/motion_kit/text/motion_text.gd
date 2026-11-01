@@ -97,6 +97,23 @@ func char_count() -> int:
 	return _chars
 
 
+## A MotionText with `font`, `size`, colour, string and `tracking` (em),
+## placed at `pos` and added to `parent` (when given). The one-line text
+## factory for pieces: `MotionText.make(self, font, 48, INK, "HELLO", 0.1)`.
+static func make(parent: Node, font_v: Font, size: float, col: Color, s: String, tracking_em := 0.0,
+		pos := Vector2.ZERO) -> MotionText:
+	var t := MotionText.new()
+	t.font = font_v
+	t.font_size = size
+	t.color = col
+	t.tracking = tracking_em
+	t.text = s
+	t.position = pos
+	if parent:
+		parent.add_child(t)
+	return t
+
+
 ## Laid-out size in pixels: widest line including tracking, total line-box height.
 func get_text_size() -> Vector2:
 	_layout()

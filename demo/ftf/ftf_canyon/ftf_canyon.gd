@@ -54,15 +54,16 @@
 # builders), MotionEdges3D (screen-space crease + silhouette outlines),
 # MotionDecalAtlas (2D markings drawn once, mapped onto 3D faces).
 # Sound: audio/make.py writes the recipes, cue map and a 112.5 bpm song;
-# audio/bake.gd bakes them.
+# tools/bake_audio.gd bakes them.
 @tool
 extends MotionComposition
 
 const CB := preload("res://demo/ftf/ftf_canyon/canyon_build.gd")
 
 # ---- beat sheet (frames)
-const BEAT := 16.0
-const BAR := 64.0
+const BPM := 112.5
+const BEAT := 1800.0 / BPM          # frames per beat at 30 fps
+const BAR := 4.0 * BEAT
 const WALKS := [16.0, 32.0, 48.0, 168.0, 184.0]
 const PIPES := [24.0, 40.0, 56.0, 160.0]
 const PODS := [20.0, 44.0]
@@ -109,7 +110,7 @@ var _stage: MotionStage3D
 var _flat := MotionFlat3D.new()
 var _atlas: MotionDecalAtlas
 var _curve: Curve3D
-var _s := PackedFloat64Array()
+var _travel: MotionTravel   # camera distance along the route per frame
 var _cb: RefCounted
 
 var _ink_fixed: ShaderMaterial
@@ -134,6 +135,7 @@ var _font_jp: Font
 
 func _init() -> void:
 	duration = END
+	bpm = BPM
 	fps = 30
 	markers = {"in": 0.0, "logo": RISE, "hold": DROP, "out": SINK}
 	cue(0.0, &"open", 0.8)
@@ -187,68 +189,30 @@ const ROUTE := [Vector3(-5, -50, 0.42), Vector3(-5, -40, 0.42), Vector3(-5, -30,
 
 
 func _make_curve() -> void:
-	_curve = Curve3D.new()
-	_curve.bake_interval = 0.1
-	var tilts := {13: 0.0, 15: -0.18, 16: -0.32, 17: -0.18, 5: 0.06, 6: 0.14, 7: 0.1}
+	var bank := {13: 0.0, 15: -0.18, 16: -0.32, 17: -0.18, 5: 0.06, 6: 0.14, 7: 0.1}
+	var pts: Array[Vector3] = []
+	var tilts: Array[float] = []
 	for i in ROUTE.size():
 		var q: Vector3 = ROUTE[i]
-		var p := CB.w(q.x, q.y, q.z)
-		var prev: Vector3 = ROUTE[maxi(i - 1, 0)]
-		var next: Vector3 = ROUTE[mini(i + 1, ROUTE.size() - 1)]
-		var hnd := (CB.w(next.x, next.y, next.z) - CB.w(prev.x, prev.y, prev.z)) * 0.18
-		_curve.add_point(p, -hnd if i > 0 else Vector3.ZERO, hnd if i < ROUTE.size() - 1 else Vector3.ZERO)
-		_curve.set_point_tilt(i, tilts.get(i, 0.0))
+		pts.append(CB.w(q.x, q.y, q.z))
+		tilts.append(bank.get(i, 0.0))
+	_curve = MotionTrack3D.circuit(pts, tilts, 0.18, 0.1)
 
 
 func _make_table() -> void:
+	# a monotone cubic through the anchors: the camera passes each landmark on its frame
 	var xs: Array[float] = []
 	var ys: Array[float] = []
 	for a in ANCHORS:
 		var g: Vector2 = a[1]
 		xs.append(a[0])
 		ys.append(_curve.get_closest_offset(CB.w(g.x, g.y, 0.5)))
-	# Fritsch-Carlson monotone cubic through the anchors
-	var n := xs.size()
-	var dl: Array[float] = []
-	for i in n - 1:
-		dl.append((ys[i + 1] - ys[i]) / (xs[i + 1] - xs[i]))
-	var m: Array[float] = [dl[0]]
-	for i in range(1, n - 1):
-		m.append(0.0 if dl[i - 1] * dl[i] <= 0.0 else (dl[i - 1] + dl[i]) * 0.5)
-	m.append(dl[n - 2])
-	for i in n - 1:
-		if dl[i] == 0.0:
-			m[i] = 0.0
-			m[i + 1] = 0.0
-			continue
-		var a := m[i] / dl[i]
-		var b := m[i + 1] / dl[i]
-		var h := a * a + b * b
-		if h > 9.0:
-			var t := 3.0 / sqrt(h)
-			m[i] = t * a * dl[i]
-			m[i + 1] = t * b * dl[i]
-	_s.resize(END + 2)
-	for f in _s.size():
-		var x := float(f)
-		var k := 0
-		while k < n - 2 and x > xs[k + 1]:
-			k += 1
-		var hh := xs[k + 1] - xs[k]
-		if x > xs[n - 1]:
-			_s[f] = ys[n - 1] + m[n - 1] * (x - xs[n - 1])
-			continue
-		var t := (x - xs[k]) / hh
-		var t2 := t * t
-		var t3 := t2 * t
-		_s[f] = (2 * t3 - 3 * t2 + 1) * ys[k] + (t3 - 2 * t2 + t) * hh * m[k] + (-2 * t3 + 3 * t2) * ys[k + 1] + (t3 - t2) * hh * m[k + 1]
+	_travel = MotionTravel.from_anchors(xs, ys, END + 2)
 
 
 ## Camera distance along the route at frame f (pure: a table lookup).
 func s_at(f: float) -> float:
-	var fc := clampf(f, 0.0, _s.size() - 1.001)
-	var i := int(fc)
-	return lerpf(_s[i], _s[i + 1], fc - i)
+	return _travel.at(f)
 
 
 func _grid_at(s: float) -> Vector2:

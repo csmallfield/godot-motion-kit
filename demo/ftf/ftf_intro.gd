@@ -206,7 +206,7 @@ func _build_act1() -> void:
 	_a1_canvas.draw_fn = _draw_act1
 	_a1.content.add_child(_a1_canvas)
 	_mh = MotionSvg.new()
-	_mh.data = _svg("res://demo/assets/logos/mh_logoFull_standard.svg")
+	_mh.data = MotionSvgData.load_any("res://demo/assets/logos/mh_logoFull_standard.svg")
 	_mh.width = MH_W
 	_mh.position = MH_POS
 	_a1.content.add_child(_mh)
@@ -298,7 +298,7 @@ func _build_act3() -> void:
 	_logo_pivot.position = LOGO_C
 	_a3.content.add_child(_logo_pivot)
 	_logo = MotionSvg.new()
-	_logo.data = _svg(FTFKit.LOGO)
+	_logo.data = MotionSvgData.load_any(FTFKit.LOGO)
 	_logo.width = LOGO_W
 	_logo_k = LOGO_W / _logo.data.view_box.size.x
 	_logo.position = -_logo.data.view_box.size * _logo_k * 0.5
@@ -324,8 +324,8 @@ func _build_act3() -> void:
 	_hud_item(jpv, HUD_AT[3], Vector2(1838, 420), jpv.get_text_size() * 0.5)
 	var hex := FTFKit.text(_a3.content, "mono", 22, FTFKit.PINK, "#E92067 // #D7FF1F // #A98BFF", 0.1)
 	_hud_item(hex, HUD_AT[4], Vector2(1260 - hex.get_text_size().x * 0.5, 1030), hex.get_text_size() * 0.5)
-	var bpm := FTFKit.text(_a3.content, "mono", 22, FTFKit.STONE, "150 BPM // 4/4", 0.1)
-	_hud_item(bpm, HUD_AT[4], Vector2(132 + bpm.get_text_size().x * 0.5, 1030), bpm.get_text_size() * 0.5)
+	var tempo := FTFKit.text(_a3.content, "mono", 22, FTFKit.STONE, "150 BPM // 4/4", 0.1)
+	_hud_item(tempo, HUD_AT[4], Vector2(132 + tempo.get_text_size().x * 0.5, 1030), tempo.get_text_size() * 0.5)
 	_dot = MotionCanvas.new()
 	_dot.draw_fn = _draw_dot
 	_stage.add_child(_dot)
@@ -335,11 +335,6 @@ func _hud_item(n: Node2D, at: float, centre: Vector2, half: Vector2) -> void:
 	var p := FTFKit.centred(_a3.content, n, centre, half)
 	_hud_texts.append(p)
 	_hud_at.append(at)
-
-
-func _svg(path: String) -> MotionSvgData:
-	var res: Resource = load(path) if ResourceLoader.exists(path) else null
-	return res if res is MotionSvgData else MotionSvgData.from_file(path)
 
 
 ## Sound: the Audio Kit's bridge when it is linked, else the committed bake.

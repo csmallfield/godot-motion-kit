@@ -36,8 +36,8 @@
 extends MotionComposition
 
 const BPM := 150.0
-const BEAT := 12.0
-const BAR := 48.0
+const BEAT := 1800.0 / BPM          # frames per beat at 30 fps
+const BAR := 4.0 * BEAT
 
 const WAVE_A := [0.0, 12.0, 24.0, 36.0]
 const MH_AT := 48.0
@@ -146,6 +146,7 @@ var _ring_trains: Array[Dictionary] = []
 
 func _init() -> void:
 	duration = END
+	bpm = BPM
 	fps = 30
 	markers = {"in": 0.0, "logo": DROP, "hold": DROP + BAR, "out": OUT}
 	for i in WAVE_A.size():
@@ -181,12 +182,7 @@ func _ready() -> void:
 # ================================================================== build
 
 func _font(path: String) -> Font:
-	var f := MotionFonts.font(path)
-	if path != F_JP:
-		var jp := MotionFonts.font(F_JP)
-		if not f.fallbacks.has(jp):
-			f.fallbacks = [jp]
-	return f
+	return MotionFonts.font(path) if path == F_JP else MotionFonts.font(path, false, [MotionFonts.font(F_JP)])
 
 
 func _build() -> void:
@@ -211,7 +207,7 @@ func _build() -> void:
 	_build_network()
 	_build_logo()
 	_logo_svg = MotionSvg.new()
-	_logo_svg.data = _svg(FTFKit.LOGO)
+	_logo_svg.data = MotionSvgData.load_any(FTFKit.LOGO)
 	_logo_svg.width = LOGO_W
 	_logo_svg.only = PackedInt32Array(FTFKit.SMALL + FTFKit.CHECKS)
 	_logo_svg.position = L_C - _logo_svg.data.view_box.size * (LOGO_W / _logo_svg.data.view_box.size.x) * 0.5
@@ -223,7 +219,7 @@ func _build() -> void:
 	_hud.draw_fn = _draw_hud
 	add_child(_hud)
 	_mh_icon = MotionSvg.new()
-	_mh_icon.data = _svg("res://demo/assets/logos/mh_icon.svg")
+	_mh_icon.data = MotionSvgData.load_any("res://demo/assets/logos/mh_icon.svg")
 	_mh_icon.width = 54.0
 	_mh_icon.position = Vector2(84, 846)
 	add_child(_mh_icon)
@@ -253,11 +249,6 @@ func _add_sound() -> void:
 		add_child(p)
 		audio = p
 		clock = Clock.AUDIO
-
-
-func _svg(path: String) -> MotionSvgData:
-	var res: Resource = load(path) if ResourceLoader.exists(path) else null
-	return res if res is MotionSvgData else MotionSvgData.from_file(path)
 
 
 func _build_river() -> void:
@@ -463,11 +454,11 @@ func _build_logo() -> void:
 	_logo.cell = 1.0
 	_logo.width = 4.2
 	_logo.casing = 0.0
-	var data := _svg(FTFKit.LOGO)
+	var data := MotionSvgData.load_any(FTFKit.LOGO)
 	var k := LOGO_W / data.view_box.size.x
 	var tl := L_C - data.view_box.size * k * 0.5
 	# plate: its outer contour, filled as the inset box; four lines round it
-	var plate_c := _contours(data, FTFKit.PLATE, k, tl)
+	var plate_c := data.contours(FTFKit.PLATE, k, tl, 0.25, true)
 	_plate = plate_c[0]
 	var rim_cols := [FTFKit.PINK, FTFKit.CREAM, FTFKit.LILAC, FTFKit.LIME]
 	for j in rim_cols.size():
@@ -484,7 +475,7 @@ func _build_logo() -> void:
 	var spacing := 7.2
 	for part in pink_parts + white_parts:
 		var col: Color = FTFKit.PINK if pink_parts.has(part) else FTFKit.WHITE
-		var conts := _contours(data, part, k, tl)
+		var conts := data.contours(part, k, tl, 0.25, true)
 		var outers: Array[PackedVector2Array] = []
 		var holes: Array[PackedVector2Array] = []
 		var is_hole := MotionPoly.hole_flags(conts, false)
@@ -546,19 +537,6 @@ func _build_logo() -> void:
 		if r.depth == 0 and FTFKit.WORD.has(r.part) or r.depth == -1:
 			_ring_trains.append({line = r.line, phase = MK.rand(n * 4.1) * 900.0, speed = (2.5 + MK.rand(n * 2.3) * 2.5) * (1.0 if n % 2 == 0 else -1.0)})
 			n += 1
-
-
-func _contours(data: MotionSvgData, part: int, k: float, tl: Vector2) -> Array[PackedVector2Array]:
-	var out: Array[PackedVector2Array] = []
-	for c in data.outline(part, 0.25):
-		var pts := PackedVector2Array()
-		for p in c:
-			pts.append(tl + p * k)
-		if pts.size() > 2 and pts[0].distance_to(pts[pts.size() - 1]) < 0.01:
-			pts.remove_at(pts.size() - 1)
-		if pts.size() > 2:
-			out.append(pts)
-	return out
 
 
 ## Deprecated: use MotionPoly.signed_area.

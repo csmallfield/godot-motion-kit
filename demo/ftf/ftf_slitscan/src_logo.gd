@@ -17,9 +17,7 @@ var _logo: MotionSvg
 
 
 func _init() -> void:
-	duration = 100000
-	autoplay = false
-	hide_outside = false
+	as_source()
 
 
 func _ready() -> void:
@@ -44,7 +42,7 @@ func _ready() -> void:
 
 static func logo_offset(f: float) -> Vector2:
 	var y := MK.map(f, [L.SCAN - 4.0, L.UNFOLD + 8.0], [760, 0], MK.ease_out)
-	var x := L.decay_kick(f, L.ACCENTS, 46.0, 0.5)
+	var x := MK.decay_kick(f, L.ACCENTS, 46.0, 0.5)
 	if f > L.LOGO_SNAP:   # a slow bob, so the scanner passes and time split have motion to bend
 		y += 12.0 * sin((f - L.LOGO_SNAP) * TAU / L.BAR) * MK.map(f, [L.LOGO_SNAP, L.LOGO_SNAP + 10.0], [0, 1])
 	if f > L.EXIT:

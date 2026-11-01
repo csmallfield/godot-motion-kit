@@ -33,8 +33,9 @@ extends MotionComposition
 
 const W := 1920.0
 const H := 1080.0
-const BEAT := 16.0
-const BAR := 64.0
+const BPM := 112.5
+const BEAT := 1800.0 / BPM          # frames per beat at 30 fps
+const BAR := 4.0 * BEAT
 
 const DIVE := 0.0
 const HORIZON := 32.0
@@ -79,8 +80,7 @@ const MH_AMBER := Color("#f4af3f")
 const MH_RED := Color("#ef393b")
 
 var _built := false
-var _travel := PackedFloat32Array()   # travel distance per frame (tabled once)
-var _speed := PackedFloat32Array()
+var _tr: MotionTravel   # travel distance per frame (tabled once)
 
 var _back: MotionPatternPlane
 var _front: MotionPatternPlane
@@ -105,6 +105,7 @@ var _lots: Array = []   # cached per lot index: Dictionary
 
 func _init() -> void:
 	duration = END
+	bpm = BPM
 	fps = 30
 	markers = {"in": 0.0, "logo": DROP, "hold": 224.0, "out": SINK}
 	_table()
@@ -135,29 +136,19 @@ func _init() -> void:
 
 # ------------------------------------------------------------------ timing
 
-func _speed_at(f: float) -> float:
-	# world units per frame
-	return MK.interp(f, [0, 32, 56, 72, 112, 124, 128, 168, 184, 192, 320, 340, 384],
-		[1.1, 0.9, 0.5, 0.32, 0.32, 1.2, 2.4, 2.4, 1.6, 2.4, 2.4, 3.2, 4.0], MK.ease_in_out)
+const SPEED_FRAMES := [0, 32, 56, 72, 112, 124, 128, 168, 184, 192, 320, 340, 384]
+## World units per frame at SPEED_FRAMES.
+const SPEED := [1.1, 0.9, 0.5, 0.32, 0.32, 1.2, 2.4, 2.4, 1.6, 2.4, 2.4, 3.2, 4.0]
 
 
 func _table() -> void:
 	# Integrate the speed profile once (on eighths of a frame): travel(f) is a
 	# lookup, so every frame stays a pure function of f.
-	_travel.resize(END + 2)
-	_speed.resize(END + 2)
-	var acc := 0.0
-	for i in END + 2:
-		_travel[i] = acc
-		_speed[i] = _speed_at(float(i))
-		for k in 8:
-			acc += _speed_at(i + (k + 0.5) / 8.0) / 8.0
+	_tr = MotionTravel.from_keys(SPEED_FRAMES, SPEED, END + 2, MK.ease_in_out)
 
 
 func travel(f: float) -> float:
-	var i := clampi(int(floorf(f)), 0, END)
-	var t := clampf(f - i, 0.0, 1.0)
-	return lerpf(_travel[i], _travel[i + 1], t)
+	return _tr.at(f)
 
 
 ## Where the MH monument stands (absolute travel position).
@@ -205,7 +196,7 @@ func _build_mh() -> void:
 	_mh_slab.draw_fn = _draw_slab
 	_mh.add_child(_mh_slab)
 	_mh_svg = MotionSvg.new()
-	_mh_svg.data = _svg("res://demo/assets/logos/mh_logoFull_standard.svg")
+	_mh_svg.data = MotionSvgData.load_any("res://demo/assets/logos/mh_logoFull_standard.svg")
 	_mh_svg.width = 980.0
 	var mh_h := 980.0 * _mh_svg.data.view_box.size.y / _mh_svg.data.view_box.size.x
 	_mh_svg.position = Vector2(-490.0, -MH_PX * MH_H / MH_W * 0.5 + 70.0)
@@ -219,7 +210,7 @@ func _build_mh() -> void:
 func _build_logo() -> void:
 	_logo = Node2D.new()
 	_stage.add_child(_logo)
-	var data := _svg(FTFKit.LOGO)
+	var data := MotionSvgData.load_any(FTFKit.LOGO)
 	var k := LOGO_PX / data.view_box.size.x
 	var origin := -data.view_box.size * k * 0.5
 	# the plate, filled with checks: a polygon mask that clips a checker canvas
@@ -259,11 +250,6 @@ func _build_hud() -> void:
 	_hud_jp.position = Vector2(W - 72 - _hud_jp.get_text_size().x, H - 90)
 
 
-func _svg(path: String) -> MotionSvgData:
-	var res: Resource = load(path) if ResourceLoader.exists(path) else null
-	return res if res is MotionSvgData else MotionSvgData.from_file(path)
-
-
 func _add_sound() -> void:
 	if Engine.is_editor_hint():
 		return
@@ -289,14 +275,6 @@ func _add_sound() -> void:
 
 
 # ------------------------------------------------------------------ helpers
-
-## 0..1 decaying pulse after each beat from `from` to `to`.
-func _beat_pulse(f: float, from: float, to: float, decay := 0.18) -> float:
-	if f < from or f >= to:
-		return 0.0
-	var t := fmod(f - from, BEAT)
-	return exp(-t * decay)
-
 
 ## Section mixes, each 0..1.
 func _tube(f: float) -> float:
@@ -348,10 +326,10 @@ func _frame(f: float) -> void:
 		var hv := MK.map(f, [HALVE, HALVE + 6], [0, 1], MK.ease_out)
 		base_cell = lerpf(base_cell, base_cell * 0.5, hv)
 		cell_y = lerpf(cell_y, cell_y * 0.5, hv)
-	var pulse := _beat_pulse(f, 80.0, 112.0) + _beat_pulse(f, TUBE, UNTUBE) + 0.5 * _beat_pulse(f, DROP, SINK)
+	var pulse := MK.beat_pulse(f, BEAT, 80.0, 112.0, 0.18) + MK.beat_pulse(f, BEAT, TUBE, UNTUBE, 0.18) + 0.5 * MK.beat_pulse(f, BEAT, DROP, SINK, 0.18)
 	p.cell = Vector2(base_cell, cell_y) * (1.0 + 0.35 * pulse)
 	p.cell_scroll = Vector2(base_cell, cell_y)
-	p.motion_blur = p.motion_blur_for(Vector2(0, _speed[clampi(int(f), 0, END)]), 0.5)
+	p.motion_blur = p.motion_blur_for(Vector2(0, _tr.frame_speed(f)), 0.5)
 	# colours: MH sunrise (cream/ink, amber lanes) -> tube flips -> FTF (white/ink, cycling lanes)
 	var mh_a := MH_CREAM
 	var a := mh_a.lerp(PAPER, hold)
@@ -380,7 +358,7 @@ func _frame(f: float) -> void:
 	p.fog_range = Vector2(lerpf(30.0, 12.0, tube), fogfar)
 	var rise_sun := MK.map(f, [0, MH_LAND], [-6.0, 7.0], MK.ease_out)
 	p.sun_elevation = lerpf(rise_sun, 5.5, hold)
-	var spulse := _beat_pulse(f, DROP, SINK, 0.22) + _beat_pulse(f, 64.0, 112.0, 0.22) * 0.6
+	var spulse := MK.beat_pulse(f, BEAT, DROP, SINK, 0.22) + MK.beat_pulse(f, BEAT, 64.0, 112.0, 0.22) * 0.6
 	p.sun_size = lerpf(11.0, 13.0, hold) * (1.0 + 0.05 * spulse + 0.12 * _env(f, [DROP], 14.0)) * (1.0 - tube)
 	p.sun_top = Color("#ffe9a6").lerp(LIME, hold)
 	p.sun_bottom = MH_RED.lerp(PINK, hold)
@@ -428,7 +406,7 @@ func _frame(f: float) -> void:
 	var hud_on := MK.map(f, [HORIZON, HORIZON + 12], [0, 1]) * (1.0 - MK.map(f, [FOLD, FOLD + 20], [0, 1]))
 	_hud.modulate.a = hud_on
 	_hud.visible = hud_on > 0.0
-	_hud_spd.text = "SPD %03d KM/H" % int(_speed[clampi(int(f), 0, END)] * 30.0 * 3.6 * 1.6)
+	_hud_spd.text = "SPD %03d KM/H" % int(_tr.frame_speed(f) * 30.0 * 3.6 * 1.6)
 	_hud_jp.visible_chars = int(MK.map(f, [DROP + 8, DROP + 24], [0, 14], MK.linear))
 
 
@@ -510,7 +488,7 @@ func _frame_logo(f: float) -> void:
 	if f >= DROP:
 		bounce = sin((f - DROP) * 0.6) * exp(-(f - DROP) * 0.2) * 0.45
 	# a little dip on every kick during the hold
-	var kick := 0.12 * _beat_pulse(f, DROP + BEAT, SINK, 0.35)
+	var kick := 0.12 * MK.beat_pulse(f, BEAT, DROP + BEAT, SINK, 0.35)
 	var y := -lh * 1.08 * (1.0 - rise) + lh * 0.5 + bounce - kick
 	var gx := -_back.curve * LOGO_D * LOGO_D + LOGO_D * tan(deg_to_rad(_back.yaw)) * 0.7
 	var q := _back.project(_back.ground_point(gx, LOGO_D, y))
@@ -616,17 +594,5 @@ func _draw_building(c: MotionCanvas, f: float, lot: Dictionary, tr: float, hh: f
 	var b := INK
 	if lot.accent:
 		a = MH_AMBER.lerp(_cycle(int(lot.idx) + maxi(bar_i, 0)), hold)
-	# inner side face (facing the road), darker
-	var xi := x0 if side > 0 else x1
-	var s0 := p.ground_point(xi, zn)
-	var s1 := p.ground_point(xi, zf)
-	var dk := Color(0.62, 0.62, 0.68)
-	var rows := maxi(1, int(round(hh / BCELL)))
-	p.draw_checker_quad(c, s0 + Vector3(0, hh, 0), s1 + Vector3(0, hh, 0), s1, s0,
-		maxi(1, int(round(d / BCELL))), rows, a * dk, b, 4.0)
-	# front face
-	if zn > 0.6:
-		var f0 := p.ground_point(x0, zn)
-		var f1 := p.ground_point(x1, zn)
-		p.draw_checker_quad(c, f0 + Vector3(0, hh, 0), f1 + Vector3(0, hh, 0), f1, f0,
-			maxi(1, int(round(w / BCELL))), rows, a, b, 4.0)
+	# inner side face (facing the road), darker; the front face
+	p.draw_checker_box(c, x0, x1, zn, zf, hh, BCELL, a, b, side, Color(0.62, 0.62, 0.68), 0.6)

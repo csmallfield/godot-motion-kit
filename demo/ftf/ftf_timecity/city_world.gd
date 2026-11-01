@@ -69,8 +69,8 @@ func _init() -> void:
 	_font_mono = FTFKit.font("mono")
 	_font_wide = FTFKit.font("wide")
 	_font_jp = FTFKit.font("jp")
-	mh_data = _svg("res://demo/assets/logos/mh_logoFull_standard.svg")
-	ftf_data = _svg(FTFKit.LOGO)
+	mh_data = MotionSvgData.load_any("res://demo/assets/logos/mh_logoFull_standard.svg")
+	ftf_data = MotionSvgData.load_any(FTFKit.LOGO)
 	scene.min_decal_area = 900.0
 	_build_world()
 	for s in mh_slabs:
@@ -81,11 +81,6 @@ func _init() -> void:
 	_special[backdrop] = true
 	_special[ftf] = true
 	_special[platform] = true
-
-
-func _svg(path: String) -> MotionSvgData:
-	var res: Resource = load(path) if ResourceLoader.exists(path) else null
-	return res if res is MotionSvgData else MotionSvgData.from_file(path)
 
 
 # ================================================================== build

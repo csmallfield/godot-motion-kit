@@ -22,9 +22,7 @@ var _jp: MotionText
 
 
 func _init() -> void:
-	duration = 100000
-	autoplay = false
-	hide_outside = false
+	as_source()
 
 
 func _ready() -> void:
@@ -38,9 +36,7 @@ func _build() -> void:
 	_box = Node2D.new()
 	add_child(_box)
 	_svg = MotionSvg.new()
-	var path := "res://demo/assets/logos/mh_logoFull_standard.svg"
-	var res: Resource = load(path) if ResourceLoader.exists(path) else null
-	_svg.data = res if res is MotionSvgData else MotionSvgData.from_file(path)
+	_svg.data = MotionSvgData.load_any("res://demo/assets/logos/mh_logoFull_standard.svg")
 	_svg.width = MH_W
 	_box.add_child(_svg)
 	_k = MH_W / _svg.data.view_box.size.x
@@ -62,7 +58,7 @@ func _build() -> void:
 static func rise(f: float) -> float:
 	var y := MK.map(f, [L.POUR_MH - 4.0, L.MH_SNAP], [760.0, 0.0], MK.bezier(0.2, 0.0, 0.1, 1.0))
 	y += MK.map(f, [L.MH_FOLD, L.GATE], [0.0, 640.0], MK.ease_in_quad)
-	y += L.decay_kick(f, L.MH_KICKS, 34.0, 0.32)
+	y += MK.decay_kick(f, L.MH_KICKS, 34.0, 0.32)
 	return y
 
 

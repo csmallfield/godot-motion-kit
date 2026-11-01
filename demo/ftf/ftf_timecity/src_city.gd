@@ -31,9 +31,7 @@ var _ftf_polys: Array = []
 
 
 func _init() -> void:
-	duration = 100000
-	autoplay = false
-	hide_outside = false
+	as_source()
 
 
 static func world() -> World:

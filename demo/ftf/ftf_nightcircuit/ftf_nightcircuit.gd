@@ -45,14 +45,15 @@
 # Sound: cue sheet in _init (the engine is one cue whose pitch and level
 # curves come from the same speed profile as the camera);
 # demo/ftf/ftf_nightcircuit/audio/make.py writes the recipes and a 150 bpm
-# song, bake.gd bakes them.
+# song, tools/bake_audio.gd bakes them.
 @tool
 extends MotionComposition
 
 const NB := preload("res://demo/ftf/ftf_nightcircuit/nightcircuit_build.gd")
 
-const BEAT := 12.0
-const BAR := 48.0
+const BPM := 150.0
+const BEAT := 1800.0 / BPM          # frames per beat at 30 fps
+const BAR := 4.0 * BEAT
 const POWER := [0.0, 12.0, 24.0, 36.0]
 const HUD_IN := 14.0
 const MH_ON := 30.0
@@ -91,7 +92,7 @@ var _built := false
 var _stage: MotionStage3D
 var _sky: MotionSkyDome3D
 var _curve: Curve3D
-var _s := PackedFloat64Array()
+var _travel: MotionTravel   # camera distance along the circuit per frame
 var _len := 0.0
 var _s_mh := 0.0
 var _s_gates: Array[float] = []
@@ -137,6 +138,7 @@ var _fade: ColorRect
 
 func _init() -> void:
 	duration = END
+	bpm = BPM
 	fps = 30
 	markers = {"in": 0.0, "logo": DROP, "hold": 216.0, "out": SINK}
 	cue(0.0, &"engine", 0.8, _engine_curves())
@@ -180,30 +182,17 @@ const SPEED_KEYS := [[0.0, 0.0], [6.0, 0.0], [30.0, 0.32], [84.0, 0.3], [96.0, 0
 
 
 static func _speed(f: float) -> float:
-	for k in range(1, SPEED_KEYS.size()):
-		var a: Array = SPEED_KEYS[k - 1]
-		var b: Array = SPEED_KEYS[k]
-		if f <= b[0]:
-			var t := clampf((f - a[0]) / (b[0] - a[0]), 0.0, 1.0)
-			return lerpf(a[1], b[1], t * t * (3.0 - 2.0 * t))
-	return SPEED_KEYS[SPEED_KEYS.size() - 1][1]
+	return MotionTravel.keyed_speed(SPEED_KEYS, f)
 
 
 func _make_table() -> void:
-	_s.resize(END + 64)
-	var s := 0.0
-	_s[0] = 0.0
-	for i in range(1, _s.size()):
-		for k in 8:   # integrate on eighths of a frame
-			s += _speed(i - 1 + (k + 0.5) / 8.0) / 8.0
-		_s[i] = s
+	# integrated on eighths of a frame, Float64 (a long circuit)
+	_travel = MotionTravel.from_speed(_speed, END + 64, 8, true)
 
 
 ## Camera distance along the circuit at frame f (pure: a table lookup).
 func s_at(f: float) -> float:
-	var fc := clampf(f, 0.0, _s.size() - 1.001)
-	var i := int(fc)
-	return lerpf(_s[i], _s[i + 1], fc - i)
+	return _travel.at(f)
 
 
 ## The engine: one cue whose pitch and level follow the camera's speed.
@@ -319,7 +308,7 @@ func _build() -> void:
 		m.set_shader_parameter("lit_to", -1000.0)
 		m.set_shader_parameter("lit_from", -1000.0)
 		_m_trails.append(m)
-		_add_mesh(NB.trail_lane(_curve, _len, trail_x[i], 0.7, trail_cols[i]), m)
+		_add_mesh(MotionTrack3D.trail_lane(_curve, _len, trail_x[i], 0.7, trail_cols[i]), m)
 
 	_build_mh()
 	_build_boards()
@@ -338,18 +327,18 @@ func _add_mesh(mesh: Mesh, mat: Material, parent: Node3D = null) -> MeshInstance
 
 func _build_mh() -> void:
 	# Minimal Humans: extruded lockup on a dark backing board above the beam
-	var b := NB.level_frame(_curve, _s_mh).basis
+	var b := MotionTrack3D.level_frame(_curve, _s_mh).basis
 	var at := Transform3D(b, _mh_fr * Vector3(0, MH_Y, 0))
 	var back := SurfaceTool.new()
 	back.begin(Mesh.PRIMITIVE_TRIANGLES)
-	NB.box(back, at, Vector3(MH_W + 2.6, 6.4, 0.5), Color("#0b0a16"))
+	MotionPattern3D.box(back, at, Vector3(MH_W + 2.6, 6.4, 0.5), Color("#0b0a16"))
 	_add_mesh(back.commit(), _m_solid)
 	var frame := SurfaceTool.new()
 	frame.begin(Mesh.PRIMITIVE_TRIANGLES)
 	for y in [-3.2, 3.2]:
-		NB.box(frame, at * Transform3D(Basis(), Vector3(0, y, 0.28)), Vector3(MH_W + 2.6, 0.16, 0.08), FTFKit.MH_AMBER)
+		MotionPattern3D.box(frame, at * Transform3D(Basis(), Vector3(0, y, 0.28)), Vector3(MH_W + 2.6, 0.16, 0.08), FTFKit.MH_AMBER)
 	for x in [-(MH_W + 2.6) * 0.5, (MH_W + 2.6) * 0.5]:
-		NB.box(frame, at * Transform3D(Basis(), Vector3(x, 0, 0.28)), Vector3(0.16, 6.4, 0.08), FTFKit.MH_AMBER)
+		MotionPattern3D.box(frame, at * Transform3D(Basis(), Vector3(x, 0, 0.28)), Vector3(0.16, 6.4, 0.08), FTFKit.MH_AMBER)
 	_add_mesh(frame.commit(), _m_mh_frame)
 	var mh: MotionSvgData = load("res://demo/assets/logos/mh_logoFull_standard.svg")
 	var mh_mesh := MotionSvgMesh.build(mh, MH_W, {depth = 0.4, side_shade = 0.55})
@@ -385,8 +374,8 @@ func _build_boards() -> void:
 		p.world_size = Vector2(18.8, 2.06)
 		p.background = bd[3]
 		p.animated = false
-		var fr := NB.frame_at(_curve, _s_gates[i])
-		p.transform = Transform3D(NB.level_frame(_curve, _s_gates[i]).basis, fr * Vector3(0, 6.4 + 1.0, 0.64))
+		var fr := MotionTrack3D.frame(_curve, _s_gates[i])
+		p.transform = Transform3D(MotionTrack3D.level_frame(_curve, _s_gates[i]).basis, fr * Vector3(0, 6.4 + 1.0, 0.64))
 		_stage.world.add_child(p)
 		var fg: Color = bd[4]
 		var c := MotionCanvas.new()
@@ -419,7 +408,7 @@ func _build_boards() -> void:
 	for i in bills.size():
 		var bl: Array = bills[i]
 		var bs := lerpf(a, bb, bl[0])
-		var lv := NB.level_frame(_curve, bs)
+		var lv := MotionTrack3D.level_frame(_curve, bs)
 		var side: float = bl[1]
 		var bp := MotionPanel3D.new()
 		bp.pixel_size = Vector2i(512, 768)
@@ -485,7 +474,7 @@ func _build_sign() -> void:
 		var x: float = sgn * PILLAR_X
 		MotionPattern3D.box(pst, Transform3D(Basis(), Vector3(x, (bottom + top) * 0.5, -0.6)), Vector3(2.4, top - bottom, 2.4), Color.WHITE, 0.0)
 		for e in [-1.0, 1.0]:
-			NB.box(lst, Transform3D(Basis(), Vector3(x + e * 1.26, (bottom + top) * 0.5, 0.66)), Vector3(0.12, top - bottom, 0.12), FTFKit.CYAN if sgn < 0 else FTFKit.LIME)
+			MotionPattern3D.box(lst, Transform3D(Basis(), Vector3(x + e * 1.26, (bottom + top) * 0.5, 0.66)), Vector3(0.12, top - bottom, 0.12), FTFKit.CYAN if sgn < 0 else FTFKit.LIME)
 		# vertical katakana boards on the pillars' fronts
 		var pp := MotionPanel3D.new()
 		var ph := top - 1.6
@@ -583,7 +572,7 @@ func _sign_rise(f: float) -> float:
 
 
 func _sign_xf(f: float) -> Transform3D:
-	var lv := NB.level_frame(_curve, s_at(f) + _sign_d(f))
+	var lv := MotionTrack3D.level_frame(_curve, s_at(f) + _sign_d(f))
 	var o := lv.origin
 	o.y = _sign_rise(f)
 	return Transform3D(lv.basis, o)
@@ -626,21 +615,6 @@ func _camera(f: float) -> Array:
 
 # ================================================================== frame
 
-func _flicker(f: float, at: float, seed_v: float) -> float:
-	if f < at:
-		return 0.0
-	var t := f - at
-	if t > 8.0:
-		return 1.0
-	return 1.0 if MK.rand(floorf(t) * 3.1 + seed_v) > 0.45 - t * 0.05 else 0.15
-
-
-func _beat_pulse(f: float, from: float, to: float, decay := 0.3) -> float:
-	if f < from or f >= to:
-		return 0.0
-	return exp(-fposmod(f - from, BEAT) * decay)
-
-
 func _frame(f: float) -> void:
 	if not _built:
 		return
@@ -654,7 +628,7 @@ func _frame(f: float) -> void:
 	var up := MK.map(f, [0, 40], [0, 1], MK.ease_out)
 	var dusk := up * (1.0 - MK.map(f, [CUTS[1], SIGN_CUT + 22.0], [0, 1], MK.ease_in_out))
 	var sun_sink := MK.map(f, [SINK, SIGN_CUT + 18.0], [0, 1], MK.ease_in_quad)
-	var spulse := _beat_pulse(f, DROP, SINK, 0.25)
+	var spulse := MK.beat_pulse(f, BEAT, DROP, SINK, 0.25)
 	_sky.level = dusk
 	_sky.sun_elevation = lerpf(SUN_EL, -12.0, sun_sink) - 6.0 * (1.0 - up)
 	_sky.sun_size = 11.0 * (1.0 + 0.04 * spulse + 0.1 * exp(-maxf(0.0, f - DROP) / 6.0) * float(f >= DROP))
@@ -705,14 +679,14 @@ func _frame(f: float) -> void:
 	if f >= SIGN_CUT:
 		cut_to = -100.0
 	var lit := minf(reach, cut_to)
-	var pulse := 1.0 + 0.55 * _beat_pulse(f, LAUNCH, SINK, 0.32)
+	var pulse := 1.0 + 0.55 * MK.beat_pulse(f, BEAT, LAUNCH, SINK, 0.32)
 	var flare := 1.0 + 1.6 * exp(-maxf(0.0, f - DROP) / 6.0) * float(f >= DROP)
 	_m_lights.set_shader_parameter("lit_to", lit)
 	_m_lights.set_shader_parameter("energy", 2.4 * pulse * flare)
 	_m_pads.set_shader_parameter("lit_to", lit)
-	_m_pads.set_shader_parameter("energy", 1.2 * (1.0 + 0.8 * _beat_pulse(f, LAUNCH, SINK, 0.3)))
+	_m_pads.set_shader_parameter("energy", 1.2 * (1.0 + 0.8 * MK.beat_pulse(f, BEAT, LAUNCH, SINK, 0.3)))
 	_m_city_lights.set_shader_parameter("lit_to", minf(reach * 2.0 + MK.map(f, [36, 60], [0, 2000]), cut_to + 60.0))
-	_m_city_lights.set_shader_parameter("energy", 1.7 * up * (1.0 + 0.35 * flare - 0.35) * (1.0 + 0.25 * _beat_pulse(f, DROP, SINK, 0.2)))
+	_m_city_lights.set_shader_parameter("energy", 1.7 * up * (1.0 + 0.35 * flare - 0.35) * (1.0 + 0.25 * MK.beat_pulse(f, BEAT, DROP, SINK, 0.2)))
 	var solid := up * (1.0 - MK.map(f, [CUTS[2], SIGN_CUT + 10.0], [0, 1]))
 	_m_solid.set_shader_parameter("energy", solid)
 	_m_checks.set_shader_parameter("energy", dusk * 0.92)
@@ -722,11 +696,11 @@ func _frame(f: float) -> void:
 	_m_gchecks.set_shader_parameter("energy", dusk)
 
 	# ---- MH lockup
-	var mh_e := _flicker(f, MH_ON, 7.0)
+	var mh_e := MK.flicker(f, MH_ON, 7.0)
 	var mh_off := 1.0 - MK.map(f, [CUTS[0], CUTS[0] + 2.0], [0, 1], MK.linear)
 	_m_mh.set_shader_parameter("energy", lerpf(0.05, 1.12, mh_e) * mh_off)
-	_m_mh_frame.set_shader_parameter("energy", lerpf(0.0, 2.2, _flicker(f, MH_ON + 3.0, 4.0)) * mh_off * (1.0 + 0.3 * _beat_pulse(f, PRESENTS, LAUNCH, 0.3)))
-	_presents.energy = (0.08 + 1.25 * _flicker(f, PRESENTS, 11.0)) * mh_off
+	_m_mh_frame.set_shader_parameter("energy", lerpf(0.0, 2.2, MK.flicker(f, MH_ON + 3.0, 4.0)) * mh_off * (1.0 + 0.3 * MK.beat_pulse(f, BEAT, PRESENTS, LAUNCH, 0.3)))
+	_presents.energy = (0.08 + 1.25 * MK.flicker(f, PRESENTS, 11.0)) * mh_off
 	_presents_text.visible_chars = int(MK.map(f, [PRESENTS, PRESENTS + 10.0], [0, 8], MK.linear))
 	_presents_jp.visible = f >= PRESENTS + 10.0
 	var boards_on := MK.map(f, [LAUNCH - 12.0, LAUNCH], [0, 1], MK.linear) * mh_off

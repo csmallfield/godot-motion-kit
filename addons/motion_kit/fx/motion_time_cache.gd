@@ -169,22 +169,7 @@ func rebuild() -> void:
 func profile_at(u: float, k: int) -> float:
 	if layout == Layout.CHANNELS:
 		return float(channel_shares[k])
-	match profile:
-		MotionTimeSlices.Profile.LINEAR:
-			return u
-		MotionTimeSlices.Profile.REVERSE:
-			return 1.0 - u
-		MotionTimeSlices.Profile.CENTRE:
-			return 1.0 - absf(2.0 * u - 1.0)
-		MotionTimeSlices.Profile.EDGES:
-			return absf(2.0 * u - 1.0)
-		MotionTimeSlices.Profile.SINE:
-			return 0.5 + 0.5 * sin(TAU * (waves * u + phase))
-		MotionTimeSlices.Profile.RANDOM:
-			return MK.rand(k * 7.13 + seed_value * 31.7)
-		MotionTimeSlices.Profile.CUSTOM:
-			return float(profile_fn.call(u)) if profile_fn.is_valid() else 0.0
-	return 0.0
+	return MotionTimeSlices.profile_value(profile, u, k, waves, phase, seed_value, profile_fn)
 
 
 ## The distinct delays rendered this frame (after quantising and merging).

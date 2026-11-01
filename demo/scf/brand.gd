@@ -60,9 +60,7 @@ static var _fonts := {}
 
 static func logo(key: String) -> MotionSvgData:
 	if not _logos.has(key):
-		var path: String = LOGO_FILES[key]
-		var res: Resource = load(path) if ResourceLoader.exists(path) else null
-		_logos[key] = res if res is MotionSvgData else MotionSvgData.from_file(path)
+		_logos[key] = MotionSvgData.load_any(LOGO_FILES[key])
 	return _logos[key]
 
 
@@ -76,12 +74,9 @@ static func font(family: String, weight := 400) -> FontFile:
 	}
 	if family == "jp":
 		return MotionFonts.font("res://demo/assets/fonts/noto-jp-%s.woff2" % ("Black" if weight >= 700 else "Regular"))
-	var f := MotionFonts.font("res://demo/assets/fonts/" + (files[family] as String) % weight)
 	# Japanese characters inside latin text fall back to the Noto JP subset, as in the browser.
 	var jp := MotionFonts.font("res://demo/assets/fonts/noto-jp-%s.woff2" % ("Black" if weight >= 700 else "Regular"))
-	if not f.fallbacks.has(jp):
-		f.fallbacks = [jp]
-	return f
+	return MotionFonts.font("res://demo/assets/fonts/" + (files[family] as String) % weight, false, [jp])
 
 
 ## Remotion springAt(f, fps)(at, damping, stiffness, mass).

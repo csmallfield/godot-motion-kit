@@ -51,8 +51,9 @@ const W := 1920.0
 const H := 1080.0
 
 # ---- tempo
-const BEAT := 18.0
-const BAR := 72.0
+const BPM := 100.0
+const BEAT := 1800.0 / BPM          # frames per beat at 30 fps
+const BAR := 4.0 * BEAT
 
 # ---- beat sheet (frames)
 const POWER := 0.0
@@ -154,6 +155,7 @@ var _slab_on := false
 
 func _init() -> void:
 	duration = END
+	bpm = BPM
 	fps = 30
 	markers = {"in": 0.0, "mh": MH_DONE, "logo": FTF_AT, "hold": DROP, "out": LIFT}
 	cue(POWER, &"power", 0.8)
@@ -191,8 +193,8 @@ func _build() -> void:
 	_built = true
 	_font_wide = FTFKit.font("wide")
 	_font_mono = FTFKit.font("mono")
-	_mh_data = _svg("res://demo/assets/logos/mh_logoFull_standard.svg")
-	_ftf_data = _svg(FTFKit.LOGO)
+	_mh_data = MotionSvgData.load_any("res://demo/assets/logos/mh_logoFull_standard.svg")
+	_ftf_data = MotionSvgData.load_any(FTFKit.LOGO)
 	_scene.min_decal_area = 70.0
 	_scene.light = Vector3(-0.5, -1.0, 0.0)
 
@@ -220,11 +222,6 @@ func _build() -> void:
 	_build_plans()
 	_build_slab()
 	_add_sound()
-
-
-func _svg(path: String) -> MotionSvgData:
-	var res: Resource = load(path) if ResourceLoader.exists(path) else null
-	return res if res is MotionSvgData else MotionSvgData.from_file(path)
 
 
 func _canvas(fn: Callable) -> MotionCanvas:
@@ -573,9 +570,7 @@ func _frame(f: float) -> void:
 		sweep_x = MH_O.x - 8.0 + fposmod(f - (MH_DONE - 6.0), BAR) / BAR * (MH_COLS + 16.0)
 	elif f >= DROP - 18.0 and f < LIFT:
 		sweep_x = FTF_O.x - 8.0 + fposmod(f - FTF_SET, BAR) / BAR * (FTF_COLS + 16.0)
-	var beat_pulse := 0.0
-	if f >= DROP and f < LIFT:
-		beat_pulse = exp(-fposmod(f - DROP, BEAT) * 0.3)
+	var beat_pulse := MK.beat_pulse(f, BEAT, DROP, LIFT, 0.3)
 	for i in _solids.size():
 		var s := _solids[i]
 		var p := plan.pose(i, f)

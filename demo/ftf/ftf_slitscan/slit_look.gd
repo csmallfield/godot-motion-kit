@@ -12,8 +12,8 @@ const STEEL := Color("#8a93a8")
 const PINK := Color("#e92067")      # the FTF logo's own pink
 
 const BPM := 180.0
-const BEAT := 10.0                  # frames per beat at 180 bpm, 30 fps
-const BAR := 40.0
+const BEAT := 1800.0 / BPM          # frames per beat at 30 fps
+const BAR := 4.0 * BEAT
 
 # ---- Act I: Minimal Humans
 const MH_SNAP := 40.0               # streaks resolve into the lockup (bar 1)
@@ -35,12 +35,3 @@ const PASSES := [256.0, 316.0]    # a scanner bump sweeps across the held logo
 const EXIT := 340.0                 # bar 8.5: the logo stretches off right
 const GONE := 392.0
 const END := 420
-
-
-static func decay_kick(f: float, ats: Array, amp: float, rate := 0.45) -> float:
-	var v := 0.0
-	for i in ats.size():
-		var at: float = ats[i]
-		if f >= at:
-			v += amp * exp(-(f - at) * rate) * (1.0 if i % 2 == 0 else -1.0)
-	return v

@@ -45,8 +45,9 @@ extends MotionComposition
 const W := 1920.0
 const H := 1080.0
 const SC := Vector2(960, 540)
-const BEAT := 24.0
-const BAR := 96.0
+const BPM := 75.0
+const BEAT := 1800.0 / BPM          # frames per beat at 30 fps
+const BAR := 4.0 * BEAT
 
 # ---- beats
 const PULL_END := 72.0
@@ -149,6 +150,7 @@ var _shake := Vector2.ZERO
 
 func _init() -> void:
 	duration = END
+	bpm = BPM
 	fps = 30
 	markers = {"in": 0.0, "logo": DROP, "hold": CASCADE_END, "out": OUT}
 	cue(0.0, &"air", 0.8)
@@ -181,11 +183,6 @@ func _ready() -> void:
 
 # ================================================================== build
 
-func _svg(path: String) -> MotionSvgData:
-	var res: Resource = load(path) if ResourceLoader.exists(path) else null
-	return res if res is MotionSvgData else MotionSvgData.from_file(path)
-
-
 func _greebler(face_c: Color, haze_c: Color, hz: float) -> MotionGreebler:
 	var g := MotionGreebler.new()
 	g.face = face_c
@@ -199,22 +196,10 @@ func _greebler(face_c: Color, haze_c: Color, hz: float) -> MotionGreebler:
 	return g
 
 
-## A part's contours in world space (svg units * k + tl).
-func _contours(data: MotionSvgData, parts: Array, k: float, tl: Vector2) -> Array:
-	var out := []
-	for i in parts:
-		for c in data.outline(int(i), 0.25):
-			var pts := PackedVector2Array()
-			for p in (c as PackedVector2Array):
-				pts.append(tl + p * k)
-			out.append(pts)
-	return out
-
-
 func _build() -> void:
 	_built = true
-	_mh = _svg("res://demo/assets/logos/mh_logoFull_standard.svg")
-	_ftf = _svg(FTFKit.LOGO)
+	_mh = MotionSvgData.load_any("res://demo/assets/logos/mh_logoFull_standard.svg")
+	_ftf = MotionSvgData.load_any(FTFKit.LOGO)
 	_k_mh = MH_W / _mh.view_box.size.x
 	_k_ftf = LOGO_W / _ftf.view_box.size.x
 	_ftf_tl = Vector2(X0, -8.0) - _ftf.view_box.size * _k_ftf * 0.5
@@ -338,14 +323,14 @@ func _track(g: MotionGreebler, id: int, mh: bool) -> int:
 func _build_mh_world() -> void:
 	# The lockup as stone: the red back layer's sides, every letter's sides,
 	# then detail on the monogram's front face and on the letters.
-	var red := _contours(_mh, [0], _k_mh, MH_TL)
+	var red := _mh.contours([0], _k_mh, MH_TL)
 	_red_sides = _track(_g_back, _g_back.add_sides(red, 26.0, {side_lit = FTFKit.MH_RED.darkened(0.2), side_dark = FTFKit.MH_RED.darkened(0.55)}), true)
-	var letters := _contours(_mh, range(3, 16), _k_mh, MH_TL)
+	var letters := _mh.contours(range(3, 16), _k_mh, MH_TL)
 	_track(_g_back, _g_back.add_sides(letters, 18.0), true)
-	var mono := _contours(_mh, [2], _k_mh, MH_TL)
+	var mono := _mh.contours([2], _k_mh, MH_TL)
 	_track(_g_mid, _g_mid.add_detail(mono, {seed = 3.0, max_level = 6, min_size = 1.6, face = FTFKit.MH_CREAM, lod = 4.0, rest_chance = 0.2}), true)
 	for i in range(3, 16):
-		_track(_g_mid, _g_mid.add_detail(_contours(_mh, [i], _k_mh, MH_TL), {seed = 10.0 + i, max_level = 4, min_size = 2.0, face = FTFKit.MH_CREAM, greeble_chance = 0.6, lod = 6.5}), true)
+		_track(_g_mid, _g_mid.add_detail(_mh.contours([i], _k_mh, MH_TL), {seed = 10.0 + i, max_level = 4, min_size = 2.0, face = FTFKit.MH_CREAM, greeble_chance = 0.6, lod = 6.5}), true)
 	_p0 = _thickest(mono)
 
 	# Plinth with the PRESENTS hatch, hanging tanks, two framing structures.
@@ -382,7 +367,7 @@ func _thickest(contours: Array) -> Vector2:
 func _build_ftf_world() -> void:
 	var o := Vector2(X0, 0)
 	# The hull plate: its pink rim's outer contour extruded deep; raised letters.
-	var rim := _contours(_ftf, [1], _k_ftf, _ftf_tl)
+	var rim := _ftf.contours([1], _k_ftf, _ftf_tl)
 	rim.sort_custom(func(x: PackedVector2Array, y: PackedVector2Array) -> bool: return absf(MotionPoly.signed_area(x)) > absf(MotionPoly.signed_area(y)))
 	var outer: PackedVector2Array = rim[0]
 	var inner: PackedVector2Array = rim[1] if rim.size() > 1 else rim[0]
@@ -390,13 +375,13 @@ func _build_ftf_world() -> void:
 	_track(_g_back, _g_back.add_sides([outer], 44.0, {side_lit = FTFKit.PINK.darkened(0.15), side_dark = FTFKit.PINK.darkened(0.55)}), false)
 	var pink_parts := [2, 3, 4, 5, 6, 7, 8] + range(13, 25)
 	var white_parts := [9, 10, 11, 12] + range(25, 45)
-	_track(_g_mid, _g_mid.add_sides(_contours(_ftf, pink_parts, _k_ftf, _ftf_tl), 7.0, {side_lit = FTFKit.PINK.darkened(0.3), side_dark = FTFKit.PINK.darkened(0.6)}), false)
-	_track(_g_mid, _g_mid.add_sides(_contours(_ftf, white_parts, _k_ftf, _ftf_tl), 5.0, {side_lit = Color("#c9b9c0"), side_dark = Color("#8f7a86")}), false)
+	_track(_g_mid, _g_mid.add_sides(_ftf.contours(pink_parts, _k_ftf, _ftf_tl), 7.0, {side_lit = FTFKit.PINK.darkened(0.3), side_dark = FTFKit.PINK.darkened(0.6)}), false)
+	_track(_g_mid, _g_mid.add_sides(_ftf.contours(white_parts, _k_ftf, _ftf_tl), 5.0, {side_lit = Color("#c9b9c0"), side_dark = Color("#8f7a86")}), false)
 	# Panels and greebles on the plate's free face, clear of every letter.
-	var all_letters := _contours(_ftf, range(2, _ftf.parts.size()), _k_ftf, _ftf_tl)
+	var all_letters := _ftf.contours(range(2, _ftf.parts.size()), _k_ftf, _ftf_tl)
 	_track(_g_mid, _g_mid.add_detail([inner], {seed = 51.0, max_level = 4, min_size = 3.0, avoid = all_letters, margin = 7.0, face = Color("#f6f4ee"), depth_k = 0.7, lod = 4.5, rest_chance = 0.5}), false)
 	# Painted seams on the pink tab, clear of its white type.
-	_track(_g_front, _g_front.add_detail(_contours(_ftf, [8], _k_ftf, _ftf_tl), {seed = 57.0, max_level = 2, min_size = 5.0, avoid = _contours(_ftf, white_parts, _k_ftf, _ftf_tl), margin = 5.0, greeble_chance = 0.3, depth_k = 0.5, lod = 2.2}), false)
+	_track(_g_front, _g_front.add_detail(_ftf.contours([8], _k_ftf, _ftf_tl), {seed = 57.0, max_level = 2, min_size = 5.0, avoid = _ftf.contours(white_parts, _k_ftf, _ftf_tl), margin = 5.0, greeble_chance = 0.3, depth_k = 0.5, lod = 2.2}), false)
 
 	# Superstructure: overhang, pylons, deck, hanging gear, clamps.
 	var ov := PackedVector2Array([Vector2(-1750, -1200), Vector2(1750, -1200), Vector2(1750, -440), Vector2(1470, -300), Vector2(-1470, -300), Vector2(-1750, -440)])

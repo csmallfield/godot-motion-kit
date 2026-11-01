@@ -19,9 +19,7 @@ var _logo: MotionSvg
 
 
 func _init() -> void:
-	duration = 100000
-	autoplay = false
-	hide_outside = false
+	as_source()
 
 
 func _ready() -> void:
@@ -48,10 +46,10 @@ func _ready() -> void:
 
 static func offset(f: float) -> Vector2:
 	var y := MK.map(f, [L.POUR - 4.0, L.UNFOLD + 10.0], [780.0, 0.0], MK.ease_out)
-	var x := L.decay_kick(f, L.ACCENTS, 40.0, 0.42)
+	var x := MK.decay_kick(f, L.ACCENTS, 40.0, 0.42)
 	if f > L.DROP:   # a slow bob on the bar, so the split has motion to bend
 		y += 9.0 * sin((f - L.DROP) * TAU / L.BAR) * MK.map(f, [L.DROP, L.DROP + 10.0], [0, 1])
-	y -= L.decay_kick(f, L.ACCENTS, 14.0, 0.42, false)
+	y -= MK.decay_kick(f, L.ACCENTS, 14.0, 0.42, false)
 	if f > L.STRETCH:
 		var t := (f - L.STRETCH) / 50.0
 		y -= 260.0 * t * t
@@ -62,6 +60,6 @@ func _frame(f: float) -> void:
 	if not _built:
 		return
 	_pivot.position = C + offset(f)
-	var pop := 1.0 + 0.045 * L.accent(f, L.ACCENTS, 0.35) + 0.06 * exp(-maxf(f - L.DROP, 0.0) * 0.3) * float(f >= L.DROP)
+	var pop := 1.0 + 0.045 * MK.accent(f, L.ACCENTS, 0.35) + 0.06 * exp(-maxf(f - L.DROP, 0.0) * 0.3) * float(f >= L.DROP)
 	_pivot.scale = Vector2.ONE * pop
 	_pivot.visible = _pivot.position.y < 1500.0 and _pivot.position.y > -500.0

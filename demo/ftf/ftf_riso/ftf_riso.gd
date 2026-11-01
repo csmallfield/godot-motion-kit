@@ -42,8 +42,9 @@
 @tool
 extends MotionComposition
 
-const BEAT := 18.0
-const BAR := 72.0
+const BPM := 100.0
+const BEAT := 1800.0 / BPM          # frames per beat at 30 fps
+const BAR := 4.0 * BEAT
 # ---- Sheet A
 const FEED_A := 0.0
 const A_BLUE := 18.0
@@ -107,6 +108,7 @@ var _ftf_svg: MotionSvgData
 
 func _init() -> void:
 	duration = END
+	bpm = BPM
 	fps = 30
 	markers = {"in": 0.0, "logo": B_BLUE, "hold": B_SNAP, "out": FLOOD}
 	cue(FEED_A, &"feed", 0.7)
@@ -135,23 +137,7 @@ func _ready() -> void:
 # ================================================================== build
 
 func _font(path: String) -> Font:
-	var f := MotionFonts.font(path)
-	var jp := MotionFonts.font(FTFKit.JP_FONT)
-	if not f.fallbacks.has(jp):
-		f.fallbacks = [jp]
-	return f
-
-
-func _text(parent: Node, path: String, sz: float, s: String, pos: Vector2, tracking := 0.0, col := Color.BLACK) -> MotionText:
-	var t := MotionText.new()
-	t.font = _font(path)
-	t.font_size = sz
-	t.color = col
-	t.tracking = tracking
-	t.text = s
-	t.position = pos
-	parent.add_child(t)
-	return t
+	return MotionFonts.font(path, false, [MotionFonts.font(FTFKit.JP_FONT)])
 
 
 func _rect(parent: Node, r: Rect2, col := Color.BLACK) -> ColorRect:
@@ -190,15 +176,10 @@ func _plate(sheet: Node2D, ink: Color, seed_v: float, cell := 0.0, angle := 15.0
 	return p
 
 
-func _load_svg(path: String) -> MotionSvgData:
-	var res: Resource = load(path) if ResourceLoader.exists(path) else null
-	return res if res is MotionSvgData else MotionSvgData.from_file(path)
-
-
 func _build() -> void:
 	_built = true
-	_mh_svg = _load_svg(MH_SVG)
-	_ftf_svg = _load_svg(FTFKit.LOGO)
+	_mh_svg = MotionSvgData.load_any(MH_SVG)
+	_ftf_svg = MotionSvgData.load_any(FTFKit.LOGO)
 	var bg := ColorRect.new()
 	bg.color = BED
 	bg.size = size
@@ -255,7 +236,7 @@ func _build_a() -> void:
 	# blue tint: the huge 01
 	var tone := _plate(s, BLUE, 12.0, 11.0, 15.0)
 	tone.tone_scale = 0.5
-	var n := _text(tone.content, INTER9, 600, "01", Vector2.ZERO, -0.04)
+	var n := MotionText.make(tone.content, _font(INTER9), 600, Color.BLACK, "01", -0.04, Vector2.ZERO)
 	n.position = Vector2(1830 - n.get_text_size().x, 1000 - n.get_baseline())
 	_a.tone = tone
 	# red: the M's back layer, knocked out by the amber and cream layers
@@ -282,9 +263,9 @@ func _build_a() -> void:
 		[870.0, "100 BPM\n4/4 // 72 FRAMES A BAR\nSHEET A"],
 	]
 	for col in cols:
-		var t := _text(black.content, INTER7, 22, col[1], Vector2(col[0], 790), 0.04)
+		var t := MotionText.make(black.content, _font(INTER7), 22, Color.BLACK, col[1], 0.04, Vector2(col[0], 790))
 		t.line_height = 1.45
-	_text(black.content, INTER7, 30, "ミニマル・ヒューマンズ", Vector2(160, 700))
+	MotionText.make(black.content, _font(INTER7), 30, Color.BLACK, "ミニマル・ヒューマンズ", 0.0, Vector2(160, 700))
 	_a.black = black
 	# lime band (the M panel knocked out of it)
 	var lime := _plate(s, LIME, 16.0)
@@ -293,8 +274,8 @@ func _build_a() -> void:
 	_a.lime = lime
 	# pink: PRESENTS
 	var pink := _plate(s, PINK, 17.0)
-	_text(pink.content, INTER9, 64, "PRESENTS", Vector2(800, 600), 0.32)
-	_text(pink.content, INTER9, 64, "提供", Vector2(1370, 598))
+	MotionText.make(pink.content, _font(INTER9), 64, Color.BLACK, "PRESENTS", 0.32, Vector2(800, 600))
+	MotionText.make(pink.content, _font(INTER9), 64, Color.BLACK, "提供", 0.0, Vector2(1370, 598))
 	_a.pink = pink
 
 
@@ -314,7 +295,7 @@ func _build_b() -> void:
 	tone.tone_scale = 0.55
 	var sh := _svg(tone.content, _ftf_svg, [0, 1], LOGO_W, LOGO_POS + Vector2(34, 30))
 	sh.apply(func(_i: int) -> Variant: return {fill = Color.BLACK})
-	var n := _text(tone.content, INTER9, 410, "9000", Vector2.ZERO, -0.05)
+	var n := MotionText.make(tone.content, _font(INTER9), 410, Color.BLACK, "9000", -0.05, Vector2.ZERO)
 	n.position = Vector2(1830 - n.get_text_size().x, 1000 - n.get_baseline())
 	var ko := _svg(tone.content, _ftf_svg, [0, 1], LOGO_W, LOGO_POS)
 	ko.apply(func(_i: int) -> Variant: return {fill = Color.WHITE})
@@ -334,16 +315,16 @@ func _build_b() -> void:
 	_b.lime = lime
 	# black: type
 	var black := _plate(s, BLACK, 25.0)
-	_text(black.content, INTER7, 24, "F-9000 // ANTI-GRAVITY LEAGUE", Vector2(180, 98), 0.08)
-	var r := _text(black.content, INTER7, 24, "SEASON 01 // SHEET B", Vector2.ZERO, 0.08)
+	MotionText.make(black.content, _font(INTER7), 24, Color.BLACK, "F-9000 // ANTI-GRAVITY LEAGUE", 0.08, Vector2(180, 98))
+	var r := MotionText.make(black.content, _font(INTER7), 24, Color.BLACK, "SEASON 01 // SHEET B", 0.08, Vector2.ZERO)
 	r.position = Vector2(1760 - r.get_text_size().x, 98)
-	_text(black.content, INTER9, 58, "フルスロットル・フラックス", Vector2(300, 524))
+	MotionText.make(black.content, _font(INTER9), 58, Color.BLACK, "フルスロットル・フラックス", 0.0, Vector2(300, 524))
 	var cols := [
 		[180.0, "FULL THROTTLE FLUX\nANTI-GRAVITY RACING\nGODOT 4.5 // FORWARD+"],
 		[520.0, "CLASSES\nSPARROW // STARLING\nKESTREL\n\nPRINT RUN 01 / 100\n100 BPM // 4/4"],
 	]
 	for col in cols:
-		var t := _text(black.content, INTER7, 22, col[1], Vector2(col[0], 676), 0.04)
+		var t := MotionText.make(black.content, _font(INTER7), 22, Color.BLACK, col[1], 0.04, Vector2(col[0], 676))
 		t.line_height = 1.45
 	_b.black = black
 	# the approval stamp: red, rough, pressed by hand
@@ -361,9 +342,9 @@ func _build_b() -> void:
 		c.ring(Vector2.ZERO, 122, Color.BLACK, 9.0)
 		c.ring(Vector2.ZERO, 100, Color.BLACK, 3.0)
 	_stamp_pivot.add_child(sc)
-	var k := _text(_stamp_pivot, INTER9, 84, "認可", Vector2.ZERO)
+	var k := MotionText.make(_stamp_pivot, _font(INTER9), 84, Color.BLACK, "認可", 0.0, Vector2.ZERO)
 	k.position = -k.get_text_size() * 0.5 - Vector2(0, 14)
-	var ok := _text(_stamp_pivot, INTER9, 18, "OK TO PRINT", Vector2.ZERO, 0.18)
+	var ok := MotionText.make(_stamp_pivot, _font(INTER9), 18, Color.BLACK, "OK TO PRINT", 0.18, Vector2.ZERO)
 	ok.position = Vector2(-ok.get_text_size().x * 0.5, 40)
 	_b.stamp = stamp
 	# the flood: black over the whole sheet

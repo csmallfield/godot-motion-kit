@@ -51,7 +51,7 @@
 #   388-400 ground goes dark; black runs out from the slit; 412-420 black
 #
 # Sound: cues in _init from the same constants; recipes, cue map and a 120 bpm
-# tape-warped industrial electro song in audio/ (make.py); audio/bake.gd bakes
+# tape-warped industrial electro song in audio/ (make.py); tools/bake_audio.gd bakes
 # audio/ftf_timecity_track.res, which plays when the audio kit isn't linked.
 # Replacement music: 120 bpm, downbeat at 0.0 s.
 #
@@ -84,6 +84,7 @@ var _mode := &"plain"
 
 func _init() -> void:
 	duration = L.END
+	bpm = L.BPM
 	fps = 30
 	markers = {"in": 0.0, "logo": L.FTF_RISE, "hold": L.DROP, "out": L.STREAK}
 	cue(0, &"tape.start", 0.7)

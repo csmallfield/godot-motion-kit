@@ -45,8 +45,9 @@
 @tool
 extends MotionComposition
 
-const BEAT := 10.0
-const BAR := 40.0
+const BPM := 180.0
+const BEAT := 1800.0 / BPM          # frames per beat at 30 fps
+const BAR := 4.0 * BEAT
 # ---- Act I: primer
 const PRIME_PIPE := 4.0
 const MH_TRACE := 6.0
@@ -141,12 +142,13 @@ var _p_header := -1
 var _p_coolant := -1
 var _p_cool_ret := -1
 var _p_side := -1
-var _spin1 := PackedFloat32Array()
-var _spin2 := PackedFloat32Array()
+var _spin1: MotionTravel
+var _spin2: MotionTravel
 
 
 func _init() -> void:
 	duration = END
+	bpm = BPM
 	fps = 30
 	markers = {"in": 0.0, "logo": DROP, "hold": DROP + 40.0, "out": HOLD_END}
 	cue(0.0, &"pump.start", 0.6)
@@ -215,8 +217,9 @@ func _build() -> void:
 	_flash.color = Color(1, 1, 1, 0)
 	_flash.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_flash)
-	_spin1 = _spin_table(func(f: float) -> float: return _pump_speed(f, 0.0, true))
-	_spin2 = _spin_table(func(f: float) -> float: return _pump_speed(f, COOLANT, false))
+	# spin angles: each pump's speed summed once a frame (left Euler, Float32)
+	_spin1 = MotionTravel.from_speed(func(f: float) -> float: return _pump_speed(f, 0.0, true), END + 2, 1, false, false)
+	_spin2 = MotionTravel.from_speed(func(f: float) -> float: return _pump_speed(f, COOLANT, false), END + 2, 1, false, false)
 	_add_sound()
 
 
@@ -256,7 +259,7 @@ func _build_pipes() -> void:
 
 
 func _build_mh() -> void:
-	var data := _svg("res://demo/assets/logos/mh_logoFull_standard.svg")
+	var data := MotionSvgData.load_any("res://demo/assets/logos/mh_logoFull_standard.svg")
 	_mh_k = MH_W / data.view_box.size.x
 	_mh_ghost = MotionSvg.new()
 	_mh_ghost.data = data
@@ -311,7 +314,7 @@ func _build_mh() -> void:
 
 
 func _build_ftf() -> void:
-	var data := _svg(FTFKit.LOGO)
+	var data := MotionSvgData.load_any(FTFKit.LOGO)
 	_k = LOGO_W / data.view_box.size.x
 	_ftf = Node2D.new()
 	_ftf.position = LOGO_POS
@@ -422,11 +425,6 @@ func _build_labels() -> void:
 	_ticker.position = Vector2(1300, 880)
 
 
-func _svg(path: String) -> MotionSvgData:
-	var res: Resource = load(path) if ResourceLoader.exists(path) else null
-	return res if res is MotionSvgData else MotionSvgData.from_file(path)
-
-
 func _add_sound() -> void:
 	if Engine.is_editor_hint():
 		return
@@ -477,21 +475,6 @@ func _pump_speed(f: float, start: float, main: bool) -> float:
 	# a kick on every beat while it runs
 	var ph := fposmod(f, BEAT)
 	return base * (1.0 + 0.9 * exp(-ph * 0.6))
-
-
-func _spin_table(speed: Callable) -> PackedFloat32Array:
-	var t := PackedFloat32Array()
-	t.resize(END + 2)
-	var a := 0.0
-	for i in END + 2:
-		t[i] = a
-		a += float(speed.call(float(i)))
-	return t
-
-
-func _spin(table: PackedFloat32Array, f: float) -> float:
-	var i := clampi(int(floorf(f)), 0, table.size() - 2)
-	return lerpf(table[i], table[i + 1], clampf(f - i, 0.0, 1.0))
 
 
 ## Valve opening 0..1 (spring overshoot on open, a snap on close).
@@ -577,7 +560,7 @@ func _frame_pipes(f: float) -> void:
 			var off := 0.0 if i == _p_coolant else 14.0
 			d.fill = _front(f, COOLANT + off, COOLANT + 16.0 + off)
 			d.drain = MK.map(f, [372.0 + off * 0.5, 386.0 + off * 0.5], [0, 1], MK.ease_in_out)
-			d.flow = _spin(_spin2, f) * 40.0
+			d.flow = _spin2.at(f) * 40.0
 			d.pulse_gain = maxf(0.4, hold_gain * 0.7) if f >= COOLANT else 0.0
 			d.fluid = CYAN.lerp(WHITE, purge * 0.7)
 			d.glow = 0.4 + 0.6 * purge
@@ -816,9 +799,9 @@ func _draw_parts(c: MotionCanvas, f: float) -> void:
 	var p1_o := MK.prog(f, 0.0, 8) * (1.0 - MK.map(f, [384.0, 398.0], [0, 1], MK.linear))
 	var lit1 := MK.map(f, [MH_VALVE, MH_VALVE + 6.0], [0, 1], MK.linear) * (1.0 - MK.map(f, [CLOSES[4], 384.0], [0, 1], MK.linear))
 	var p1_fluid := AMBER if f < MAIN_VALVE else LIME
-	_draw_pump(c, P1, 52.0, _spin(_spin1, f), p1_fluid, lit1, p1_o)
+	_draw_pump(c, P1, 52.0, _spin1.at(f), p1_fluid, lit1, p1_o)
 	var p2_o := MK.prog(f, NET_DRAW + 14.0, 8) * (1.0 - MK.map(f, [384.0, 398.0], [0, 1], MK.linear))
-	_draw_pump(c, P2, 46.0, -_spin(_spin2, f), CYAN, MK.map(f, [COOLANT, COOLANT + 8.0], [0, 1], MK.linear), p2_o)
+	_draw_pump(c, P2, 46.0, -_spin2.at(f), CYAN, MK.map(f, [COOLANT, COOLANT + 8.0], [0, 1], MK.linear), p2_o)
 	# primer valve and gauges (Act I)
 	var mh_o := MK.prog(f, PRIME_PIPE + 8.0, 6) * (1.0 - MK.map(f, [MH_DRAIN + 10.0, MH_DRAIN + 22.0], [0, 1], MK.linear))
 	_draw_valve(c, Vector2(P1.x, 760), _valve(f, MH_VALVE, MH_DRAIN + 8.0), true, mh_o)

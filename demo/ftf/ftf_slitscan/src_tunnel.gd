@@ -14,9 +14,7 @@ var _canvas: MotionCanvas
 
 
 func _init() -> void:
-	duration = 100000
-	autoplay = false
-	hide_outside = false
+	as_source()
 
 
 func _ready() -> void:

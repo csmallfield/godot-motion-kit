@@ -29,8 +29,8 @@ const MH_BLUE := Color("#1b6393")
 const MH_INK := Color("#111111")
 
 const BPM := 150.0
-const BEAT := 12.0          # frames per beat at 150 bpm, 30 fps
-const BAR := 48.0
+const BEAT := 1800.0 / BPM  # frames per beat at 30 fps (12)
+const BAR := 4.0 * BEAT
 
 const LOGO := "res://demo/ftf/assets/ftf_logo.svg"
 const JP_FONT := "res://demo/ftf/assets/noto-jp-ftf-900.woff2"
@@ -63,24 +63,15 @@ static func font(key: String) -> Font:
 		tall = "res://demo/assets/fonts/big-shoulders-display-latin-900-normal.woff2",
 		jp = JP_FONT,
 	}
-	var f := MotionFonts.font(files[key])
-	if key != "jp":
-		var jp := MotionFonts.font(JP_FONT)
-		if not f.fallbacks.has(jp):
-			f.fallbacks = [jp]
+	# every face falls back to the Japanese subset (a font of its own: the
+	# shared file's fallbacks are never touched)
+	var f := MotionFonts.font(files[key]) if key == "jp" else MotionFonts.font(files[key], false, [MotionFonts.font(JP_FONT)])
 	_fonts[key] = f
 	return f
 
 
 static func text(parent: Node, key: String, size: float, col: Color, s: String, tracking := 0.0) -> MotionText:
-	var t := MotionText.new()
-	t.font = font(key)
-	t.font_size = size
-	t.color = col
-	t.tracking = tracking
-	t.text = s
-	parent.add_child(t)
-	return t
+	return MotionText.make(parent, font(key), size, col, s, tracking)
 
 
 ## A pivot node at `centre` holding `item` centred on it (item offset by -half size).

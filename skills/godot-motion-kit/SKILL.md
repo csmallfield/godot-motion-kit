@@ -62,7 +62,10 @@ from one of these numbers, so retiming is editing a constant:
 #   150-174   out: everything springs away, ends on black
 ```
 
-Put beats on a musical grid if there will be sound (120 bpm = a beat every 15 frames).
+Put beats on a musical grid if there will be sound (120 bpm = a beat every 15 frames):
+`const BPM := 120.0`, `const BEAT := 1800.0 / BPM`, `bpm = BPM` in `_init`;
+`MK.beat_pulse(f, BEAT, from, to, rate)`, `MK.decay_kick`, `MK.accent` and `MK.flicker`
+cover the usual beat-driven pulses, kicks and lamp strikes.
 Every beat that should be heard becomes a `cue()` in the code (section 6).
 
 ## 3. Build it
@@ -172,8 +175,11 @@ for free via `fill`. Fade a whole logo as one layer inside a `CanvasGroup`.
 **Type.** `MotionText`: `font` (`MotionFonts.font(path)`), `font_size`, `color`,
 `tracking` (em), `line_height`, `align` + `box_width`, `visible_chars`, `uppercase`,
 `stroke_width`/`stroke_color`, `vertical`; `glyph_fn = func(i, f)` per character;
-`get_text_size()`, `get_baseline()`. `MotionPill` for tags. Add subset fonts to
-`fallbacks` for symbols the main font lacks.
+`get_text_size()`, `get_baseline()`. `MotionText.make(parent, font, size, col, text,
+tracking)` in one line. `MotionPill` for tags. For symbols or scripts the main font
+lacks, ask for a font with fallbacks: `MotionFonts.font(path, false, [jp_font])`; never
+assign `.fallbacks` on a MotionFonts font (it is shared). Load logos with
+`MotionSvgData.load_any(path)`.
 
 **Shapes and drawing.** `MotionShape` (CIRCLE, RECT, RING, ARC; `MotionShape.circle(d,
 col)`, `pill(w, h, col)`; dashes, borders, box-shadow `blur`). `MotionGradient.linear`,
@@ -185,6 +191,9 @@ barcode, crosshair, warning triangles, hazard clamps, ribbons and stripe bundles
 paths. `MotionPath` measures a polyline (`point_at(s)`, `tangent_at`, `sub(a, b)` /
 `sub_fraction`, `rounded`, `offset`); `MotionPoly` has signed area, bounds and
 point-in-polygon; `MotionTape` poses and draws hazard tape along a path.
+`MotionTravel` tables distance over time (camera along a track: `from_keys` speed keys,
+`from_anchors` landmarks on frames; `at(f)` per frame). `MotionTrack3D` builds banked
+track curves and ribbons for MotionStage3D worlds.
 `MotionCells` for palette byte grids.
 
 **Effects.** `MotionFX` (put nodes under `.content`; size it to the frame plus room for

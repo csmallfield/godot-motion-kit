@@ -74,8 +74,8 @@ static var _outfit_fb: Font
 ## Carlito (Bold, for weight 900), whose dot is much smaller than Inter's.
 static func _outfit() -> Font:
 	if not _outfit_fb:
-		var f := MotionFonts.font("res://demo/assets/fonts/outfit-latin-900-normal.woff2")
-		f.fallbacks = [MotionFonts.font("res://demo/assets/fonts/fallback-dot-bold.ttf")]
+		var f := MotionFonts.font("res://demo/assets/fonts/outfit-latin-900-normal.woff2", false,
+			[MotionFonts.font("res://demo/assets/fonts/fallback-dot-bold.ttf")])
 		_outfit_fb = f
 	return _outfit_fb
 
@@ -182,12 +182,12 @@ func _build() -> void:
 			var w := 6.0 if MK.rand(i * 3.1) > 0.6 else 2.0
 			c.rect(Rect2(x, 1080 - 40 - 34, w, 34), _micro.fg)
 			x += w + 4
-	var bpm := MotionText.new()
-	bpm.font = _mono_font(); bpm.font_size = 22; bpm.tracking = 0.12; bpm.text = "120 BPM — ▲▲▲"
-	bpm.align = HORIZONTAL_ALIGNMENT_RIGHT
-	bpm.position = Vector2(1920 - 48, 1080 - 40 - bpm.get_text_size().y)
-	_strobe.add_child(bpm)
-	_micro.bpm = bpm
+	var tempo := MotionText.new()
+	tempo.font = _mono_font(); tempo.font_size = 22; tempo.tracking = 0.12; tempo.text = "120 BPM — ▲▲▲"
+	tempo.align = HORIZONTAL_ALIGNMENT_RIGHT
+	tempo.position = Vector2(1920 - 48, 1080 - 40 - tempo.get_text_size().y)
+	_strobe.add_child(tempo)
+	_micro.bpm = tempo
 	_micro.fg = CREAM
 
 	# the MH lockup the rows squash into

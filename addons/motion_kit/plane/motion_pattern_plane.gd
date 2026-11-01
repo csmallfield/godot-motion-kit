@@ -412,3 +412,29 @@ func draw_checker_quad(c: MotionCanvas, a: Vector3, b: Vector3, cc: Vector3, d: 
 				continue
 			var k0 := j * (cols + 1) + i
 			c.draw_colored_polygon(PackedVector2Array([grid[k0], grid[k0 + 1], grid[k0 + cols + 2], grid[k0 + cols + 1]]), fb)
+
+
+## A checkered box standing on the ground (a building on a checker city):
+## its inner side face, the one toward the road at x = 0, tinted by
+## `side_tint`, and its front face toward the camera when that is in front of
+## `near_z`. x0 < x1 lateral (ground x, before `curve`), z0 < z1 camera-relative
+## depths, `h` its height, `cell` the check size (whole checks per face).
+## `side` +1 for a box right of the road (inner face at x0), -1 left of it.
+## `clip_side` starts the side face at `near_z` (keeps every corner well in
+## front of a rolling camera); otherwise draw_checker_quad clips it.
+func draw_checker_box(c: MotionCanvas, x0: float, x1: float, z0: float, z1: float, h: float, cell: float,
+		col: Color, ink: Color, side: int, side_tint := Color(0.62, 0.62, 0.68), near_z := 0.6,
+		clip_side := false, min_px := 4.0) -> void:
+	var zs := maxf(z0, near_z) if clip_side else z0
+	var xi := x0 if side > 0 else x1
+	var s0 := ground_point(xi, zs)
+	var s1 := ground_point(xi, z1)
+	var up := Vector3(0, h, 0)
+	var rows := maxi(1, int(round(h / cell)))
+	draw_checker_quad(c, s0 + up, s1 + up, s1, s0, maxi(1, int(round((z1 - zs) / cell))), rows,
+		col * side_tint, ink, min_px)
+	if z0 >= near_z:
+		var f0 := ground_point(x0, z0)
+		var f1 := ground_point(x1, z0)
+		draw_checker_quad(c, f0 + up, f1 + up, f1, f0, maxi(1, int(round((x1 - x0) / cell))), rows,
+			col, ink, min_px)
