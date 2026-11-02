@@ -40,10 +40,10 @@ name it, and that piece's `KIT_NOTES.md` has the measurements behind the cost no
 | [Fields and patterns](#fields-and-patterns) | [MotionGlyphField](#motionglyphfield), [MotionWarpField](#motionwarpfield), [MotionTiling](#motiontiling), [MotionPatternPlane](#motionpatternplane), [MotionPlaneScan](#motionplanescan) |
 | [Print](#print) | [MotionPlate](#motionplate), [MotionPaper](#motionpaper) |
 | [2.5D extrusion and cities](#25d-extrusion-and-cities) | [MotionExtrudeCamera](#motionextrudecamera), [MotionSolid](#motionsolid), [MotionExtrude](#motionextrude), [MotionCityPlan](#motioncityplan), [MotionGreebler](#motiongreebler), [MotionVoxelize](#motionvoxelize), [MotionBlockPlan](#motionblockplan), [MotionFaceLights](#motionfacelights) |
-| [3D](#3d) | [MotionStage3D](#motionstage3d), [MotionLens3D](#motionlens3d), [MotionSvgMesh](#motionsvgmesh), [MotionPanel3D](#motionpanel3d), [MotionCutoutRig](#motioncutoutrig), [MotionCutout](#motioncutout), [MotionRibbon3D](#motionribbon3d), [MotionFlat3D](#motionflat3d), [MotionEdges3D](#motionedges3d), [MotionDecalAtlas](#motiondecalatlas), [MotionPattern3D](#motionpattern3d), [MotionSkyDome3D](#motionskydome3d), [MotionTrack3D](#motiontrack3d) |
+| [3D](#3d) | [MotionStage3D](#motionstage3d), [MotionLens3D](#motionlens3d), [MotionSvgMesh](#motionsvgmesh), [MotionPanel3D](#motionpanel3d), [MotionCutoutRig](#motioncutoutrig), [MotionCutout](#motioncutout), [MotionRibbon3D](#motionribbon3d), [MotionGrass3D](#motiongrass3d), [MotionFlat3D](#motionflat3d), [MotionEdges3D](#motionedges3d), [MotionDecalAtlas](#motiondecalatlas), [MotionPattern3D](#motionpattern3d), [MotionSkyDome3D](#motionskydome3d), [MotionTrack3D](#motiontrack3d) |
 | [Diagrams and flow](#diagrams-and-flow) | [MotionMetroMap](#motionmetromap), [MotionFlow](#motionflow), [MotionLiquidFill](#motionliquidfill), [MotionCable](#motioncable), [MotionCableSet](#motioncableset) |
 | [Shader includes](#shader-includes) | `motion_noise`, `motion_sun`, `motion_pattern`, `motion_flat_3d` |
-| [Game layer](#game-layer) | MotionSpring, MotionSpring2D, MotionSpring3D, MotionAimSpring, MotionReactive, MotionTransition, MotionClock, MotionTrauma, MotionIK, MotionGait, MotionChain, MotionSquash, MotionPoseCurve |
+| [Game layer](#game-layer) | MotionSpring, MotionSpring2D, MotionSpring3D, MotionAimSpring, MotionReactive, MotionTransition, MotionClock, MotionTrauma, MotionIK, MotionGait, MotionChain, MotionSquash, MotionPoseCurve, MotionRipples |
 | [Deprecated aliases](#deprecated-aliases) | Old names that still work |
 
 ## Core
@@ -1229,6 +1229,7 @@ Megastructure (`demo/ftf/ftf_canyon/`) are the examples.
 | `motion_lens_3d.gd` | `MotionLens3D` (RefCounted): a camera pose that blends perspective into orthographic without a pop, and matches a `MotionExtrudeCamera` exactly |
 | `motion_svg_mesh.gd` | `MotionSvgMesh` (static): extruded SVG logos |
 | `motion_panel_3d.gd` + `.gdshader` | `MotionPanel3D`: kit 2D on a 3D quad |
+| `motion_grass_3d.gd` + `.gdshader` | `MotionGrass3D` (static): MultiMesh grass tufts that sway and ripple |
 | `motion_ribbon_3d.gd` | `MotionRibbon3D` (MeshInstance3D): an outlined ribbon through moving points (chains) |
 | `motion_cutout_rig.gd`, `motion_cutout.gd` | `MotionCutoutRig` (Node3D): a cutout character from one SVG, parts on pivots, IK; `MotionCutout` (Node3D): front / back / side views with a paper turn |
 | `motion_flat_3d.gd` | `MotionFlat3D` (RefCounted): the MotionExtrude look in real 3D: face-tone materials, depth fog, frame-pure group motion, builders |
@@ -1373,6 +1374,22 @@ MotionChain's points) in the node's XY plane, facing +Z like cutout cards: `widt
 edge geometry. `update(points)` rebuilds it (ImmediateMesh, vertex colour: use
 `MotionFlat3D.cutout()`). **Cost.** About 40 µs per short ribbon per frame in GDScript on a
 2-core VM: fine for a few per character, not for crowds.
+
+### MotionGrass3D
+
+Static, `three/motion_grass_3d.gd` + `.gdshader`. Grass tufts for the flat graphic look:
+one MultiMesh of small flat tuft cards (three blades), scattered by a seeded hash, coloured
+per instance, swaying in the wind and pushed over and flattened by `MotionRipples` rings.
+One draw call per field.
+
+| Member | Notes |
+| --- | --- |
+| `field(rect, density, color, seed, mask, opts) -> MultiMeshInstance3D` | `density` per m² over a world x, z rect; `mask(p: Vector2) -> bool` keeps a tuft; opts `height`, `width`, `lean_deg` (toward a pitched camera, like cutout cards), `facing` (yaw), `variation` |
+| `tuft_mesh(w, h)`, `tick(grass, time_s)` | The tuft (vertex alpha = height along the blade); advance the wind |
+| Shader parameters | `wind_dir`, `wind_amp`, `wind_speed`, `bend`, `flatten`, `root_shade`, plus the ripple and MotionFlat3D fog uniforms (register the material with both) |
+
+**Cost.** Vertex work only (a ripple loop per vertex over the live rings); about 1,000 tufts
+on Cutout Isle's chunk.
 
 ### MotionPanel3D
 
@@ -1719,6 +1736,7 @@ short spans: lower `samples` (8 is plenty).
 | `shaders/motion_sun.gdshaderinc` | The banded OutRun sun: `sun_band_cut(v, bands, aa)`, `sun_tint(v, bottom, top)`, `sun_glow_k(ang, radius)`; each caller keeps its own antialiasing (screen pixels on the planes, `fwidth` on the sky dome). |
 | `plane/motion_pattern.gdshaderinc` | Box-filtered `checker`, `band` (`box_int`), `lines`, `dots` (MotionPatternPlane, MotionPlaneScan, MotionPattern3D). With `#define MK_PLANE` before it, also the plane model the two plane shaders share: `cam_to_world`, `plane_hit`, `ground_coord`, the ring, `pattern_colour`, `accent_lanes` and `plane_sky`. |
 | `three/motion_flat_3d.gdshaderinc`, `three/motion_flat_3d_faces.gdshaderinc` | MotionFlat3D's group motion (sink rings, beat pulse) and depth fog, and its face-tone body; include the first in a shader to register it with `MotionFlat3D.register()`. Define `MK_INSTANCED` before including the faces body for per-instance `flash` and `tint`. |
+| `shaders/motion_ripples.gdshaderinc` | `mk_ripple(world_xz)` and its uniforms: MotionRipples' event rings. |
 | `shaders/motion_gradient.gdshaderinc` | The CSS gradient body shared by MotionGradient's plain and blending shaders. |
 
 ## Game layer
@@ -1825,6 +1843,21 @@ rig.solve_limb(&"leg_l_upper", &"leg_l_lower", &"foot_l", rest_foot_y + cut.grou
 card-plane offset on the same screen point (x mirrored with the view, ground depth and
 height up the card), so world feet drive any view's IK. Feet stay on the body's ground
 height; slopes and stairs need a ground probe per foot (not yet).
+
+### MotionRipples
+
+`RefCounted`, `live/motion_ripples.gd`, shader include `shaders/motion_ripples.gdshaderinc`.
+Event rings for shaders: hits, footsteps and landings send a ring running out across the
+ground, and any shader including the include reads them (`vec3 r = mk_ripple(world.xz)`:
+r.xy push away from the centres, r.z total amount). Time City's ring-rise, driven by game
+events instead of beats. Up to 16 rings; the oldest is replaced.
+
+| Member | Notes |
+| --- | --- |
+| `add(pos, strength)` | A ring at a world point (Vector3 x, z or Vector2) |
+| `step(dt)`, `apply()`, `register(material)` | Advance, push uniforms to registered materials once per frame |
+| `speed`, `width`, `decay`, `life` | m/s, m, 1/s, seconds kept |
+| `offset(pos)`, `uniforms()`, `count()` | The shader's result in GDScript for CPU-moved things; the raw rings |
 
 ### MotionPoseCurve
 

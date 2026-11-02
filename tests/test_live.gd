@@ -610,3 +610,51 @@ func test_pose_curve_markers_and_blend() -> String:
 	d.changed_channels()
 	var b: float = c.blend(d, 0.25, &"arc", 3.0, 0.0)
 	return "" if is_equal_approx(b, 135.0 * 0.75) else "blend: %s" % b
+
+
+# ------------------------------------------------------------------ ripples and grass
+
+func test_ripples_run_out_and_expire() -> String:
+	var r := MotionRipples.new()
+	r.add(Vector3(0, 0, 0), 1.0)
+	r.step(0.5)                      # the front is now 1.5 m out
+	var on := r.offset(Vector2(1.5, 0))
+	var off := r.offset(Vector2(0.3, 0))
+	if on.z <= 0.1 or off.z > 1e-3:
+		return "ring front not where expected: on %s off %s" % [on, off]
+	if on.x <= 0.0:
+		return "push should point away from the centre"
+	var u := r.uniforms()
+	if u.size() != MotionRipples.MAX or not is_equal_approx(u[0].z, 0.5) or u[1].z >= 0.0:
+		return "uniforms: %s" % [u.slice(0, 2)]
+	r.step(5.0)
+	return "" if r.count() == 0 else "old rings should be dropped"
+
+
+func test_ripples_keep_newest_sixteen() -> String:
+	var r := MotionRipples.new()
+	for i in 20:
+		r.add(Vector2(i, 0), 1.0)
+		r.step(0.01)
+	var u := r.uniforms()
+	return "" if r.count() == 16 and is_equal_approx(u[0].x, 4.0) else "kept %d, first %s" % [r.count(), u[0]]
+
+
+func test_grass_field_scatter_and_mask() -> String:
+	var g := MotionGrass3D.field(Rect2(0, 0, 4, 4), 5.0, Color.GREEN, 3, func(p: Vector2) -> bool: return p.x < 2.0)
+	var n := g.multimesh.instance_count
+	var ok := ""
+	if n < 25 or n > 55:
+		ok = "about 40 tufts expected on half of 16 m2 at 5/m2, got %d" % n
+	else:
+		for i in n:
+			if g.multimesh.get_instance_transform(i).origin.x >= 2.0:
+				ok = "the mask was ignored"
+				break
+	var params := []
+	for u in RenderingServer.get_shader_parameter_list((g.material_override as ShaderMaterial).shader.get_rid()):
+		params.append(u.name)
+	if ok == "" and not params.has("mk_ripples"):
+		ok = "grass shader should read the ripple uniforms"
+	g.free()
+	return ok
