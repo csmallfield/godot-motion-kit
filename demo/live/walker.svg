@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 240">
+  <!-- A one-view cutout walker for the live example (side view, facing right).
+       Rig parts are groups with pivot markers (ids starting "pivot"). -->
+  <g id="hips"><circle id="pivot-hips" cx="80" cy="170" r="2" fill="none"/>
+    <g id="leg_l_upper"><circle id="pivot-leg_l_upper" cx="76" cy="172" r="2" fill="none"/>
+      <rect fill="#2c3550" x="69" y="168" width="14" height="30" rx="6"/>
+      <g id="leg_l_lower"><circle id="pivot-leg_l_lower" cx="76" cy="196" r="2" fill="none"/>
+        <rect fill="#2c3550" x="70" y="192" width="12" height="28" rx="5"/>
+        <g id="foot_l"><circle id="pivot-foot_l" cx="76" cy="220" r="2" fill="none"/>
+          <path fill="#1c2238" d="M68 216 L84 216 C92 218 96 224 96 230 L68 230 Z"/></g></g></g>
+    <g id="torso"><circle id="pivot-torso" cx="80" cy="170" r="2" fill="none"/>
+      <path id="coat" fill="#f0a63a" d="M58 96 L102 96 C110 104 112 130 110 176 L54 176 C52 130 52 104 58 96 Z"/>
+      <g id="head"><circle id="pivot-head" cx="80" cy="98" r="2" fill="none"/>
+        <circle id="face" fill="#f7cfa6" cx="84" cy="64" r="36"/>
+        <path id="hat" fill="#2c3550" d="M46 60 C46 30 66 18 86 18 C108 18 122 34 122 54 L134 58 L46 60 Z"/>
+        <ellipse id="eye" class="flat" fill="#1f1a26" cx="102" cy="68" rx="5" ry="8"/>
+      </g>
+      <g id="arm_upper"><circle id="pivot-arm_upper" cx="82" cy="110" r="2" fill="none"/>
+        <rect fill="#d98a2a" x="75" y="104" width="14" height="32" rx="6"/>
+        <g id="arm_lower"><circle id="pivot-arm_lower" cx="82" cy="134" r="2" fill="none"/>
+          <rect fill="#d98a2a" x="76" y="130" width="12" height="26" rx="5"/>
+          <g id="hand"><circle id="pivot-hand" cx="82" cy="158" r="2" fill="none"/>
+            <circle fill="#f7cfa6" cx="82" cy="161" r="8"/></g></g></g>
+    </g>
+    <g id="leg_r_upper"><circle id="pivot-leg_r_upper" cx="84" cy="172" r="2" fill="none"/>
+      <rect fill="#3a4568" x="77" y="168" width="14" height="30" rx="6"/>
+      <g id="leg_r_lower"><circle id="pivot-leg_r_lower" cx="84" cy="196" r="2" fill="none"/>
+        <rect fill="#3a4568" x="78" y="192" width="12" height="28" rx="5"/>
+        <g id="foot_r"><circle id="pivot-foot_r" cx="84" cy="220" r="2" fill="none"/>
+          <path fill="#252c46" d="M76 216 L92 216 C100 218 104 224 104 230 L76 230 Z"/></g></g></g>
+  </g>
+</svg>

@@ -86,6 +86,8 @@ func face(dir: Vector2) -> void:
 	if dir.length_squared() < 1e-6:
 		return
 	var v := choose(dir, _want_view, hysteresis, views.has(&"side"), views.has(&"back"))
+	if not views.has(v):              # a character with fewer views keeps what it has
+		v = _want_view if views.has(_want_view) else views.keys()[0]
 	_want_view = v
 	_want_mirror = dir.x < -1e-3 if absf(dir.x) > 1e-3 else _want_mirror
 	if not paper_turn:

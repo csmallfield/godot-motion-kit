@@ -1,0 +1,15 @@
+[remap]
+
+importer="motion_kit.svg"
+importer_version=2
+type="Resource"
+uid="uid://dttqwo2uv843g"
+path="res://.godot/imported/walker.svg-0f2b1687f9f47ddfbb6fe66527257263.res"
+
+[deps]
+
+source_file="res://demo/live/walker.svg"
+dest_files=["res://.godot/imported/walker.svg-0f2b1687f9f47ddfbb6fe66527257263.res"]
+
+[params]
+

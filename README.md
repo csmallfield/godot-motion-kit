@@ -80,9 +80,9 @@ The kit is grouped into families; [docs/API.md](docs/API.md) uses the same group
 | Fields and patterns | `MotionGlyphField`, `MotionWarpField`, `MotionTiling`, `MotionPatternPlane`, `MotionPlaneScan` | One-quad shader fields lit by any 2D mask: cycling glyphs, warped and kaleidoscoped colour fields, op-art tilings, ray-cast pattern planes with an OutRun sun, and their per-pixel slit-scan |
 | Print | `MotionPlate`, `MotionPaper` | Overprinting ink plates with halftone, misregistration, press roller and ink texture on paper |
 | 2.5D extrusion and cities | `MotionExtrude`, `MotionSolid`, `MotionExtrudeCamera`, `MotionCityPlan`, `MotionGreebler`, `MotionVoxelize`, `MotionBlockPlan`, `MotionFaceLights` | Vector-crisp isometric extrusion (iso to flat elevation), procedural machine cities, greebles with zoom level of detail, voxel logo assembly with lit windows |
-| 3D | `MotionStage3D`, `MotionLens3D`, `MotionSvgMesh`, `MotionPanel3D`, `MotionFlat3D`, `MotionEdges3D`, `MotionDecalAtlas`, `MotionPattern3D`, `MotionSkyDome3D`, `MotionTrack3D` | Frame-driven 3D inside a composition: perspective-to-isometric lens, extruded SVG logos, 2D panels, poster shading with outlines and decals, patterned worlds, sky domes, banked tracks |
+| 3D | `MotionStage3D`, `MotionLens3D`, `MotionSvgMesh`, `MotionPanel3D`, `MotionCutoutRig`, `MotionCutout`, `MotionRibbon3D`, `MotionGrass3D`, `MotionWarmup`, `MotionFlat3D`, `MotionEdges3D`, `MotionDecalAtlas`, `MotionPattern3D`, `MotionSkyDome3D`, `MotionTrack3D` | Frame-driven 3D inside a composition or a game scene: perspective-to-isometric lens, extruded SVG logos, 2D panels, cutout characters from SVG (pivoted parts, two-bone IK, front / back / side views with a paper turn), outlined ribbons, grass that ripples, material warmup, poster shading with outlines, per-actor flashes and decals, patterned worlds, sky domes, banked tracks |
 | Diagrams and flow | `MotionMetroMap`, `MotionFlow`, `MotionLiquidFill`, `MotionCable`, `MotionCableSet` | Octilinear transit maps, pipe networks with flowing fluid, logos filling with sloshing liquid, sagging shaded cables with plugs |
-| Game layer | `MotionSpring`, `MotionReactive`, `MotionTransition` (autoload) | Stateful springs for input; hover, focus and press feedback for any Control; `change_scene(path, style)` with circle, bars, clock, fade, glitch, crt |
+| Game layer | `MotionSpring` (+ `2D`, `3D`), `MotionAimSpring`, `MotionReactive`, `MotionTransition` (autoload), `MotionClock`, `MotionTrauma`, `MotionIK`, `MotionGait`, `MotionChain`, `MotionSquash`, `MotionPoseCurve`, `MotionRipples`, `MotionPerfProbe` | Springs for input; hover, focus and press feedback for any Control; `change_scene(path, style)` with circle, bars, clock, fade, glitch, crt. Live game systems: event clocks with per-entity hit-stop (so every `MK` curve runs on game events), trauma shake, two-bone IK, procedural gait with foot planting, verlet chains, squash and stretch, authored moves as data, event rings for shaders, per-system script timing |
 
 See [docs/techniques.md](docs/techniques.md) for what to use when (with examples, best
 practices and the three ways to do 3D), [docs/API.md](docs/API.md) for the reference, and
@@ -100,6 +100,11 @@ around a kit family (slit-scan, isometric cities, risograph plates, 3D gantries,
 fields, transit maps, cables, pattern planes and more) with its own baked soundtrack:
 see [demo/ftf/README.md](demo/ftf/README.md) for the list with tempo, technique, render
 cost and how to re-bake the sound.
+
+`demo/live/live_example.tscn` shows the live game layer in one small scene: a cutout
+walker with planted feet and a trailing scarf circles a post on rippling grass and bonks
+it, with hit-stop, trauma shake and a wobble. [Cutout Isle](https://github.com/csmallfield/cutout-isle)
+is a full 2.5D action slice built on it with the Godot Audio Kit.
 
 ## Tests and comparisons
 

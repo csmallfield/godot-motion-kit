@@ -658,3 +658,40 @@ func test_grass_field_scatter_and_mask() -> String:
 		ok = "grass shader should read the ripple uniforms"
 	g.free()
 	return ok
+
+
+# ------------------------------------------------------------------ consolidation helpers
+
+func test_perf_probe_window() -> String:
+	MotionPerfProbe.reset()
+	for i in 3:
+		var t := MotionPerfProbe.begin()
+		var x := 0.0
+		for k in 2000:
+			x += sqrt(float(k))
+		MotionPerfProbe.end(&"work", t)
+		MotionPerfProbe.end_frame()
+	var st := MotionPerfProbe.stats()
+	if not st.has(&"work") or (st[&"work"] as Vector2).y <= 0.0:
+		return "no timing recorded: %s" % st
+	var rep := MotionPerfProbe.report()
+	MotionPerfProbe.reset()
+	return "" if rep.size() == 2 and rep[1].contains("total") else "report: %s" % rep
+
+
+func test_cutout_card_and_warmup_collect() -> String:
+	var flat := MotionFlat3D.new()
+	var data := MotionSvgData.from_string(RIG_SVG)
+	var card := MotionCutoutRig.card(data, 0.5, flat.cutout(), flat.edges())
+	var root := Node3D.new()
+	root.add_child(card)
+	var rig := _rig()
+	root.add_child(rig)
+	var mats := MotionWarmup.collect(root)
+	var res := ""
+	if card.get_node_or_null("Outline") == null:
+		res = "card has no outline"
+	elif mats.size() < 4:      # card cutout + its edges, rig cutout + rig edges
+		res = "collect found %d materials" % mats.size()
+	root.free()
+	return res

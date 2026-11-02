@@ -419,3 +419,48 @@ func _init() -> void:
 - Only when matching an existing browser animation exactly (porting a Remotion/CSS/SVG
   piece) do the browser rules matter: read `docs/porting-from-remotion.md` and compare
   with `tools/compare/compare.py`.
+
+## 9. Live game systems
+
+The same curves run a game, not just a timeline: reactions are pure functions of "time
+since the event", following behaviour uses springs, and simulation runs at the physics
+rate. `demo/live/live_example.tscn` shows every piece in one small scene;
+`csmallfield/cutout-isle` is a full action slice built on them. Read the API's Game layer,
+MotionCutoutRig and MotionCutout entries before starting.
+
+- **Time.** One `MotionClock` per entity, parented to a world clock. Mark events
+  (`clock.mark(&"hit", data)`) and feed `clock.frames_since(&"hit")` to any `MK` curve
+  (`MK.spring`, `MotionSquash.land`, `MK.shakes(clock.frame(), clock.frames(&"hit"), ...)`).
+  Hit-stop is `clock.freeze(hold, ease)`: on the attacker and victim for per-entity
+  hit-stop, on the world clock for global. Everything on an entity takes its time from
+  its clock, including `_physics_process` (`delta * clock.rate()`), or a frozen entity
+  keeps sliding. Keep the camera and HUD on real time.
+- **Layers, one owner per property.** Each frame: `reset_pose()`, then authored pose
+  (a `MotionPoseCurve` sampled at frames since the move started), procedural offsets
+  (gait, lean, look-at), reactions (squash, flash), camera last. Two systems writing the
+  same property fight.
+- **Fixed-step simulation** (`MotionGait`, `MotionChain`) steps in `_physics_process` and
+  is read in `_process` with `Engine.get_physics_interpolation_fraction()`. Nodes posed in
+  `_process` get `physics_interpolation_mode = OFF` when the project interpolates physics.
+- **Cutout characters.** Draw each view as an SVG whose rig parts are groups holding a
+  pivot marker; `MotionCutoutRig.build` per view, `MotionCutout` to choose the view from
+  the facing (paper turn between them) and `lean()` toward the camera (upright cards
+  occlude correctly; the stretch keeps the art's proportions). Legs and arms reach
+  targets with `solve_limb`; world feet from a gait become targets through
+  `ground_to_card`. Props are `MotionCutoutRig.card`. Characters use `MotionFlat3D.cutout()`
+  (unlit vertex colour) and an outline material whose depth bias is below the layer step.
+- **Per-actor reactions** need instance uniforms: `material(..., instanced = true)` or
+  `cutout()`, then `MotionFlat3D.set_flash(node, color, amount)`. Flash small areas, at
+  most three a second; prefer shake (`MotionTrauma` with `kick`), rings
+  (`MotionRipples` through `MotionGrass3D`) and squash to flashes.
+- **Juice that held up:** hit-stop 60–90 ms scaled by power, trauma 0.2–0.4 with a kick
+  along the blow, a squash on the victim, an impact star that plays through the freeze on
+  real time, a ring through the grass, a telegraph (a held windup and a glowing blade)
+  before every enemy attack.
+- **Cost.** Measure with `MotionPerfProbe` per system and show it in an overlay. A posed
+  cutout character with gait, IK and a chain costs roughly 0.2–0.3 ms of GDScript on a
+  2-core cloud VM; skip posing off screen (`VisibleOnScreenNotifier3D`) and keep crowds on
+  simpler poses. Cloud renders use software GL: never quote their frame times as
+  performance; profile on the target GPU.
+- **Loading.** `MotionWarmup.run(camera, MotionWarmup.collect(scene))` compiles every
+  material during loading, and audio pools render at load too.

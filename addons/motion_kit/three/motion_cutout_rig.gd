@@ -142,6 +142,31 @@ static func build(data: MotionSvgData, width: float, material: Material, outline
 	return rig
 
 
+## A single flat card from an SVG (a prop: a sword, a sign, a pouch): every
+## part stacked `layer` apart toward +Z, `anchor` (fractions of the viewBox)
+## at the origin, outlines on every part without class "flat". For anything
+## that moves in parts, build() a rig instead.
+static func card(data: MotionSvgData, width: float, material: Material, outline_material: Material = null, anchor := Vector2(0.5, 1.0), layer := 0.012) -> MeshInstance3D:
+	var opts := {flat = true, depth = 0.0, layer = layer, anchor = anchor}
+	var mi := MeshInstance3D.new()
+	mi.mesh = MotionSvgMesh.build(data, width, opts)
+	mi.material_override = material
+	if outline_material:
+		var only := []
+		for i in data.parts.size():
+			if not (data.parts[i].classes as PackedStringArray).has("flat"):
+				only.append(i)
+		if not only.is_empty():
+			var eo := opts.duplicate()
+			eo["only"] = only
+			var edges := MeshInstance3D.new()
+			edges.name = "Outline"
+			edges.mesh = MotionEdges3D.from_mesh(MotionSvgMesh.build(data, width, eo), {kind = MotionEdges3D.ALWAYS, crease_deg = 89.0})
+			edges.material_override = outline_material
+			mi.add_child(edges)
+	return mi
+
+
 ## An SVG point in rig-local metres (z 0).
 func svg_to_local(p: Vector2) -> Vector3:
 	return Vector3((p.x - origin_svg.x) * k, -(p.y - origin_svg.y) * k, 0.0)

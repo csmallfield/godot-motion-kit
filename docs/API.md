@@ -40,10 +40,10 @@ name it, and that piece's `KIT_NOTES.md` has the measurements behind the cost no
 | [Fields and patterns](#fields-and-patterns) | [MotionGlyphField](#motionglyphfield), [MotionWarpField](#motionwarpfield), [MotionTiling](#motiontiling), [MotionPatternPlane](#motionpatternplane), [MotionPlaneScan](#motionplanescan) |
 | [Print](#print) | [MotionPlate](#motionplate), [MotionPaper](#motionpaper) |
 | [2.5D extrusion and cities](#25d-extrusion-and-cities) | [MotionExtrudeCamera](#motionextrudecamera), [MotionSolid](#motionsolid), [MotionExtrude](#motionextrude), [MotionCityPlan](#motioncityplan), [MotionGreebler](#motiongreebler), [MotionVoxelize](#motionvoxelize), [MotionBlockPlan](#motionblockplan), [MotionFaceLights](#motionfacelights) |
-| [3D](#3d) | [MotionStage3D](#motionstage3d), [MotionLens3D](#motionlens3d), [MotionSvgMesh](#motionsvgmesh), [MotionPanel3D](#motionpanel3d), [MotionCutoutRig](#motioncutoutrig), [MotionCutout](#motioncutout), [MotionRibbon3D](#motionribbon3d), [MotionGrass3D](#motiongrass3d), [MotionFlat3D](#motionflat3d), [MotionEdges3D](#motionedges3d), [MotionDecalAtlas](#motiondecalatlas), [MotionPattern3D](#motionpattern3d), [MotionSkyDome3D](#motionskydome3d), [MotionTrack3D](#motiontrack3d) |
+| [3D](#3d) | [MotionStage3D](#motionstage3d), [MotionLens3D](#motionlens3d), [MotionSvgMesh](#motionsvgmesh), [MotionPanel3D](#motionpanel3d), [MotionCutoutRig](#motioncutoutrig), [MotionCutout](#motioncutout), [MotionRibbon3D](#motionribbon3d), [MotionGrass3D](#motiongrass3d), [MotionWarmup](#motionwarmup), [MotionFlat3D](#motionflat3d), [MotionEdges3D](#motionedges3d), [MotionDecalAtlas](#motiondecalatlas), [MotionPattern3D](#motionpattern3d), [MotionSkyDome3D](#motionskydome3d), [MotionTrack3D](#motiontrack3d) |
 | [Diagrams and flow](#diagrams-and-flow) | [MotionMetroMap](#motionmetromap), [MotionFlow](#motionflow), [MotionLiquidFill](#motionliquidfill), [MotionCable](#motioncable), [MotionCableSet](#motioncableset) |
 | [Shader includes](#shader-includes) | `motion_noise`, `motion_sun`, `motion_pattern`, `motion_flat_3d` |
-| [Game layer](#game-layer) | MotionSpring, MotionSpring2D, MotionSpring3D, MotionAimSpring, MotionReactive, MotionTransition, MotionClock, MotionTrauma, MotionIK, MotionGait, MotionChain, MotionSquash, MotionPoseCurve, MotionRipples |
+| [Game layer](#game-layer) | MotionSpring, MotionSpring2D, MotionSpring3D, MotionAimSpring, MotionReactive, MotionTransition, MotionClock, MotionTrauma, MotionIK, MotionGait, MotionChain, MotionSquash, MotionPoseCurve, MotionRipples, MotionPerfProbe |
 | [Deprecated aliases](#deprecated-aliases) | Old names that still work |
 
 ## Core
@@ -1229,6 +1229,7 @@ Megastructure (`demo/ftf/ftf_canyon/`) are the examples.
 | `motion_lens_3d.gd` | `MotionLens3D` (RefCounted): a camera pose that blends perspective into orthographic without a pop, and matches a `MotionExtrudeCamera` exactly |
 | `motion_svg_mesh.gd` | `MotionSvgMesh` (static): extruded SVG logos |
 | `motion_panel_3d.gd` + `.gdshader` | `MotionPanel3D`: kit 2D on a 3D quad |
+| `motion_warmup.gd` | `MotionWarmup` (static): draw every material once while loading |
 | `motion_grass_3d.gd` + `.gdshader` | `MotionGrass3D` (static): MultiMesh grass tufts that sway and ripple |
 | `motion_ribbon_3d.gd` | `MotionRibbon3D` (MeshInstance3D): an outlined ribbon through moving points (chains) |
 | `motion_cutout_rig.gd`, `motion_cutout.gd` | `MotionCutoutRig` (Node3D): a cutout character from one SVG, parts on pivots, IK; `MotionCutout` (Node3D): front / back / side views with a paper turn |
@@ -1340,6 +1341,7 @@ Authoring convention (no sidecar file):
 | `rig_transform(name)` | A part's transform in rig space, without the scene tree |
 | `solve_limb(upper, lower, tip, target, bend) -> bool` | Two-bone IK: rotates `upper` and `lower` so the tip's pivot reaches `target` (rig-local x, y) |
 | `set_flash(color, amount)`, `set_tint(color)` | Per-instance reactions on every part |
+| static `card(data, width, material, outline_material, anchor, layer) -> MeshInstance3D` | A single flat card for a prop (sword, sign, pouch): parts stacked toward +Z, outlines on parts without class `flat` |
 
 **Cost.** One MeshInstance3D and one outline per part with shapes (about 30 draw calls for
 a 17-part character). Script cost per call on a 2-core cloud VM: `reset_pose` 7.6 µs,
@@ -1390,6 +1392,15 @@ One draw call per field.
 
 **Cost.** Vertex work only (a ripple loop per vertex over the live rings); about 1,000 tufts
 on Cutout Isle's chunk.
+
+### MotionWarmup
+
+Static, `three/motion_warmup.gd`. Hitch prevention at load: `collect(root)` gathers every
+distinct material under a node (overrides, surface materials, MultiMesh meshes, hidden
+nodes included), and `await run(camera, materials, frames = 2)` draws each once on a tiny
+quad in front of the camera so shaders and pipelines compile while loading. Godot 4.4+
+Forward+ compiles ubershaders in the background, which removes most hitches; this covers
+the rest, and the Compatibility renderer.
 
 ### MotionPanel3D
 
@@ -1858,6 +1869,15 @@ events instead of beats. Up to 16 rings; the oldest is replaced.
 | `step(dt)`, `apply()`, `register(material)` | Advance, push uniforms to registered materials once per frame |
 | `speed`, `width`, `decay`, `life` | m/s, m, 1/s, seconds kept |
 | `offset(pos)`, `uniforms()`, `count()` | The shader's result in GDScript for CPU-moved things; the raw rings |
+
+### MotionPerfProbe
+
+Static, `live/motion_perf_probe.gd`. Per-system script timing for an in-game overlay:
+`var t := MotionPerfProbe.begin()` … `MotionPerfProbe.end(&"gait", t)`, `end_frame()` once
+per frame (from a node with a high `process_priority`), then `stats()` ({name:
+Vector2(avg µs, max µs)} over the last 120 frames), `report()` (sorted text lines with a
+total), `worst_frame_ms`, `reset_worst()`, `reset()`. CPU script cost only: on a machine
+without the target GPU it says nothing about frame rate.
 
 ### MotionPoseCurve
 
