@@ -35,6 +35,9 @@ extends RefCounted
 ##   layer: float        each part's z offset step, so overlapping parts don't
 ##                       z-fight (default depth * 0.04)
 ##   side_shade: float   how much darker the side walls are (default 0.5)
+##   flat: bool          front caps only, no back or sides: cutout cards (use
+##                       depth 0, a small `layer` so parts stack toward +Z, and
+##                       MotionFlat3D.cutout())
 ##   only: Array         part indices to include (default all)
 ##   part_fn: Callable   (i) -> Dictionary overriding per part: hide, color,
 ##                       side_color, back_color, depth, z
@@ -58,6 +61,7 @@ static func append(st: SurfaceTool, data: MotionSvgData, width := 10.0, opts := 
 	var anchor: Vector2 = opts.get("anchor", Vector2(0.5, 0.5))
 	var layer: float = opts.get("layer", depth * 0.04)
 	var shade: float = opts.get("side_shade", 0.5)
+	var flat: bool = opts.get("flat", false)
 	var only: Array = opts.get("only", [])
 	var part_fn: Callable = opts.get("part_fn", Callable())
 	var uv2_fn: Callable = opts.get("uv2_x", Callable())
@@ -99,11 +103,15 @@ static func append(st: SurfaceTool, data: MotionSvgData, width := 10.0, opts := 
 				var uv: Vector2 = uv_of.call(v)
 				st.set_color(col); st.set_normal(nz); st.set_uv(uv); st.set_uv2(uv2_of.call(uv))
 				st.add_vertex(to3.call(v, z1))
+			if flat:
+				continue
 			for t in range(tris.size() - 1, -1, -1):
 				var v: Vector2 = poly[tris[t]]
 				var uv: Vector2 = uv_of.call(v)
 				st.set_color(back); st.set_normal(-nz); st.set_uv(uv); st.set_uv2(uv2_of.call(uv))
 				st.add_vertex(to3.call(v, z0))
+		if flat:
+			continue
 		# side walls along the true contours
 		for c in contours:
 			var n := c.size()

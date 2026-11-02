@@ -270,7 +270,11 @@ cables: `reveal`, `tension`, `tugs`, `pulses`, plugs, over / under `z_ranges`).
 
 **Game layer.** `MotionTransition.change_scene(path, style)` (circle, bars, clock, fade,
 glitch, crt), `cover()` / `uncover()`; `MotionReactive` under any Control for spring
-hover / focus / press; `MotionSpring` for input-driven values.
+hover / focus / press; `MotionSpring` (and `MotionSpring2D` / `3D`, `impulse()`) for
+input-driven values. Live game systems: `MotionClock` (events, "frames since", per-entity
+hit-stop with `freeze()`; feed `frames_since` to any `MK` curve), `MotionTrauma` (trauma
+shake with directional kicks), `MotionFlat3D.cutout()` / `instanced` materials with
+`set_flash` for per-actor reactions, `MotionSvgMesh` `flat` cards for cutout characters.
 
 **Naming.** Partial drawing is `reveal` (0..1, the drawn end) and `reveal_from` (its
 start); random seeds are `seed`; alpha is `opacity` (`set_opacity(id, a)` per greeble

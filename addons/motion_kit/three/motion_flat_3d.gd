@@ -29,6 +29,9 @@ extends RefCounted
 const FLAT := preload("res://addons/motion_kit/three/motion_flat_3d.gdshader")
 const FLAT_2S := preload("res://addons/motion_kit/three/motion_flat_3d_double.gdshader")
 const DECAL := preload("res://addons/motion_kit/three/motion_decal_3d.gdshader")
+const FLAT_I := preload("res://addons/motion_kit/three/motion_flat_3d_instanced.gdshader")
+const FLAT_I2S := preload("res://addons/motion_kit/three/motion_flat_3d_instanced_double.gdshader")
+const CUTOUT := preload("res://addons/motion_kit/three/motion_cutout_3d.gdshader")
 
 ## Horizontal direction the light comes from (Godot axes: +z is south).
 var light := Vector3(-0.33, 0.0, 0.94)
@@ -62,10 +65,16 @@ var fixed: Array[ShaderMaterial] = []
 ## darker `dark` (undersides of walkways and pipes). `moves` false keeps it out
 ## of group motion (the ground). `two_sided` skips back-face culling (meshes
 ## without consistent winding, such as MotionSvgMesh logos: paint those with
-## white tones so their vertex colours show as built).
-func material(top: Color, lit: Color, dark: Color, under := Color(0, 0, 0, 0), soft := 0.0, moves := true, two_sided := false) -> ShaderMaterial:
+## white tones so their vertex colours show as built). `instanced` gives
+## per-instance `flash` and `tint` (set_flash / set_tint) for things that react
+## one at a time: actors, props that get hit.
+func material(top: Color, lit: Color, dark: Color, under := Color(0, 0, 0, 0), soft := 0.0, moves := true, two_sided := false,
+		instanced := false) -> ShaderMaterial:
 	var m := ShaderMaterial.new()
-	m.shader = FLAT_2S if two_sided else FLAT
+	if instanced:
+		m.shader = FLAT_I2S if two_sided else FLAT_I
+	else:
+		m.shader = FLAT_2S if two_sided else FLAT
 	m.set_shader_parameter("top", top)
 	m.set_shader_parameter("lit", lit)
 	m.set_shader_parameter("dark", dark)
@@ -85,6 +94,27 @@ func decals(atlas: Texture2D, moves := true) -> ShaderMaterial:
 	m.shader = DECAL
 	m.set_shader_parameter("atlas", atlas)
 	return register(m, moves)
+
+
+## A material for flat cutout parts (MotionSvgMesh with `flat`): unlit vertex
+## colour, two-sided, fogged with this look, per-instance `flash`, `tint` and
+## `opacity`. Out of group motion (characters move on the CPU).
+func cutout() -> ShaderMaterial:
+	var m := ShaderMaterial.new()
+	m.shader = CUTOUT
+	return register(m, false)
+
+
+## Hit flash on one instance of an instanced or cutout material: rgb pulled
+## toward `color` by `amount` (0 clears it). Keep flashes small and at most
+## three a second (photosensitivity).
+static func set_flash(gi: GeometryInstance3D, color: Color, amount: float) -> void:
+	gi.set_instance_shader_parameter(&"flash", Color(color.r, color.g, color.b, clampf(amount, 0.0, 1.0)))
+
+
+## Multiply one instance's colour (instanced and cutout materials).
+static func set_tint(gi: GeometryInstance3D, color: Color) -> void:
+	gi.set_instance_shader_parameter(&"tint", color)
 
 
 ## Add any material using motion_flat_3d.gdshaderinc so apply() drives it.

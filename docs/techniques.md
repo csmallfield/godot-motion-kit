@@ -293,6 +293,10 @@ spring maths, so a hover feels like the intros.
 | Build-in, hold, outro | Markers `in` and `hold`, `play_segment("in", "hold")`, then `play_backwards()` on choice. | A pause or results screen that waits on its hold frame, then reverses out. |
 | Fit to any window | `fit_to_viewport` letterboxes the 1920×1080 reference into the window. | Pieces that look right at 1366×768 and ultrawide alike. |
 | Pause-safe UI | A root composition runs while the tree is paused, unless you set its process mode. | The pause menu animates while the race is frozen behind it. |
+| Reactions from game events | A `MotionClock` per entity (child of a world clock): `mark(&"hit")` on the event, then any `MK` curve of `clock.frames_since(&"hit")`; `MK.shakes(clock.frame(), clock.frames(&"hit"), ...)` for repeated hits. | Cutout Isle's training dummy: squash from frames since the hit, a tilt wobble on a `MotionSpring2D`, a small rate-limited flash. |
+| Hit-stop | `clock.freeze(hold, ease)` on the attacker's and victim's clocks (per entity), or on the world clock (global). Everything on an entity takes time from its clock, including `_physics_process` (`delta * clock.rate()`). | 75 ms freezes on a sword hit; the camera keeps shaking on real time. |
+| Trauma shake | `MotionTrauma`: `add()` per hit, `kick(screen_dir, px)` along the blow, `step(dt)`, then `lens.offset = trauma.offset()` and roll the lens basis. | The follow camera in Cutout Isle. |
+| Cutout characters in 3D | SVG parts as flat cards: `MotionSvgMesh.build(data, w, {flat = true, depth = 0, layer = 0.012})` with `MotionFlat3D.cutout()`, outlines from `MotionEdges3D.from_mesh` of the parts to outline, with a bias under the layer step. Lean cards toward the camera and stretch them by 1 / cos(pitch − lean) so the art keeps its proportions. | Cutout Isle's hero: body, head and sword cards, a paper-turn flip on facing. |
 
 ## Best practices: building motion that holds up
 

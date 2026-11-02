@@ -43,7 +43,7 @@ name it, and that piece's `KIT_NOTES.md` has the measurements behind the cost no
 | [3D](#3d) | [MotionStage3D](#motionstage3d), [MotionLens3D](#motionlens3d), [MotionSvgMesh](#motionsvgmesh), [MotionPanel3D](#motionpanel3d), [MotionFlat3D](#motionflat3d), [MotionEdges3D](#motionedges3d), [MotionDecalAtlas](#motiondecalatlas), [MotionPattern3D](#motionpattern3d), [MotionSkyDome3D](#motionskydome3d), [MotionTrack3D](#motiontrack3d) |
 | [Diagrams and flow](#diagrams-and-flow) | [MotionMetroMap](#motionmetromap), [MotionFlow](#motionflow), [MotionLiquidFill](#motionliquidfill), [MotionCable](#motioncable), [MotionCableSet](#motioncableset) |
 | [Shader includes](#shader-includes) | `motion_noise`, `motion_sun`, `motion_pattern`, `motion_flat_3d` |
-| [Game layer](#game-layer) | MotionSpring, MotionReactive, MotionTransition |
+| [Game layer](#game-layer) | MotionSpring, MotionSpring2D, MotionSpring3D, MotionReactive, MotionTransition, MotionClock, MotionTrauma |
 | [Deprecated aliases](#deprecated-aliases) | Old names that still work |
 
 ## Core
@@ -1235,6 +1235,8 @@ Megastructure (`demo/ftf/ftf_canyon/`) are the examples.
 | `motion_flat_3d.gdshaderinc` | shared group motion (sink rings, beat pulse) and depth fog |
 | `motion_flat_3d_faces.gdshaderinc` | the face-tone body |
 | `motion_flat_3d.gdshader` / `motion_flat_3d_double.gdshader` | face tones, back faces culled / two-sided |
+| `motion_flat_3d_instanced.gdshader` / `motion_flat_3d_instanced_double.gdshader` | the same with per-instance `flash` and `tint` (instance uniforms) |
+| `motion_cutout_3d.gdshader` | flat cutout parts: unlit vertex colour, two-sided, per-instance `flash`, `tint`, `opacity` (dithered) |
 | `motion_edges_3d.gdshader` | constant-pixel-width outline ribbons |
 | `motion_decal_3d.gdshader` | tinted, alpha-blended atlas decals |
 | `motion_pattern_3d.gdshader` | box-filtered checker / stripes / grid / solid spatial material: world XZ, UV-in-metres or triplanar space, motion blur, face shading, sheen, ring shockwave, light window (UV2.x), sprouting by key |
@@ -1303,7 +1305,7 @@ Static, `three/motion_svg_mesh.gd`.
 
 | Member | Notes |
 | --- | --- |
-| `build(data, width, opts) -> ArrayMesh` | Every part extruded: front cap (+Z), back cap, side walls; one surface. `opts`: `depth`, `tolerance`, `anchor`, `layer` (z step per part), `side_shade`, `only`, `part_fn(i) -> {hide, color, side_color, back_color, depth, z}`, `uv2_x(i, uv) -> float` |
+| `build(data, width, opts) -> ArrayMesh` | Every part extruded: front cap (+Z), back cap, side walls; one surface. `opts`: `depth`, `tolerance`, `anchor`, `layer` (z step per part), `side_shade`, `only`, `flat` (front caps only: cutout cards; use `depth` 0 and a small `layer`), `part_fn(i) -> {hide, color, side_color, back_color, depth, z}`, `uv2_x(i, uv) -> float` |
 | `append(st, data, width, opts, xform)` | The same into an open SurfaceTool (merge logos into larger meshes) |
 | Vertex data | COLOR = part colour (sides darker), UV = viewBox position 0..1, UV2 = (UV.x, part index) |
 | Holes | A contour inside an odd number of the part's other contours (majority of its vertices inside) is a hole; caps cut each hole open with a hairline slit so Godot's ear-clipper sees simple polygons; side walls follow the true contours. Triangles are not consistently wound: use a material with culling off (`unlit()` is) |
@@ -1325,7 +1327,9 @@ Static, `three/motion_svg_mesh.gd`.
 
 | Member | Notes |
 | --- | --- |
-| `material(top, lit, dark, under, soft, moves = true, two_sided = false)` | Face tones by world normal: up-facing `top`, sides facing the horizontal `light` `lit`, sides facing away `dark`, down-facing `under`; `soft` 0 = a hard poster terminator. Vertex colour multiplies. `moves` false = ignores group motion (ground). `two_sided` for meshes without consistent winding (MotionSvgMesh: paint white tones so the part colours show) |
+| `material(top, lit, dark, under, soft, moves = true, two_sided = false, instanced = false)` | Face tones by world normal: up-facing `top`, sides facing the horizontal `light` `lit`, sides facing away `dark`, down-facing `under`; `soft` 0 = a hard poster terminator. Vertex colour multiplies. `moves` false = ignores group motion (ground). `two_sided` for meshes without consistent winding (MotionSvgMesh: paint white tones so the part colours show). `instanced`: `flash` and `tint` per instance, for actors and props that react one at a time |
+| `cutout()` | Material for flat cutout cards (`MotionSvgMesh` with `flat`): unlit vertex colour (a card keeps its drawn colour however it turns; face tones would flip it between lit and dark), two-sided, fogged, out of group motion; per-instance `flash`, `tint`, `opacity` |
+| static `set_flash(gi, color, amount)`, `set_tint(gi, color)` | Per-instance hit flash (rgb toward `color` by `amount`, 0 clears) and tint on an instanced or cutout material. Keep flashes small and at most three a second |
 | `edges(color, width_px, bias)`, `decals(atlas, moves)`, `register(m, moves)` | Outline / decal materials registered with the look; any shader including `motion_flat_3d.gdshaderinc` can be registered |
 | `light`, `energy`, `fog_color/begin/end/amount` | Horizontal light direction (Godot axes); brightness (fade to black); linear depth fog |
 | `fog(color, begin, end, amount)`, `fog_for(lens, color, before, after, amount)` | Depth fog; `fog_for` measures from a lens's target plane, so the dolly zoom keeps the same fog around what it frames |
@@ -1353,6 +1357,11 @@ ten draw calls); per frame ~0 ms of GDScript beyond setting ~20 uniforms per mat
 Software GL (llvmpipe, 1920×1080, MSAA 4x, 2 shared cores): the 420-frame piece in
 3 min 34 s, about 0.51 s a frame, including the city build.
 **Limits.** Face tones assume an unshaded graphic look: no cast shadows or AO.
+**In a game.** The look works outside a `MotionStage3D` in a normal scene (Forward+ or
+Compatibility): keep one MotionFlat3D, call `apply()` once per frame. Moving actors use
+`moves = false` (group motion is keyed to fixed ground anchors) and `instanced` materials
+for per-actor flashes. Outlines on stacked cutout parts need a depth `bias` smaller than
+the part `layer`, or a back part's outline draws over the part in front.
 
 ### MotionEdges3D
 
@@ -1645,15 +1654,24 @@ short spans: lower `samples` (8 is plenty).
 | `shaders/motion_noise.gdshaderinc` | `mk_hash21(p, s)`, `mk_vnoise2(p, s)`, `mk_hash31(p, s)`, `mk_vnoise3(p, s)`, `mk_fbm3(p, s, octaves, lacunarity, shift)`: the kit's hash and value noise with the seed term `s` passed in, so each shader keeps its own constants (`mk_hash21(p, seed * 0.618)` in static and tiling, `seed * 0.1234` in paper, plate and glyphs, `mk_hash31(p, seed * 0.0137)` in the warp field). |
 | `shaders/motion_sun.gdshaderinc` | The banded OutRun sun: `sun_band_cut(v, bands, aa)`, `sun_tint(v, bottom, top)`, `sun_glow_k(ang, radius)`; each caller keeps its own antialiasing (screen pixels on the planes, `fwidth` on the sky dome). |
 | `plane/motion_pattern.gdshaderinc` | Box-filtered `checker`, `band` (`box_int`), `lines`, `dots` (MotionPatternPlane, MotionPlaneScan, MotionPattern3D). With `#define MK_PLANE` before it, also the plane model the two plane shaders share: `cam_to_world`, `plane_hit`, `ground_coord`, the ring, `pattern_colour`, `accent_lanes` and `plane_sky`. |
-| `three/motion_flat_3d.gdshaderinc`, `three/motion_flat_3d_faces.gdshaderinc` | MotionFlat3D's group motion (sink rings, beat pulse) and depth fog, and its face-tone body; include the first in a shader to register it with `MotionFlat3D.register()`. |
+| `three/motion_flat_3d.gdshaderinc`, `three/motion_flat_3d_faces.gdshaderinc` | MotionFlat3D's group motion (sink rings, beat pulse) and depth fog, and its face-tone body; include the first in a shader to register it with `MotionFlat3D.register()`. Define `MK_INSTANCED` before including the faces body for per-instance `flash` and `tint`. |
 | `shaders/motion_gradient.gdshaderinc` | The CSS gradient body shared by MotionGradient's plain and blending shaders. |
 
 ## Game layer
 
-`game/`.
+`game/` and `live/`. The live classes run the kit's curves from game events instead of a
+timeline: reactions stay pure functions of "time since the event" (MotionClock), and
+following behaviour uses springs. Give each animated property one owner and add layers in
+a fixed order: authored pose, procedural offsets, reactions, camera.
 
 - `MotionSpring.new(initial, damping, stiffness, mass)`: set `target`, call `step(delta)` every
-  frame. Stepping matches `MK.spring` exactly. `snap(v)`, `is_settled()`.
+  frame. Stepping matches `MK.spring` exactly. `snap(v)`, `is_settled()`, `impulse(v)` (adds
+  velocity: a kick). static `coefficients(dt, damping, stiffness, mass)` returns the exact
+  step as a linear map (x = c0·x0 + c1·v0, v = c2·x0 + c3·v0), so one solve steps any number
+  of axes or springs with the same setting.
+- `MotionSpring2D`, `MotionSpring3D`: the same spring on a `Vector2` / `Vector3` (`value`,
+  `velocity`, `target`, `step`, `snap`, `impulse`, `is_settled`). Camera follow, tilt
+  wobbles, look-at targets.
 - `MotionReactive`: put it under a Control, including Controls inside Containers. It
   handles `hover_scale`, `focus_scale`, `press_scale`, `hover_offset`, `hover_tint`,
   `damping` and `stiffness`. Position is only touched when `hover_offset` is set, and any
@@ -1662,6 +1680,52 @@ short spans: lower `samples` (8 is plenty).
   `await cover(style)`, `await uncover(style)`. Also `colour`, `bar_colours`, `frames`,
   `busy`, and signals `covered` and `finished`. Styles: `circle`, `bars`, `clock`, `fade`,
   `glitch`, `crt` (an unknown name warns and fades).
+
+### MotionClock
+
+`RefCounted`, `live/motion_clock.gd`. Game time that records events and answers "how long
+since", so `MK.spring`, `MK.shakes`, `MK.decay_kick` and `MK.accent` run on game events
+unchanged. One clock per entity, parented to a world clock:
+
+```gdscript
+var clock := MotionClock.new(world)            # world: the root MotionClock
+clock.tick(delta)                              # in _process (a second call that frame is ignored)
+clock.mark(&"hit", {dir = d})
+var squash := 1.0 - MK.spring(clock.frames_since(&"hit"), 0, 7, 320)
+offset = MK.shakes(clock.frame(), clock.frames(&"hit"), 6, 8)
+clock.freeze(0.075, 0.05)                      # hit-stop on this entity only
+velocity_step = delta * clock.rate()           # fixed-step code in _physics_process
+```
+
+| Member | Notes |
+| --- | --- |
+| `parent`, `scale`, `ignore_time_scale` | Rate = `scale` × envelopes × parent's rate. A frozen world freezes every child; `ignore_time_scale` runs on real time (UI, a camera that shakes through a global slow-mo). Root clocks follow `Engine.time_scale` through `_process`'s delta |
+| `time`, `dt`, `frame(fps=30)` | Local seconds, the last tick's local step, local time in frames |
+| `tick(delta)`, `advance(delta)`, `rate()` | Once-per-frame advance; unguarded advance (tests, replays); the current rate (0 while frozen) |
+| `mark(event, data)`, signal `marked` | Record an event at the current local time (`history` kept per name, default 16) |
+| `since(event)`, `frames_since(event, fps=30)` | Seconds (INF if never) and frames (1e6 if never, so springs read as settled) since the latest |
+| `frames(event, fps=30)` | Every kept event as a frame: the `ats` of `MK.shakes` / `decay_kick` / `accent` |
+| `within(event, window)`, `count(event, window)`, `last_data(event)`, `clear(event)` | Ages in the last window (newest first), how many, the latest data |
+| `freeze(hold, ease=0, low=0)`, `slow(low, hold, ease=0.2)`, `release()`, `is_scaled()` | Time-scale envelopes: hold at `low` for `hold` s, ease back over `ease` s (smoothstep). They run on input time, so a freeze always ends; overlapping envelopes take the slowest. Evaluated at the middle of each step (one step of error at most) |
+
+**Per-entity or global hit-stop.** `Engine.time_scale` is global; per-entity hit-stop needs
+every system on the entity (pose, reactions, movement, simulation) to take its time from
+the entity's clock. Freezing attacker and victim reads better than freezing the world;
+keep the camera on real time so its kick plays through the freeze.
+
+### MotionTrauma
+
+`RefCounted`, `live/motion_trauma.gd`. Trauma shake, the stateful game model: `add(amount)`
+on hits (clamped to 1), linear `decay` per second, shake = trauma^`power` × smooth seeded
+value noise, in translation (`offset()` in pixels, or `offset3(scale)`) and roll (`roll()`).
+`kick(dir, amount)` adds a damped jolt along a screen-space direction (`kick_rate`,
+`kick_hz`), so a blow from the left knocks the view right. `step(dt)` advances it;
+`amount()`, `is_still()`; static `value_noise(x, seed)`.
+
+With `MotionLens3D`: `lens.offset = trauma.offset()` and roll the lens basis about its
+view axis. `MK.shake` / `MK.shakes` remain the event-pure option (pure in frames since
+the hit); trauma differs in that overlapping hits saturate instead of stacking and the
+noise doesn't restart on each hit. Both are deterministic for the same steps.
 
 ## Deprecated aliases
 

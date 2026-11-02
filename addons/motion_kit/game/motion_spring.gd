@@ -39,30 +39,38 @@ func is_settled(eps := 0.0005) -> bool:
 	return absf(value - target) < eps and absf(velocity) < eps * 10.0
 
 
+## Kick it: add `v` to the velocity (units per second).
+func impulse(v: float) -> void:
+	velocity += v
+
+
 ## Advance by `dt` seconds and return the new value.
 func step(dt: float) -> float:
 	if dt <= 0.0:
 		return value
+	var c := MotionSpring.coefficients(dt, damping, stiffness, mass)
 	var x0 := value - target          # displacement from rest
 	var v0 := velocity
-	var w0 := sqrt(stiffness / mass)
-	var zeta := damping / (2.0 * sqrt(stiffness * mass))
-	var x: float
-	var v: float
+	value = target + c[0] * x0 + c[1] * v0
+	velocity = c[2] * x0 + c[3] * v0
+	return value
+
+
+## The exact step as a linear map: after `dt` seconds a displacement x0 and
+## velocity v0 become x = c[0]·x0 + c[1]·v0 and v = c[2]·x0 + c[3]·v0. Linear,
+## so the same four numbers step every axis of a vector spring (and a whole
+## array of springs with one setting) for the cost of one.
+static func coefficients(dt: float, damping_: float, stiffness_: float, mass_ := 1.0) -> PackedFloat64Array:
+	var w0 := sqrt(stiffness_ / mass_)
+	var zeta := damping_ / (2.0 * sqrt(stiffness_ * mass_))
 	if zeta < 1.0:
 		var w1 := w0 * sqrt(1.0 - zeta * zeta)
 		var env := exp(-zeta * w0 * dt)
 		var c := cos(w1 * dt)
 		var s := sin(w1 * dt)
-		var b := (v0 + zeta * w0 * x0) / w1
-		x = env * (x0 * c + b * s)
-		v = env * ((-zeta * w0) * (x0 * c + b * s) + (-x0 * w1 * s + b * w1 * c))
-	else:
-		# Critically damped (Remotion uses this for every ratio >= 1).
-		var env := exp(-w0 * dt)
-		var b := v0 + w0 * x0
-		x = env * (x0 + b * dt)
-		v = env * (b - w0 * (x0 + b * dt))
-	value = target + x
-	velocity = v
-	return value
+		return PackedFloat64Array([
+			env * (c + zeta * w0 / w1 * s), env * s / w1,
+			-env * s * w0 * w0 / w1, env * (c - zeta * w0 / w1 * s)])
+	# Critically damped (Remotion uses this for every ratio >= 1).
+	var e := exp(-w0 * dt)
+	return PackedFloat64Array([e * (1.0 + w0 * dt), e * dt, -e * w0 * w0 * dt, e * (1.0 - w0 * dt)])
