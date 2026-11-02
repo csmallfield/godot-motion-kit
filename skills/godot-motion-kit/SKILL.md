@@ -452,7 +452,9 @@ MotionCutoutRig and MotionCutout entries before starting.
   sword between hands: give front and back `EITHER` (never flipped, drawn with the
   sword hand anatomically placed) and build the left side view from
   `side_data.mirrored()` as a `LEFT` view (the sword arm becomes the far arm, behind the
-  body). Draw back-view arms behind the torso. Three views give 4 directions;
+  body). Draw back-view arms behind the torso. A move can carry a part forward or back
+  for its active frames (`rig.depth(part, value * rig.front_depth(part))` from a pose-curve
+  channel), so the far sword arm swings in front of the body. Three views give 4 directions;
   adding `front_34` and `back_34` gives 8 (five drawings, mirrored). The 3/4 views cost
   the most: each needs its own art, prop attach points and per-view move channels
   (`arc.front_34`, falling back to the base channel), and flat parts show their overlaps

@@ -1343,6 +1343,7 @@ Authoring convention (no sidecar file):
 | `reset_pose()`, `pose(name, rot, offset, scale)` | Pose relative to rest: rotation (radians, counter-clockwise in the card plane), offset in the parent's plane, scale |
 | `rig_transform(name)` | A part's transform in rig space, without the scene tree |
 | `solve_limb(upper, lower, tip, target, bend) -> bool` | Two-bone IK: rotates `upper` and `lower` so the tip's pivot reaches `target` (rig-local x, y) |
+| `depth(name, dz)`, `front_depth(name)`, `back_depth(name)`, `layer_step` | Move a part and its children toward the camera (+) or away (-) on top of its pose, e.g. a sword arm drawn behind the body brought in front for a swing (drive it from a `MotionPoseCurve` channel). `front_depth` / `back_depth` give the offset that clears every other part. Cleared by `reset_pose()` |
 | `set_flash(color, amount)`, `set_tint(color)`, `actor_material` | Reactions on the whole rig: one uniform on its actor material when built with one (every view sharing it reacts together), else an instance uniform per part |
 | static `card(data, width, material, outline_material, anchor, layer) -> MeshInstance3D` | A single flat card for a prop (sword, sign, pouch): parts stacked toward +Z, outlines on parts without class `flat` |
 
@@ -1367,6 +1368,7 @@ halfway for 45.
 | --- | --- |
 | `add_view(name, rig, angle_deg = NAN)`, `views`, `angles`, `view`, `mirrored`, `rig` | Views by name; NAN takes the default angle for `front`, `front_34`, `side`, `back_34`, `back` (`ANGLES`); the one showing and its rig |
 | `add_view(..., side = MIRROR)`, `sides`, `left`, `MIRROR` / `RIGHT` / `LEFT` / `EITHER` | `MIRROR`: drawn facing right, flipped for the left. `RIGHT` / `LEFT`: used only when facing that way (a left drawing can be `MotionSvgData.mirrored()` of the right one). `EITHER`: never flipped (front and back views of a character with a fixed sword hand). `left` is the facing side. A turn from a right-facing to a left-facing drawing narrows edge-on |
+| `shear_depth` (true) | `lean()` also shears the card so depth along it has no screen parallax: without it, 0.1 m of layer depth shows 0.05 m lower at pitch 50 and lean 20 (sin(pitch − lean) per metre), so stacked parts and props hung in front drift down from where they were drawn |
 | `disabled`, `hysteresis` | Views left out of the choice (drop 8 directions to 4 at runtime); extra degrees the current view keeps past each border (under half the spacing between views) |
 | `face(dir)` | World x, z (+z toward the camera); zero keeps the facing |
 | `ground_to_card(offset)` | A world offset from the character as the card-plane offset that lands on the same screen point in the view showing (uses the pitch given to `lean`) |

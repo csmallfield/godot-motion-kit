@@ -43,6 +43,9 @@ var pivot_svg := {}
 ## Metres per SVG unit, and the SVG point at the rig's origin.
 var k := 0.01
 var origin_svg := Vector2.ZERO
+## Depth between stacked elements (the `layer` build option).
+var layer_step := 0.004
+var _z_cache := {}
 ## The material the parts were built with when it is an actor material
 ## (MotionFlat3D.actor): flash and tint go to it as plain uniforms.
 var actor_material: ShaderMaterial
@@ -59,6 +62,7 @@ static func build(data: MotionSvgData, width: float, material: Material, outline
 	rig.k = width / vb.size.x
 	rig.origin_svg = opts.get("origin", Vector2(vb.position.x + vb.size.x * 0.5, vb.end.y))
 	var layer: float = opts.get("layer", 0.004)
+	rig.layer_step = layer
 	var tol: float = opts.get("tolerance", 0.5)
 	var prefix: String = opts.get("pivot_prefix", "pivot")
 	var flat_class: String = opts.get("flat_class", "flat")
@@ -203,6 +207,55 @@ func pose(name: StringName, rot := 0.0, offset := Vector2.ZERO, scale_ := Vector
 	(parts[name] as Node3D).transform = Transform3D(
 			Basis(Vector3.BACK, rot) * Basis.from_scale(Vector3(scale_.x, scale_.y, 1.0)),
 			r.origin + Vector3(offset.x, offset.y, 0.0))
+
+
+## Move a part (and everything hanging from it) toward the camera (+) or
+## away (-) by `dz` metres, on top of its pose: a sword arm drawn behind the
+## body brought in front for a swing's active frames. Call after pose() or
+## solve_limb() each frame (reset_pose() clears it). front_depth() and
+## back_depth() give the offsets that clear every other part. Under a
+## MotionCutout with shear_depth the part stays put on screen.
+func depth(name: StringName, dz: float) -> void:
+	var n := parts[name] as Node3D
+	n.position.z = (rest[name] as Transform3D).origin.z + dz
+
+
+## The depth offset that puts `name` and its children in front of every
+## other part of this rig (one layer clear).
+func front_depth(name: StringName) -> float:
+	var own := _subtree_z(name)
+	var all := _subtree_z(&"")
+	return all.y - own.x + layer_step
+
+
+## The depth offset that puts `name` and its children behind every other
+## part of this rig (one layer clear).
+func back_depth(name: StringName) -> float:
+	var own := _subtree_z(name)
+	var all := _subtree_z(&"")
+	return all.x - own.y - layer_step
+
+
+## (min, max) mesh depth of a part and everything under it, at rest ("" for
+## the whole rig).
+func _subtree_z(name: StringName) -> Vector2:
+	if _z_cache.has(name):
+		return _z_cache[name]
+	var lo := INF
+	var hi := -INF
+	for owner: StringName in meshes:
+		var n := owner
+		var inside := name == &""
+		while not inside and n != &"":
+			inside = n == name
+			n = parent_of.get(n, &"")
+		if inside:
+			var bb := (meshes[owner] as MeshInstance3D).mesh.get_aabb()
+			lo = minf(lo, bb.position.z)
+			hi = maxf(hi, bb.end.z)
+	var r := Vector2(lo, hi) if lo <= hi else Vector2.ZERO
+	_z_cache[name] = r
+	return r
 
 
 ## A part's current transform in rig-local space (no scene tree needed).

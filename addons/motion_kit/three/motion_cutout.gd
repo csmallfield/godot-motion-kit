@@ -76,7 +76,9 @@ var paper_turn := true
 var turn := MotionSpring.new(1.0, 16.0, 420.0)
 ## Degrees of hysteresis around the borders between views.
 var hysteresis := 12.0
-## The card holder (lean and stretch); views hang below `flip`.
+## Shear the card so depth along it has no screen parallax (see lean()).
+var shear_depth := true
+## The card holder (lean, stretch and shear); views hang below `flip`.
 var card: Node3D
 var flip: Node3D
 
@@ -109,11 +111,17 @@ func add_view(name: StringName, r: MotionCutoutRig, angle_deg := NAN, side := MI
 
 
 ## Tilt the cards back toward a camera pitched `pitch_deg` below the horizon.
+## With `shear_depth` the card is also sheared so depth along the card
+## (part layers, MotionCutoutRig.depth, props hung in front) lands on the
+## same screen point at any depth: without it a part 0.1 m forward shows
+## 0.05 m lower at pitch 50 and lean 20 (sin(pitch - lean) per metre).
 func lean(pitch_deg: float, lean_deg := 20.0) -> void:
 	_pitch = pitch_deg
 	var l := deg_to_rad(lean_deg)
-	card.rotation = Vector3(-l, 0, 0)
-	card.scale = Vector3(1, 1.0 / maxf(cos(deg_to_rad(pitch_deg) - l), 0.2), 1)
+	var gap := deg_to_rad(pitch_deg) - l
+	var stretch := Basis.from_scale(Vector3(1, 1.0 / maxf(cos(gap), 0.2), 1))
+	var shear := Basis(Vector3.RIGHT, Vector3.UP, Vector3(0, sin(gap) if shear_depth else 0.0, 1))
+	card.transform = Transform3D(Basis(Vector3.RIGHT, -l) * stretch * shear, card.position)
 
 
 ## A world offset from the character (x and z on the ground, y up) as the

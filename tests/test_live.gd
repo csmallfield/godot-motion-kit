@@ -548,6 +548,46 @@ func test_cutout_one_way_views() -> String:
 	return res
 
 
+func test_cutout_depth_without_parallax() -> String:
+	var cut := MotionCutout.new()
+	cut.lean(50.0, 20.0)
+	var p := deg_to_rad(50.0)
+	var up := Vector3(0, cos(p), -sin(p))           # the camera's screen up (MotionLens3D.extrude_basis)
+	var to_cam := Vector3(0, sin(p), cos(p))
+	var basis := cut.card.transform.basis
+	var near := basis * Vector3(0, 0, 0.1)
+	var res := ""
+	if absf(near.dot(up)) > 1e-5:
+		res = "0.1 m of depth moved %.4f m on screen" % near.dot(up)
+	elif near.dot(to_cam) <= 0.0:
+		res = "depth should still point toward the camera"
+	elif not is_equal_approx((basis * Vector3(0, 0.1, 0)).dot(up), 0.1):
+		res = "card height should keep its drawn size on screen"
+	cut.shear_depth = false
+	cut.lean(50.0, 20.0)
+	if res == "" and absf((cut.card.transform.basis * Vector3(0, 0, 0.1)).dot(up) + 0.05) > 1e-4:
+		res = "without the shear, 0.1 m of depth should show 0.05 m lower"
+	cut.free()
+	# per-part depth: in front of, or behind, every other part
+	var data := MotionSvgData.from_string('<svg viewBox="0 0 100 100"><g id="body"><circle id="pivot-body" cx="50" cy="90" r="1" fill="none"/><g id="arm"><circle id="pivot-arm" cx="50" cy="40" r="1" fill="none"/><rect x="45" y="40" width="10" height="30" fill="#333333"/></g><rect x="30" y="30" width="40" height="60" fill="#00ff00"/><rect x="40" y="10" width="20" height="20" fill="#ffcc99"/></g></svg>')
+	var rig := MotionCutoutRig.build(data, 1.0, null)
+	var arm_z := (rig.meshes[&"arm"] as MeshInstance3D).mesh.get_aabb()
+	var body_z := (rig.meshes[&"body"] as MeshInstance3D).mesh.get_aabb()
+	var f := rig.front_depth(&"arm")
+	if res == "" and not (arm_z.position.z + f > body_z.end.z):
+		res = "front_depth should clear the body: arm %s + %s vs body top %s" % [arm_z.position.z, f, body_z.end.z]
+	rig.depth(&"arm", f)
+	if res == "" and not is_equal_approx(rig.part(&"arm").position.z, f):
+		res = "depth() should offset the part"
+	rig.reset_pose()
+	if res == "" and rig.part(&"arm").position.z != 0.0:
+		res = "reset_pose() should clear the depth"
+	if res == "" and rig.back_depth(&"arm") > 0.0:
+		res = "the arm is already at the back: back_depth should be 0 or less"
+	rig.free()
+	return res
+
+
 # ------------------------------------------------------------------ gait
 
 func test_gait_alternates_and_plants() -> String:
