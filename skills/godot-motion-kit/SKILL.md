@@ -276,7 +276,8 @@ hit-stop with `freeze()`; feed `frames_since` to any `MK` curve), `MotionTrauma`
 shake with directional kicks), `MotionFlat3D.cutout()` / `instanced` materials with
 `set_flash` for per-actor reactions; cutout characters from SVG with `MotionCutoutRig`
 (groups with pivot markers become nested part nodes; `pose`, `solve_limb` two-bone IK) and
-`MotionCutout` (front / back / side views with a paper turn, `lean` toward the camera);
+`MotionCutout` (front / back / side views, or 8 directions with `front_34` / `back_34`, a
+paper turn between them, `lean` toward the camera);
 `MotionIK`, `MotionAimSpring` for look-at; `MotionGait` (+ `MotionGaitSettings`) plants feet
 in world space, steps on arcs, and gives body dip and lean, mapped onto a view with
 `MotionCutout.ground_to_card`; `MotionChain` (verlet scarves, capes, dangling props, shape
@@ -447,10 +448,18 @@ MotionCutoutRig and MotionCutout entries before starting.
   the facing (paper turn between them) and `lean()` toward the camera (upright cards
   occlude correctly; the stretch keeps the art's proportions). Legs and arms reach
   targets with `solve_limb`; world feet from a gait become targets through
-  `ground_to_card`. Props are `MotionCutoutRig.card`. Characters use `MotionFlat3D.cutout()`
+  `ground_to_card`. Props are `MotionCutoutRig.card`. Three views give 4 directions;
+  adding `front_34` and `back_34` gives 8 (five drawings, mirrored). The 3/4 views cost
+  the most: each needs its own art, prop attach points and per-view move channels
+  (`arc.front_34`, falling back to the base channel), and flat parts show their overlaps
+  most at 45 degrees. Characters use `MotionFlat3D.cutout()`
   (unlit vertex colour) and an outline material whose depth bias is below the layer step.
-- **Per-actor reactions** need instance uniforms: `material(..., instanced = true)` or
-  `cutout()`, then `MotionFlat3D.set_flash(node, color, amount)`. Flash small areas, at
+- **Per-actor reactions:** a character gets its own `flat.actor()` material, shared by
+  every part and view, and `rig.set_flash(color, amount)`. Props and world pieces use
+  instance uniforms: `material(..., instanced = true)` or `cutout()`, then
+  `MotionFlat3D.set_flash(node, color, amount)`. Every instance-uniform mesh holds a block
+  of a global buffer, and the Compatibility renderer fits only a few hundred: a rig of 15
+  parts in 5 views is 75 meshes, so never give rig parts instance uniforms. Flash small areas, at
   most three a second; prefer shake (`MotionTrauma` with `kick`), rings
   (`MotionRipples` through `MotionGrass3D`) and squash to flashes.
 - **Juice that held up:** hit-stop 60–90 ms scaled by power, trauma 0.2–0.4 with a kick

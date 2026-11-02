@@ -1334,13 +1334,13 @@ Authoring convention (no sidecar file):
 
 | Member | Notes |
 | --- | --- |
-| static `build(data, width, material, outline_material, opts) -> MotionCutoutRig` | `opts`: `origin` (SVG point at the node origin, default bottom centre), `layer` (0.004 m between stacked elements), `tolerance`, `pivot_prefix`, `flat_class`, `overrides` ({part: {pivot, parent}}). Use `MotionFlat3D.cutout()` and an outline material whose depth bias is below `layer` (e.g. `flat.edges(ink, 2.6, 0.001)`) |
+| static `build(data, width, material, outline_material, opts) -> MotionCutoutRig` | `opts`: `origin` (SVG point at the node origin, default bottom centre), `layer` (0.004 m between stacked elements), `tolerance`, `pivot_prefix`, `flat_class`, `overrides` ({part: {pivot, parent}}). For characters use one `MotionFlat3D.actor()` material per character, shared by all its views (no instance uniforms); `MotionFlat3D.cutout()` suits props. Pair it with an outline material whose depth bias is below `layer` (e.g. `flat.edges(ink, 2.6, 0.001)`) |
 | `parts`, `meshes`, `outlines`, `rest`, `parent_of`, `pivot_svg`, `k`, `origin_svg` | Part name → pivot node, its MeshInstance3D and outline, rest transform, parent name (`&""` = the rig), pivot in SVG units; metres per SVG unit |
 | `part(name)`, `has_part(name)`, `rest_pivot(name)`, `svg_to_local(p)` | Lookups in rig-local metres (card plane: x right, y up, facing +Z) |
 | `reset_pose()`, `pose(name, rot, offset, scale)` | Pose relative to rest: rotation (radians, counter-clockwise in the card plane), offset in the parent's plane, scale |
 | `rig_transform(name)` | A part's transform in rig space, without the scene tree |
 | `solve_limb(upper, lower, tip, target, bend) -> bool` | Two-bone IK: rotates `upper` and `lower` so the tip's pivot reaches `target` (rig-local x, y) |
-| `set_flash(color, amount)`, `set_tint(color)` | Per-instance reactions on every part |
+| `set_flash(color, amount)`, `set_tint(color)`, `actor_material` | Reactions on the whole rig: one uniform on its actor material when built with one (every view sharing it reacts together), else an instance uniform per part |
 | static `card(data, width, material, outline_material, anchor, layer) -> MeshInstance3D` | A single flat card for a prop (sword, sign, pouch): parts stacked toward +Z, outlines on parts without class `flat` |
 
 **Cost.** One MeshInstance3D and one outline per part with shapes (about 30 draw calls for
@@ -1351,18 +1351,24 @@ would make a character one draw call.
 
 ### MotionCutout
 
-`Node3D`, `three/motion_cutout.gd`. A cutout character seen from a fixed game camera: up
-to three views of one rig (front, back, side), one shown at a time, picked from the
-facing direction with hysteresis, and a paper turn between them (the card's width springs
-through zero and the view swaps while edge-on). Side art faces right; mirroring covers
-the left, and front and back mirror with the horizontal facing too.
+`Node3D`, `three/motion_cutout.gd`. A cutout character seen from a fixed game camera:
+several views of one rig, one shown at a time, picked by facing angle with hysteresis, and
+a paper turn between them (the card's width springs toward edge-on and the view swaps
+while it is narrow). Each view has a facing angle: 0 sideways (side art faces right), +90
+toward the camera, -90 away; mirroring covers the left. Three views (front, side, back)
+give 4 directions; five (adding `front_34` at +45 and `back_34` at -45) give 8. A turn
+narrows the card in proportion to the angle between the views: edge-on for 90 degrees,
+halfway for 45.
 
 | Member | Notes |
 | --- | --- |
-| `add_view(name, rig)`, `views`, `view`, `mirrored`, `rig` | Views by name (`&"front"`, `&"back"`, `&"side"`); the one showing and its rig |
+| `add_view(name, rig, angle_deg = NAN)`, `views`, `angles`, `view`, `mirrored`, `rig` | Views by name; NAN takes the default angle for `front`, `front_34`, `side`, `back_34`, `back` (`ANGLES`); the one showing and its rig |
+| `disabled`, `hysteresis` | Views left out of the choice (drop 8 directions to 4 at runtime); extra degrees the current view keeps past each border (under half the spacing between views) |
 | `face(dir)` | World x, z (+z toward the camera); zero keeps the facing |
 | `ground_to_card(offset)` | A world offset from the character as the card-plane offset that lands on the same screen point in the view showing (uses the pitch given to `lean`) |
-| static `choose(dir, current, hysteresis, has_side, has_back)` | The view rule: side in the left and right sectors, front toward the camera, back away; the current view keeps an extra `hysteresis` degrees |
+| static `nearest(dir, view_angles, current, hysteresis)`, static `facing_angle(dir)` | The view rule: the view whose angle is nearest the facing, with hysteresis on the current one |
+| static `narrow_for(from_deg, to_deg)` | How narrow a same-side turn gets: 1 − angle / 90, clamped |
+| static `choose(dir, current, hysteresis, has_side, has_back)` | The original three-view rule, kept for existing callers |
 | `step(dt)`, `paper_turn`, `turn` | Advance the turn (a `MotionSpring` on the width); off = instant swaps |
 | `lean(pitch_deg, lean_deg = 20)` | Tilt the cards back toward the camera and stretch them by 1 / cos(pitch − lean), so the art keeps its drawn proportions. Upright cards occlude correctly against props behind them; fully facing cards can dip into them |
 | `card`, `flip`, signal `view_changed(view, mirrored)` | The lean holder, the flip holder; reparent held props (a sword) on `view_changed` |
@@ -1421,6 +1427,8 @@ the rest, and the Compatibility renderer.
 | --- | --- |
 | `material(top, lit, dark, under, soft, moves = true, two_sided = false, instanced = false)` | Face tones by world normal: up-facing `top`, sides facing the horizontal `light` `lit`, sides facing away `dark`, down-facing `under`; `soft` 0 = a hard poster terminator. Vertex colour multiplies. `moves` false = ignores group motion (ground). `two_sided` for meshes without consistent winding (MotionSvgMesh: paint white tones so the part colours show). `instanced`: `flash` and `tint` per instance, for actors and props that react one at a time |
 | `cutout()` | Material for flat cutout cards (`MotionSvgMesh` with `flat`): unlit vertex colour (a card keeps its drawn colour however it turns; face tones would flip it between lit and dark), two-sided, fogged, out of group motion; per-instance `flash`, `tint`, `opacity` |
+| `actor()`, static `set_actor_flash(material, color, amount)`, `CUTOUT_ACTOR` | A cutout material for one character: `flash`, `tint`, `opacity` are plain uniforms on it, so a rig of any size takes no room in the global instance-uniform buffer. Every mesh with an instance-uniform material holds a block of that buffer, which fits only a few hundred under the Compatibility renderer (about 290 on Mesa llvmpipe; Forward+ has far more). Make one per character and build all its views with it; registered, so it fogs |
+| `unregister(material)` | Stop driving a material (a character gone for good) |
 | static `set_flash(gi, color, amount)`, `set_tint(gi, color)` | Per-instance hit flash (rgb toward `color` by `amount`, 0 clears) and tint on an instanced or cutout material. Keep flashes small and at most three a second |
 | `edges(color, width_px, bias)`, `decals(atlas, moves)`, `register(m, moves)` | Outline / decal materials registered with the look; any shader including `motion_flat_3d.gdshaderinc` can be registered |
 | `light`, `energy`, `fog_color/begin/end/amount` | Horizontal light direction (Godot axes); brightness (fade to black); linear depth fog |

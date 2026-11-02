@@ -43,6 +43,9 @@ var pivot_svg := {}
 ## Metres per SVG unit, and the SVG point at the rig's origin.
 var k := 0.01
 var origin_svg := Vector2.ZERO
+## The material the parts were built with when it is an actor material
+## (MotionFlat3D.actor): flash and tint go to it as plain uniforms.
+var actor_material: ShaderMaterial
 
 
 ## Build a rig from `data`, `width` metres wide. Options: origin (SVG point
@@ -50,6 +53,8 @@ var origin_svg := Vector2.ZERO
 ## tolerance (0.5), pivot_prefix ("pivot"), flat_class ("flat"), overrides.
 static func build(data: MotionSvgData, width: float, material: Material, outline_material: Material = null, opts := {}) -> MotionCutoutRig:
 	var rig := MotionCutoutRig.new()
+	if material is ShaderMaterial and (material as ShaderMaterial).shader == MotionFlat3D.CUTOUT_ACTOR:
+		rig.actor_material = material
 	var vb := data.view_box
 	rig.k = width / vb.size.x
 	rig.origin_svg = opts.get("origin", Vector2(vb.position.x + vb.size.x * 0.5, vb.end.y))
@@ -237,14 +242,25 @@ func solve_limb(upper: StringName, lower: StringName, tip: StringName, target: V
 
 
 ## Hit flash on every part (rgb toward `color` by `amount`).
+## Hit flash on the whole rig. With an actor material (MotionFlat3D.actor)
+## it is one uniform on that material (every view sharing it flashes
+## together); with the shared cutout() material, an instance uniform per part.
 func set_flash(color: Color, amount: float) -> void:
+	if actor_material:
+		MotionFlat3D.set_actor_flash(actor_material, color, amount)
+		return
 	for m in meshes.values():
 		MotionFlat3D.set_flash(m, color, amount)
 
 
+## Multiply the whole rig's colour (actor material or per part, as set_flash).
 func set_tint(color: Color) -> void:
+	if actor_material:
+		actor_material.set_shader_parameter(&"tint", color)
+		return
 	for m in meshes.values():
 		MotionFlat3D.set_tint(m, color)
+
 
 
 ## Parent names before children.

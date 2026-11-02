@@ -32,6 +32,7 @@ const DECAL := preload("res://addons/motion_kit/three/motion_decal_3d.gdshader")
 const FLAT_I := preload("res://addons/motion_kit/three/motion_flat_3d_instanced.gdshader")
 const FLAT_I2S := preload("res://addons/motion_kit/three/motion_flat_3d_instanced_double.gdshader")
 const CUTOUT := preload("res://addons/motion_kit/three/motion_cutout_3d.gdshader")
+const CUTOUT_ACTOR := preload("res://addons/motion_kit/three/motion_cutout_3d_actor.gdshader")
 
 ## Horizontal direction the light comes from (Godot axes: +z is south).
 var light := Vector3(-0.33, 0.0, 0.94)
@@ -105,6 +106,21 @@ func cutout() -> ShaderMaterial:
 	return register(m, false)
 
 
+## A cutout material for one character: flash, tint and opacity are plain
+## uniforms on it (set_actor_flash, or MotionCutoutRig.set_flash), so a rig of
+## any size shares it with no per-instance cost. Make one per character and
+## build all its views with it. Registered like cutout(), so it fogs.
+func actor() -> ShaderMaterial:
+	var m := ShaderMaterial.new()
+	m.shader = CUTOUT_ACTOR
+	return register(m, false)
+
+
+## Hit flash on an actor material (every part and view using it).
+static func set_actor_flash(m: ShaderMaterial, color: Color, amount: float) -> void:
+	m.set_shader_parameter(&"flash", Color(color.r, color.g, color.b, clampf(amount, 0.0, 1.0)))
+
+
 ## Hit flash on one instance of an instanced or cutout material: rgb pulled
 ## toward `color` by `amount` (0 clears it). Keep flashes small and at most
 ## three a second (photosensitivity).
@@ -123,6 +139,12 @@ func register(m: ShaderMaterial, moves := true) -> ShaderMaterial:
 	if not moves:
 		fixed.append(m)
 	return m
+
+
+## Stop driving a material (a character that is gone for good).
+func unregister(m: ShaderMaterial) -> void:
+	materials.erase(m)
+	fixed.erase(m)
 
 
 ## A MeshInstance3D with a material override.

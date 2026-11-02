@@ -406,6 +406,89 @@ func test_cutout_view_choice_and_turn() -> String:
 	return res
 
 
+func test_cutout_eight_directions() -> String:
+	var five := {&"front": 90.0, &"front_34": 45.0, &"side": 0.0, &"back_34": -45.0, &"back": -90.0}
+	var cases := [[Vector2(1, 0), &"side"], [Vector2(-1, 0), &"side"], [Vector2(1, 1), &"front_34"],
+		[Vector2(-1, 1), &"front_34"], [Vector2(0, 1), &"front"], [Vector2(1, -1), &"back_34"], [Vector2(0, -1), &"back"]]
+	for c in cases:
+		var got := MotionCutout.nearest(c[0], five, &"", 6.0)
+		if got != c[1]:
+			return "%s chose %s, wanted %s" % [c[0], got, c[1]]
+	# 25 degrees: past the 22.5 border, but within the side view's hysteresis
+	var d := Vector2(cos(deg_to_rad(25.0)), sin(deg_to_rad(25.0)))
+	if MotionCutout.nearest(d, five, &"side", 6.0) != &"side" or MotionCutout.nearest(d, five, &"front", 6.0) != &"front_34":
+		return "hysteresis around a 45-degree border"
+	# three views: the same answers as choose() (which, from front or back,
+	# also shrinks side toward the opposite view; nearest() doesn't)
+	var three := {&"front": 90.0, &"side": 0.0, &"back": -90.0}
+	for a in range(-180, 180, 7):
+		var v := Vector2(cos(deg_to_rad(a)), sin(deg_to_rad(a)))
+		for cur in [&"", &"side", &"front" if a >= 0 else &"back"]:
+			if MotionCutout.nearest(v, three, cur, 12.0) != MotionCutout.choose(v, cur, 12.0):
+				return "three views at %d from %s differ from choose()" % [a, cur]
+	if not is_equal_approx(MotionCutout.narrow_for(0.0, 45.0), 0.5) or MotionCutout.narrow_for(0.0, 90.0) != 0.0:
+		return "narrowing"
+	# a 45-degree turn narrows to about half, never edge-on, and swaps once
+	var cut := MotionCutout.new()
+	cut.add_view(&"side", _rig())
+	cut.add_view(&"front_34", _rig())
+	var swaps := []
+	cut.view_changed.connect(func(v: StringName, m: bool) -> void: swaps.append(v))
+	cut.face(Vector2(1, 1))
+	var min_w := 1.0
+	for i in 60:
+		cut.step(DT)
+		min_w = minf(min_w, absf(cut.flip.scale.x))
+	var res := ""
+	if swaps != [&"front_34"]:
+		res = "swaps: %s" % [swaps]
+	elif min_w < 0.3 or min_w > 0.7:
+		res = "a 45-degree turn should narrow to about half: %s" % min_w
+	elif absf(cut.flip.scale.x - 1.0) > 0.02:
+		res = "should open again: %s" % cut.flip.scale.x
+	# disabled views drop out of the choice
+	cut.disabled[&"front_34"] = true
+	cut.face(Vector2(1, 1))
+	for i in 60:
+		cut.step(DT)
+	if res == "" and cut.view != &"side":
+		res = "a disabled view was chosen"
+	cut.free()
+	return res
+
+
+func test_cutout_actor_material() -> String:
+	var flat := MotionFlat3D.new()
+	var mat := flat.actor()
+	var data := MotionSvgData.from_string('<svg viewBox="0 0 100 100"><g id="body"><circle id="pivot-body" cx="50" cy="90" r="1" fill="none"/><rect x="40" y="40" width="20" height="50" fill="#ff0000"/></g></svg>')
+	var a := MotionCutoutRig.build(data, 1.0, mat)
+	var b := MotionCutoutRig.build(data, 1.0, mat)
+	var res := ""
+	if a.actor_material != mat:
+		res = "a rig built with an actor material should keep it"
+	else:
+		a.set_flash(Color(1, 0, 0), 0.5)
+		a.set_tint(Color(0.5, 0.5, 1.0))
+		var f: Color = mat.get_shader_parameter(&"flash")
+		if not f.is_equal_approx(Color(1, 0, 0, 0.5)) or not (mat.get_shader_parameter(&"tint") as Color).is_equal_approx(Color(0.5, 0.5, 1.0)):
+			res = "flash and tint should be uniforms on the actor material"
+		elif not flat.materials.has(mat):
+			res = "actor() should register the material (fog)"
+		else:
+			for m in a.meshes.values():
+				if (m as GeometryInstance3D).get_instance_shader_parameter(&"flash") != null:
+					res = "no instance uniforms on actor parts"
+	var shared := MotionCutoutRig.build(data, 1.0, flat.cutout())
+	if res == "" and shared.actor_material != null:
+		res = "the shared cutout material isn't an actor material"
+	flat.unregister(mat)
+	if res == "" and flat.materials.has(mat):
+		res = "unregister"
+	for r in [a, b, shared]:
+		r.free()
+	return res
+
+
 # ------------------------------------------------------------------ gait
 
 func test_gait_alternates_and_plants() -> String:

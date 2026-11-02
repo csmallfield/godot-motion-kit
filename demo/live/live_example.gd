@@ -75,7 +75,8 @@ func _ready() -> void:
 	add_child(walker)
 	cut = MotionCutout.new()
 	walker.add_child(cut)
-	cut.add_view(&"side", MotionCutoutRig.build(MotionSvgData.load_any(WALKER), 0.6, cutout, ink, {origin = Vector2(80, 230)}))
+	# a character gets its own actor material (flash and tint as plain uniforms)
+	cut.add_view(&"side", MotionCutoutRig.build(MotionSvgData.load_any(WALKER), 0.6, flat.actor(), ink, {origin = Vector2(80, 230)}))
 	cut.lean(PITCH, 20.0)
 	gait = MotionGait.new()
 	gait.settings.hip_width = 0.05
