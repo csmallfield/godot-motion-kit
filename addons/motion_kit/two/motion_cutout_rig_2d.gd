@@ -93,6 +93,7 @@ var _want_view: StringName = &""
 var _want_mirror := false
 var _want_left := false
 var _turn_mid := false               # narrowing toward a swap
+var _face_last := Vector2.ZERO
 
 
 func _init(atlas_: MotionCutoutAtlas = null) -> void:
@@ -133,6 +134,25 @@ func add_prop(name: StringName, parent: StringName, key: StringName, at := Vecto
 	_view_cache.clear()
 	if view != &"":
 		_show(view, mirrored)
+
+
+## A part's index, for the *_at() calls (stable for the rig's life; -1 when
+## no view has the part). Crowds: look names up once, pose by index.
+func part_id(name: StringName) -> int:
+	return _index.get(name, -1)
+
+
+## pose() by index (no name lookup). Ignores -1.
+func pose_at(i: int, rot := 0.0, offset := Vector2.ZERO) -> void:
+	if i >= 0:
+		_rot[i] = rot
+		_off[i] = offset
+
+
+## add_rot() by index. Ignores -1.
+func add_rot_at(i: int, rot: float) -> void:
+	if i >= 0:
+		_rot[i] += rot
 
 
 func has_part(name: StringName) -> bool:
@@ -245,6 +265,11 @@ func apply() -> void:
 func face(dir: Vector2) -> void:
 	if dir.length_squared() < 1e-8:
 		return
+	# the same direction as last time decides the same view: skip the search
+	var nd := dir.normalized()
+	if nd.dot(_face_last) > 0.9995:
+		return
+	_face_last = nd
 	var is_left := dir.x < -0.001 or (absf(dir.x) <= 0.001 and _want_left)
 	var ang := rad_to_deg(atan2(dir.y, absf(dir.x)))
 	var best: StringName = &""

@@ -460,6 +460,16 @@ MotionCutoutRig and MotionCutout entries before starting.
   (`arc.front_34`, falling back to the base channel), and flat parts show their overlaps
   most at 45 degrees. Characters use `MotionFlat3D.cutout()`
   (unlit vertex colour) and an outline material whose depth bias is below the layer step.
+- **2D cutout characters (crowds).** For a 2D game, bake the same SVG views into one
+  `MotionCutoutAtlas` (every character type in the same atlas, recoloured variants by
+  `hue_map` merged per colour family, `hide` for parts only the hero wears) and draw each
+  character as a `MotionCutoutRig2D`. Pose by index (`part_id` once, `pose_at`), call
+  `apply()` only on frames you pose: idle and far characters on twos or threes, carrying
+  the skipped time; off-screen ones not at all; fast events (launch, hit, attack) every
+  frame. Put a swing's hand on the actual hitbox arc with `solve_limb` and `depth` the arm
+  in front when the arc comes toward the camera, so what you see is what hits. Flash and
+  tint through `set_look` only: never per-sprite materials, which break batching.
+  `csmallfield/knockabout` is the example (its `entities/puppet/`).
 - **Per-actor reactions:** a character gets its own `flat.actor()` material, shared by
   every part and view, and `rig.set_flash(color, amount)`. Props and world pieces use
   instance uniforms: `material(..., instanced = true)` or `cutout()`, then

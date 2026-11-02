@@ -214,7 +214,9 @@ func layer_count(key: StringName) -> int:
 ## turn that takes `from` to `to`, and its saturation and value scaled the
 ## same way. Near-greys and near-blacks (whites, eyes, inks) and `keep` (hex strings)
 ## stay as drawn. `amount` 0..1 blends from the drawing toward the full shift.
-static func hue_map(data: MotionSvgData, from: Color, to: Color, keep := PackedStringArray(), amount := 1.0) -> Dictionary:
+## `only` (hex strings) limits the map to those colours: merge several maps
+## to move colour families separately (skin one way, clothes another).
+static func hue_map(data: MotionSvgData, from: Color, to: Color, keep := PackedStringArray(), amount := 1.0, only := PackedStringArray()) -> Dictionary:
 	var out := {}
 	var dh := to.h - from.h
 	var ks := to.s / maxf(from.s, 0.001)
@@ -224,7 +226,9 @@ static func hue_map(data: MotionSvgData, from: Color, to: Color, keep := PackedS
 		if c.a <= 0.0:
 			continue
 		var hex := c.to_html(false)
-		if out.has(hex) or keep.has(hex) or c.s < 0.12 or c.v < 0.2:
+		if out.has(hex) or keep.has(hex) or (not only.is_empty() and not only.has(hex)):
+			continue
+		if only.is_empty() and (c.s < 0.12 or c.v < 0.2):
 			continue
 		var n := Color.from_hsv(fposmod(c.h + dh, 1.0), clampf(c.s * ks, 0.0, 1.0), clampf(c.v * kv, 0.0, 1.0), c.a)
 		out[hex] = c.lerp(n, amount)

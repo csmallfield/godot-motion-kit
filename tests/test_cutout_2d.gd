@@ -270,3 +270,33 @@ func test_rig_set_look_encoding() -> String:
 	if not flashed:
 		return "a flash rides on alpha above 1"
 	return "" if shared else "every layer should share the one material"
+
+
+func test_rig_index_posing_matches_names() -> String:
+	var a := _atlas()
+	var r1 := _rig(a)
+	var r2 := _rig(a)
+	r1.pose(&"head", 0.3)
+	r1.add_rot(&"arm_upper", 0.2)
+	var hi := r2.part_id(&"head")
+	r2.pose_at(hi, 0.3)
+	r2.add_rot_at(r2.part_id(&"arm_upper"), 0.2)
+	r2.pose_at(-1, 9.0)                     # unknown parts are ignored
+	var same := r1.part_point(&"hand").is_equal_approx(r2.part_point(&"hand")) \
+		and r1.part_point(&"eyes").is_equal_approx(r2.part_point(&"eyes"))
+	var missing := r1.part_id(&"nope") == -1
+	_free()
+	if not missing:
+		return "part_id of an unknown part should be -1"
+	return "" if same else "index posing differs from name posing"
+
+
+func test_rig_face_cache_keeps_choice() -> String:
+	var r := _rig(_atlas())
+	r.face(Vector2.LEFT)
+	r.face(Vector2.LEFT * 2.0)              # same direction: cached
+	var ok := r.view == &"side_left"
+	r.face(Vector2.RIGHT)
+	ok = ok and r.view == &"side"
+	_free()
+	return "" if ok else "the face() cache changed the chosen view"

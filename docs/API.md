@@ -41,6 +41,7 @@ name it, and that piece's `KIT_NOTES.md` has the measurements behind the cost no
 | [Print](#print) | [MotionPlate](#motionplate), [MotionPaper](#motionpaper) |
 | [2.5D extrusion and cities](#25d-extrusion-and-cities) | [MotionExtrudeCamera](#motionextrudecamera), [MotionSolid](#motionsolid), [MotionExtrude](#motionextrude), [MotionCityPlan](#motioncityplan), [MotionGreebler](#motiongreebler), [MotionVoxelize](#motionvoxelize), [MotionBlockPlan](#motionblockplan), [MotionFaceLights](#motionfacelights) |
 | [3D](#3d) | [MotionStage3D](#motionstage3d), [MotionLens3D](#motionlens3d), [MotionSvgMesh](#motionsvgmesh), [MotionPanel3D](#motionpanel3d), [MotionCutoutRig](#motioncutoutrig), [MotionCutout](#motioncutout), [MotionRibbon3D](#motionribbon3d), [MotionGrass3D](#motiongrass3d), [MotionWarmup](#motionwarmup), [MotionFlat3D](#motionflat3d), [MotionEdges3D](#motionedges3d), [MotionDecalAtlas](#motiondecalatlas), [MotionPattern3D](#motionpattern3d), [MotionSkyDome3D](#motionskydome3d), [MotionTrack3D](#motiontrack3d) |
+| [2D cutouts](#2d-cutouts) | [MotionCutoutAtlas](#motioncutoutatlas), [MotionCutoutRig2D](#motioncutoutrig2d) |
 | [Diagrams and flow](#diagrams-and-flow) | [MotionMetroMap](#motionmetromap), [MotionFlow](#motionflow), [MotionLiquidFill](#motionliquidfill), [MotionCable](#motioncable), [MotionCableSet](#motioncableset) |
 | [Shader includes](#shader-includes) | `motion_noise`, `motion_sun`, `motion_pattern`, `motion_flat_3d` |
 | [Game layer](#game-layer) | MotionSpring, MotionSpring2D, MotionSpring3D, MotionAimSpring, MotionReactive, MotionTransition, MotionClock, MotionTrauma, MotionIK, MotionGait, MotionChain, MotionSquash, MotionPoseCurve, MotionRipples, MotionPerfProbe |
@@ -1562,6 +1563,104 @@ chases):
 | `trail_lane(curve, length, x, y, col, half_w=0.35, half_h=0.25, step=1) -> ArrayMesh` | A cross-section ribbon to light as a moving ship trail |
 
 Checkered faces use `MotionPattern3D.box / quad` (UVs in metres) instead.
+
+## 2D cutouts
+
+The cutout characters of the 3D section, for 2D games with crowds. The same SVG authoring
+convention (rig parts are groups holding a pivot marker, document order is draw order,
+class `flat` gets no outline), baked once into a texture instead of meshed: every view of
+every character in one atlas, one shared material, so a crowd batches into a few draw
+calls. Built for Knockabout (`csmallfield/knockabout`), whose hero and recoloured mobs
+are the Cutout Isle hero drawings.
+
+| File (in `two/`) | Class / role |
+| --- | --- |
+| `motion_cutout_atlas.gd` | `MotionCutoutAtlas` (RefCounted): rasterizes rig views and prop cards with baked outlines, recolours at bake, packs one texture |
+| `motion_cutout_rig_2d.gd` | `MotionCutoutRig2D` (Node2D): one Sprite2D per layer, posed by a forward-kinematics pass in script; views with a paper turn; depth overrides; props; IK |
+| `motion_cutout_2d.gdshader` | the shared material: tint, fade and hit flash decoded from the CanvasItem's modulate |
+
+Cost, from Knockabout on a 2-core cloud CPU: about 33 µs of script per `pose()` +
+`apply()` of a 16-layer character, and nothing for frames it isn't posed (moving the
+character moves one CanvasItem). The 3D rig in Cutout Isle cost about 100 µs and 32 draw
+calls per character. 40 characters with the room drew in about 100 draw calls.
+
+### MotionCutoutAtlas
+
+`RefCounted`, `two/motion_cutout_atlas.gd`.
+
+```gdscript
+var atlas := MotionCutoutAtlas.new()
+var s := 34.0 / 318.0 * 2.0                      # 34 px feet-to-head on screen, baked at 2x
+atlas.add_view(&"hero/front", front, s, {origin = Vector2(110, 318)})
+atlas.add_view(&"hero/side_left", side.mirrored(110), s, {origin = Vector2(110, 318)})
+var map := MotionCutoutAtlas.hue_map(front, Color("#f7cfa6"), Color(0.4, 0.8, 0.35), [], 1.0, SKIN_HEXES)
+atlas.add_view(&"goblin/front", front, s, {origin = Vector2(110, 318), recolor = map, hide = ["scarf"]})
+atlas.add_card(&"sword", sword, s, Vector2(20, 136))
+atlas.bake()
+```
+
+| Member | Notes |
+| --- | --- |
+| `add_view(key, data, scale, opts)` | A rigged view at `scale` baked px per SVG unit. `opts`: `origin` (SVG point at the rig origin, default bottom centre), `outline` (baked px, 1.6), `ink` (#1b1622), `recolor` ({fill hex lowercase without `#`, or Color: Color}), `hide` (element ids, classes or group ids left out), `pad` (2 px), `pivot_prefix`, `flat_class`, `overrides` (as MotionCutoutRig) |
+| `add_card(key, data, scale, anchor, opts)` | A prop in one piece (sword, shadow, marker), pivoting at `anchor` (SVG units) |
+| `bake(max_width = 2048) -> ImageTexture` | Rasterize what was added and pack everything into `texture`. Call once after adding everything (a later bake re-packs, so rigs built before it keep the old texture) |
+| `texture`, `views`, `bake_seconds` | The packed texture; key → `{names, parent, pivot, layers, scale}` (pivots in rig-local baked px, y down; each layer `{part, region, offset}`) |
+| static `material() -> ShaderMaterial` | The one material every rig shares |
+| static `hue_map(data, from, to, keep = [], amount = 1, only = []) -> Dictionary` | A `recolor` map turning every fill's hue by the turn that takes `from` to `to` and scaling saturation and value alike. Near-greys and near-blacks and `keep` stay; `only` limits it to a colour family, so several maps merged move skin, hair and clothes separately |
+
+A part whose own shapes are split by a child part in document order (a head with the eyes
+in the middle of it) bakes as several layers on the same pivot, so draw order matches the
+drawing. Each element's outline is drawn under its own fill, so inner outlines (a belt over
+a tunic) show as they do in 3D. Recolouring at bake costs nothing at runtime and keeps
+outlines and whites, which a modulate tint would darken. Elements without a fill are left
+out (as in 3D): make rings and lines filled shapes.
+
+### MotionCutoutRig2D
+
+`Node2D`, `two/motion_cutout_rig_2d.gd`.
+
+```gdscript
+var rig := MotionCutoutRig2D.new(atlas)
+rig.add_view(&"front", &"hero/front", MotionCutoutRig2D.EITHER)
+rig.add_view(&"back", &"hero/back", MotionCutoutRig2D.EITHER)
+rig.add_view(&"side", &"hero/side", MotionCutoutRig2D.RIGHT)
+rig.add_view(&"side_left", &"hero/side_left", MotionCutoutRig2D.LEFT)
+rig.add_prop(&"sword", &"hand_r", &"sword")
+rig.display_scale = 0.5                         # baked at 2x
+var head := rig.part_id(&"head")                # once
+# each posed frame:
+rig.face(velocity)                              # screen direction, y down
+rig.step(delta)                                 # paper turn
+rig.reset_pose()
+rig.pose_at(head, 0.1)
+rig.solve_limb(&"arm_r_upper", &"arm_r_lower", &"hand_r", target, -1.0)
+rig.depth(&"arm_r_upper", 1)                    # sword arm in front for the swing
+rig.apply()
+```
+
+Coordinates are rig-local baked pixels, origin at the view's `origin` (the feet), y down;
+rotations are radians, positive clockwise on screen. Views share parts by name; a part a
+view lacks is not drawn in it.
+
+| Member | Notes |
+| --- | --- |
+| `add_view(name, key, side, angle_deg = NAN)` | A view from atlas view `key` at a facing angle (0 sideways facing right, +90 toward the viewer, -90 away; `ANGLES` gives the defaults for front, front_34, side, side_left, back_34, back) and a side: `MIRROR` (flipped for the left), `RIGHT`, `LEFT`, `EITHER` (never flipped). As MotionCutout |
+| `add_prop(name, parent, key, at, rot, above)` | Hang an atlas card on a part (`at` px from its pivot, rest rotation `rot`), drawn just behind the part's layers or just in front (`above`). The prop is a part: pose it, depth it, read it |
+| `face(dir)`, `step(dt)` | Choose the view for a screen direction (hysteresis, cached for repeated directions); with `paper_turn` the card narrows and the view swaps in `step()`, else at once. `view_changed(view, mirrored)` fires on a swap |
+| `reset_pose()`, `pose(name, rot, offset, scale)`, `add_rot(name, rot)`, `get_rot(name)` | Pose relative to rest; layers stack with `add_rot` |
+| `part_id(name)`, `pose_at(i, rot, offset)`, `add_rot_at(i, rot)` | The same by index: look names up once and pose crowds without name lookups |
+| `solve_limb(upper, lower, tip, target, bend) -> bool` | Two-bone IK to a rig-local target; `bend` ±1 picks the elbow side |
+| `part_transform(name)`, `part_point(name, local)`, `rest_pivot(name)` | Current transforms from the pose arrays (no `apply()` needed): where a hand is, where a shoulder is |
+| `depth(name, d)` | Draw a part and its children in front of the rig (+1), behind it (-1) or in place (0). Re-sorts the layers: cheap, but change it on events, not every frame |
+| `apply()` | One forward-kinematics pass, written to the sprites. Skip it on frames you don't pose and the character keeps its last pose for free |
+| `set_look(tint, flash, alpha)` | Tint (rgb multiply), fade and hit flash as one modulate (flash rides on alpha above 1, decoded by the shared shader; a flashing character shows at full opacity) |
+| `flip`, `body`, `display_scale`, `paper_turn`, `turn`, `hysteresis` | `flip.scale.x` is the mirror and paper turn; `body` is the driver's whole-body transform (tumble, squash, hop); `display_scale` maps baked to local px |
+
+For crowds: pose by index, give idle and far characters fewer posed frames (carry the
+skipped time into the next pose so cycles keep their speed), skip off-screen ones, and
+keep the paper turn for the hero. Put every character type in one atlas so the crowd
+shares one texture; a shadow or marker under a character can be a plain Sprite2D of an
+atlas card with the same material.
 
 ## Diagrams and flow
 
