@@ -43,7 +43,7 @@ name it, and that piece's `KIT_NOTES.md` has the measurements behind the cost no
 | [3D](#3d) | [MotionStage3D](#motionstage3d), [MotionLens3D](#motionlens3d), [MotionSvgMesh](#motionsvgmesh), [MotionPanel3D](#motionpanel3d), [MotionCutoutRig](#motioncutoutrig), [MotionCutout](#motioncutout), [MotionFlat3D](#motionflat3d), [MotionEdges3D](#motionedges3d), [MotionDecalAtlas](#motiondecalatlas), [MotionPattern3D](#motionpattern3d), [MotionSkyDome3D](#motionskydome3d), [MotionTrack3D](#motiontrack3d) |
 | [Diagrams and flow](#diagrams-and-flow) | [MotionMetroMap](#motionmetromap), [MotionFlow](#motionflow), [MotionLiquidFill](#motionliquidfill), [MotionCable](#motioncable), [MotionCableSet](#motioncableset) |
 | [Shader includes](#shader-includes) | `motion_noise`, `motion_sun`, `motion_pattern`, `motion_flat_3d` |
-| [Game layer](#game-layer) | MotionSpring, MotionSpring2D, MotionSpring3D, MotionAimSpring, MotionReactive, MotionTransition, MotionClock, MotionTrauma, MotionIK |
+| [Game layer](#game-layer) | MotionSpring, MotionSpring2D, MotionSpring3D, MotionAimSpring, MotionReactive, MotionTransition, MotionClock, MotionTrauma, MotionIK, MotionGait |
 | [Deprecated aliases](#deprecated-aliases) | Old names that still work |
 
 ## Core
@@ -1357,6 +1357,7 @@ the left, and front and back mirror with the horizontal facing too.
 | --- | --- |
 | `add_view(name, rig)`, `views`, `view`, `mirrored`, `rig` | Views by name (`&"front"`, `&"back"`, `&"side"`); the one showing and its rig |
 | `face(dir)` | World x, z (+z toward the camera); zero keeps the facing |
+| `ground_to_card(offset)` | A world offset from the character as the card-plane offset that lands on the same screen point in the view showing (uses the pitch given to `lean`) |
 | static `choose(dir, current, hysteresis, has_side, has_back)` | The view rule: side in the left and right sectors, front toward the camera, back away; the current view keeps an extra `hysteresis` degrees |
 | `step(dt)`, `paper_turn`, `turn` | Advance the turn (a `MotionSpring` on the width); off = instant swaps |
 | `lean(pitch_deg, lean_deg = 20)` | Tilt the cards back toward the camera and stretch them by 1 / cos(pitch − lean), so the art keeps its drawn proportions. Upright cards occlude correctly against props behind them; fully facing cards can dip into them |
@@ -1781,6 +1782,38 @@ Static, `live/motion_ik.gd`. Analytic two-bone IK (law of cosines); Godot 4.5 ha
 
 `MotionCutoutRig.solve_limb` applies the 2D solve to a rig. A `SkeletonModifier3D`
 wrapper for skinned characters is a thin addition on top of `two_bone_3d`.
+
+### MotionGait
+
+`RefCounted`, `live/motion_gait.gd`, tunables in `MotionGaitSettings` (Resource,
+`live/motion_gait_settings.gd`). Procedural gait with foot planting on the ground plane:
+each foot stays where it was planted until the body has moved its home (a point beside the
+body, `hip_width` across the facing, `lead` seconds of velocity ahead) more than half a
+stride away, then steps along an arc to land ahead of the body. Feet alternate, one in the
+air at a time; stride and step time scale with speed; standing still, feet settle home.
+
+```gdscript
+var gait := MotionGait.new(preload("res://hero_gait.tres"), 2)
+gait.planted.connect(func(i, pos): GameEvents.emit(&"step.grass", pos))
+# _physics_process (a clock's rate freezes the walk during hit-stop):
+gait.step(delta * clock.rate(), global_position, velocity, facing)
+# _process: between physics steps, mapped onto a cutout view
+var off := gait.foot(0, Engine.get_physics_interpolation_fraction()) - body_interpolated
+rig.solve_limb(&"leg_l_upper", &"leg_l_lower", &"foot_l", rest_foot_y + cut.ground_to_card(off), 1.0)
+```
+
+| Member | Notes |
+| --- | --- |
+| `step(dt, at, vel, facing)`, `reset(at, facing)` | Fixed step from `_physics_process`; feet start at home on the first step |
+| `foot(i, frac)`, `is_planted(i)`, `progress(i)`, `home(i, at, vel, facing)` | World position (y = lift above the body's ground height), interpolated between physics steps; step progress 0..1 or −1 |
+| `body` | Spring outputs: y = bob (a dip on each plant, a rise while a foot is up), x = forward lean, z = sideways lean (radians, facing frame) from speed and acceleration |
+| signals `planted(foot, position)`, `lifted(foot, position)` | Footstep sounds, dust, ripples |
+| Settings | `hip_width`, `stride`, `stride_speed_scale`, `reference_speed`, `step_time`, `step_time_fast`, `lift`, `lift_shape`, `lead`, `settle_distance`, `settle_delay`, `plant_dip` and its spring, `step_rise`, `lean_accel`, `lean_speed`, `lean_max` and its spring |
+
+`MotionCutout.ground_to_card(offset)` turns a world offset from the character into the
+card-plane offset on the same screen point (x mirrored with the view, ground depth and
+height up the card), so world feet drive any view's IK. Feet stay on the body's ground
+height; slopes and stairs need a ground probe per foot (not yet).
 
 ### MotionTrauma
 

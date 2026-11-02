@@ -277,7 +277,9 @@ shake with directional kicks), `MotionFlat3D.cutout()` / `instanced` materials w
 `set_flash` for per-actor reactions; cutout characters from SVG with `MotionCutoutRig`
 (groups with pivot markers become nested part nodes; `pose`, `solve_limb` two-bone IK) and
 `MotionCutout` (front / back / side views with a paper turn, `lean` toward the camera);
-`MotionIK`, `MotionAimSpring` for look-at.
+`MotionIK`, `MotionAimSpring` for look-at; `MotionGait` (+ `MotionGaitSettings`) plants feet
+in world space, steps on arcs, and gives body dip and lean, mapped onto a view with
+`MotionCutout.ground_to_card`.
 
 **Naming.** Partial drawing is `reveal` (0..1, the drawn end) and `reveal_from` (its
 start); random seeds are `seed`; alpha is `opacity` (`set_opacity(id, a)` per greeble

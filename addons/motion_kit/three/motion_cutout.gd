@@ -39,6 +39,7 @@ var hysteresis := 12.0
 var card: Node3D
 var flip: Node3D
 
+var _pitch := 50.0
 var _want_view: StringName = &""
 var _want_mirror := false
 
@@ -64,9 +65,19 @@ func add_view(name: StringName, r: MotionCutoutRig) -> void:
 
 ## Tilt the cards back toward a camera pitched `pitch_deg` below the horizon.
 func lean(pitch_deg: float, lean_deg := 20.0) -> void:
+	_pitch = pitch_deg
 	var l := deg_to_rad(lean_deg)
 	card.rotation = Vector3(-l, 0, 0)
 	card.scale = Vector3(1, 1.0 / maxf(cos(deg_to_rad(pitch_deg) - l), 0.2), 1)
+
+
+## A world offset from the character (x and z on the ground, y up) as the
+## card-plane offset that lands on the same screen point in the view showing
+## (x mirrored with the view, y up the screen): world foot positions from a
+## MotionGait become IK targets this way. Uses the pitch given to lean().
+func ground_to_card(offset: Vector3) -> Vector3:
+	var p := deg_to_rad(_pitch)
+	return Vector3(offset.x * (-1.0 if mirrored else 1.0), -offset.z * sin(p) + offset.y * cos(p), 0.0)
 
 
 ## Face a direction (world x, z; +z toward the camera). A zero vector keeps

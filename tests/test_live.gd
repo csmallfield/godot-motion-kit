@@ -404,3 +404,69 @@ func test_cutout_view_choice_and_turn() -> String:
 		res = "should settle mirrored: %s" % cut.flip.scale.x
 	cut.free()
 	return res
+
+
+# ------------------------------------------------------------------ gait
+
+func test_gait_alternates_and_plants() -> String:
+	var g := MotionGait.new()
+	var plants := []
+	g.planted.connect(func(i: int, p: Vector3) -> void: plants.append([i, p]))
+	g.reset(Vector3.ZERO, Vector3(1, 0, 0))
+	var at := Vector3.ZERO
+	var vel := Vector3(3.0, 0, 0)
+	var held := {}
+	for f in 180:
+		at += vel * DT
+		var before := [g.foot(0), g.foot(1)]
+		g.step(DT, at, vel, Vector3(1, 0, 0))
+		if not g.is_planted(0) and not g.is_planted(1):
+			return "both feet in the air at frame %d" % f
+		for i in 2:
+			if g.is_planted(i) and g.progress(i) < 0.0 and held.get(i, false):
+				if g.foot(i).distance_to(before[i]) > 1e-6:
+					return "a planted foot slid at frame %d" % f
+			held[i] = g.is_planted(i)
+	if plants.size() < 6:
+		return "too few steps: %d" % plants.size()
+	for k in range(1, plants.size()):
+		if plants[k][0] == plants[k - 1][0]:
+			return "the same foot stepped twice in a row"
+	var last: Vector3 = plants[-1][1]
+	if absf(last.x - at.x) > 0.4:
+		return "feet fell behind the body: foot %s body %s" % [last.x, at.x]
+	return ""
+
+
+func test_gait_settles_and_freezes() -> String:
+	var g := MotionGait.new()
+	g.reset(Vector3.ZERO, Vector3(1, 0, 0))
+	var at := Vector3.ZERO
+	for f in 40:
+		at += Vector3(3, 0, 0) * DT
+		g.step(DT, at, Vector3(3, 0, 0), Vector3(1, 0, 0))
+	for f in 90:
+		g.step(DT, at, Vector3.ZERO, Vector3(1, 0, 0))
+	for i in 2:
+		var h := g.home(i, at, Vector3.ZERO, Vector3(1, 0, 0))
+		if Vector2(g.foot(i).x - h.x, g.foot(i).z - h.z).length() > g.settings.settle_distance + 1e-4:
+			return "foot %d did not settle home" % i
+	var snap := [g.foot(0), g.foot(1)]
+	g.step(0.0, at + Vector3(1, 0, 0), Vector3(3, 0, 0), Vector3(1, 0, 0))
+	if not g.foot(0).is_equal_approx(snap[0]):
+		return "a zero step (hit-stop) moved a foot"
+	return ""
+
+
+func test_cutout_ground_to_card() -> String:
+	var cut := MotionCutout.new()
+	cut.lean(50.0, 20.0)
+	var a := cut.ground_to_card(Vector3(0.1, 0, 0))
+	var b := cut.ground_to_card(Vector3(0, 0, 1.0))
+	var c := cut.ground_to_card(Vector3(0, 1.0, 0))
+	cut.free()
+	if not a.is_equal_approx(Vector3(0.1, 0, 0)):
+		return "x: %s" % a
+	if not is_equal_approx(b.y, -sin(deg_to_rad(50.0))):
+		return "toward the camera should go down the card: %s" % b
+	return "" if is_equal_approx(c.y, cos(deg_to_rad(50.0))) else "height: %s" % c
