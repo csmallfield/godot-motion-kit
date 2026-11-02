@@ -59,6 +59,56 @@ func part_count() -> int:
 	return parts.size()
 
 
+## A copy mirrored left to right about `axis_x` (default: the viewBox's
+## centre), with "l" and "r" swapped in every id and group id ("arm_r_upper"
+## becomes "arm_l_upper"; tokens between underscores, so "pivot-foot_l"
+## swaps too). Document order is kept. This is the partial mirror for a
+## cutout character drawn side-on: the far arm, drawn behind the body, is
+## still drawn behind it, but now it is the other arm. A right-handed hero
+## seen from the left keeps the sword in its right hand, now the far one.
+## Pass an empty `swap` for a plain mirror.
+func mirrored(axis_x := NAN, swap := PackedStringArray(["l", "r"])) -> MotionSvgData:
+	var a := view_box.get_center().x if is_nan(axis_x) else axis_x
+	var out := MotionSvgData.new()
+	out.view_box = Rect2(2.0 * a - view_box.end.x, view_box.position.y, view_box.size.x, view_box.size.y)
+	out.defs = defs
+	out.warnings = warnings.duplicate()
+	out.source = source + " (mirrored)"
+	for p in parts:
+		var q: Dictionary = p.duplicate(true)
+		q.id = swap_sides(String(p.id), swap)
+		var gs := PackedStringArray()
+		for g in (p.groups as PackedStringArray):
+			gs.append(swap_sides(g, swap))
+		q.groups = gs
+		var cubics: Array[PackedVector2Array] = []
+		for c in p.cubics:
+			var m := PackedVector2Array()
+			for v in (c as PackedVector2Array):
+				m.append(Vector2(2.0 * a - v.x, v.y))
+			cubics.append(m)
+		q.cubics = cubics
+		var b: Rect2 = p.bbox
+		q.bbox = Rect2(2.0 * a - b.end.x, b.position.y, b.size.x, b.size.y)
+		q.svg = '<g transform="matrix(-1 0 0 1 %s 0)">%s</g>' % [2.0 * a, p.svg]
+		out.parts.append(q)
+	return out
+
+
+## `name` with the tokens in `swap` (a pair) exchanged, tokens being the
+## pieces between underscores: swap_sides("arm_l_upper") is "arm_r_upper".
+static func swap_sides(name: String, swap := PackedStringArray(["l", "r"])) -> String:
+	if swap.size() != 2 or name == "":
+		return name
+	var bits := name.split("_")
+	for i in bits.size():
+		if bits[i] == swap[0]:
+			bits[i] = swap[1]
+		elif bits[i] == swap[1]:
+			bits[i] = swap[0]
+	return "_".join(bits)
+
+
 ## Indices of the parts whose id, class or enclosing group id is `name`.
 func find(name: String) -> PackedInt32Array:
 	var out := PackedInt32Array()

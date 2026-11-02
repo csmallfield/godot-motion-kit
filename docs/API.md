@@ -266,7 +266,10 @@ degenerate contours.
 
 `MotionSvgData`: `view_box`, `parts` (tag, id, classes, groups, fill, stroke, bbox, cubic
 contours), `find(name)` (by id, class or group id), `sorted_by_x()`, `centre(i)`,
-`outline(i, tolerance)`, `to_svg_string()`, `warnings`.
+`outline(i, tolerance)`, `to_svg_string()`, `warnings`, `mirrored(axis_x = centre, swap = ["l", "r"])`
+(a copy flipped left to right with `l` and `r` exchanged in every id and group id, document
+order kept: the partial mirror that lets one side-on cutout drawing face both ways with a
+sword staying in the same hand, now the far one), static `swap_sides(name, swap)`.
 
 `MotionSvgParser` (`RefCounted`, `svg/motion_svg_parser.gd`) does the parsing behind
 `from_string` / `from_file` and the importer: path (every command), rect (with corner
@@ -1363,6 +1366,7 @@ halfway for 45.
 | Member | Notes |
 | --- | --- |
 | `add_view(name, rig, angle_deg = NAN)`, `views`, `angles`, `view`, `mirrored`, `rig` | Views by name; NAN takes the default angle for `front`, `front_34`, `side`, `back_34`, `back` (`ANGLES`); the one showing and its rig |
+| `add_view(..., side = MIRROR)`, `sides`, `left`, `MIRROR` / `RIGHT` / `LEFT` / `EITHER` | `MIRROR`: drawn facing right, flipped for the left. `RIGHT` / `LEFT`: used only when facing that way (a left drawing can be `MotionSvgData.mirrored()` of the right one). `EITHER`: never flipped (front and back views of a character with a fixed sword hand). `left` is the facing side. A turn from a right-facing to a left-facing drawing narrows edge-on |
 | `disabled`, `hysteresis` | Views left out of the choice (drop 8 directions to 4 at runtime); extra degrees the current view keeps past each border (under half the spacing between views) |
 | `face(dir)` | World x, z (+z toward the camera); zero keeps the facing |
 | `ground_to_card(offset)` | A world offset from the character as the card-plane offset that lands on the same screen point in the view showing (uses the pitch given to `lean`) |

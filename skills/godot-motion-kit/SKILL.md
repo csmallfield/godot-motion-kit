@@ -448,7 +448,11 @@ MotionCutoutRig and MotionCutout entries before starting.
   the facing (paper turn between them) and `lean()` toward the camera (upright cards
   occlude correctly; the stretch keeps the art's proportions). Legs and arms reach
   targets with `solve_limb`; world feet from a gait become targets through
-  `ground_to_card`. Props are `MotionCutoutRig.card`. Three views give 4 directions;
+  `ground_to_card`. Props are `MotionCutoutRig.card`. Plain mirroring swaps a held
+  sword between hands: give front and back `EITHER` (never flipped, drawn with the
+  sword hand anatomically placed) and build the left side view from
+  `side_data.mirrored()` as a `LEFT` view (the sword arm becomes the far arm, behind the
+  body). Draw back-view arms behind the torso. Three views give 4 directions;
   adding `front_34` and `back_34` gives 8 (five drawings, mirrored). The 3/4 views cost
   the most: each needs its own art, prop attach points and per-view move channels
   (`arc.front_34`, falling back to the base channel), and flat parts show their overlaps

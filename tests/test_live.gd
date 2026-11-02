@@ -489,6 +489,65 @@ func test_cutout_actor_material() -> String:
 	return res
 
 
+func test_svg_mirrored_swaps_sides() -> String:
+	var data := MotionSvgData.from_string('<svg viewBox="0 0 100 100"><g id="arm_l_upper"><circle id="pivot-arm_l_upper" cx="20" cy="50" r="1" fill="none"/><rect x="10" y="40" width="20" height="20" fill="#333333"/></g><g id="arm_r_upper"><circle id="pivot-arm_r_upper" cx="70" cy="50" r="1" fill="none"/><rect x="60" y="40" width="20" height="20" fill="#00ff00"/></g></svg>')
+	var m := data.mirrored()
+	if MotionSvgData.swap_sides("pivot-foot_l") != "pivot-foot_r" or MotionSvgData.swap_sides("arm_l_upper") != "arm_r_upper" or MotionSvgData.swap_sides("leg") != "leg":
+		return "swap_sides"
+	if m.parts.size() != data.parts.size():
+		return "part count"
+	# document order is kept: the first (far, dark) part is still first, now named r
+	var first: Dictionary = m.parts[1]
+	if not (first.groups as PackedStringArray).has("arm_r_upper") or (first.fill as Color) != Color("#333333"):
+		return "the far part should keep its place and swap its name: %s" % [first.groups]
+	var b: Rect2 = first.bbox
+	if not b.is_equal_approx(Rect2(70, 40, 20, 20)):
+		return "mirrored bbox %s" % b
+	var piv := m.centre(0)
+	if not piv.is_equal_approx(Vector2(80, 50)):
+		return "mirrored pivot %s" % piv
+	if (data.parts[1].bbox as Rect2) != Rect2(10, 40, 20, 20):
+		return "the source should be untouched"
+	var rig := MotionCutoutRig.build(m, 1.0, null)
+	var res := "" if rig.has_part(&"arm_r_upper") and rig.rest_pivot(&"arm_r_upper").x > 0.0 else "the mirrored rig's arm_r should sit on the right"
+	rig.free()
+	return res
+
+
+func test_cutout_one_way_views() -> String:
+	var cut := MotionCutout.new()
+	cut.paper_turn = false
+	cut.add_view(&"front", _rig(), NAN, MotionCutout.EITHER)
+	cut.add_view(&"side", _rig(), NAN, MotionCutout.RIGHT)
+	cut.add_view(&"side_left", _rig(), 0.0, MotionCutout.LEFT)
+	var res := ""
+	cut.face(Vector2(1, 0)); cut.step(DT)
+	if cut.view != &"side" or cut.mirrored:
+		res = "right: %s %s" % [cut.view, cut.mirrored]
+	cut.face(Vector2(-1, 0)); cut.step(DT)
+	if res == "" and (cut.view != &"side_left" or cut.mirrored or not cut.left):
+		res = "left should show the left drawing unmirrored: %s %s" % [cut.view, cut.mirrored]
+	cut.face(Vector2(-0.2, 1)); cut.step(DT)
+	if res == "" and (cut.view != &"front" or cut.mirrored):
+		res = "front facing left should not mirror"
+	if res == "" and not is_equal_approx(cut.ground_to_card(Vector3(-0.1, 0, 0)).x, -0.1):
+		res = "an unmirrored view keeps world x"
+	cut.free()
+	# with the paper turn, right to left narrows edge-on
+	cut = MotionCutout.new()
+	cut.add_view(&"side", _rig(), NAN, MotionCutout.RIGHT)
+	cut.add_view(&"side_left", _rig(), 0.0, MotionCutout.LEFT)
+	cut.face(Vector2(-1, 0))
+	var min_w := 1.0
+	for i in 60:
+		cut.step(DT)
+		min_w = minf(min_w, absf(cut.flip.scale.x))
+	if res == "" and (cut.view != &"side_left" or min_w > 0.2 or absf(cut.flip.scale.x - 1.0) > 0.02):
+		res = "right to left: view %s, narrowest %s, settled %s" % [cut.view, min_w, cut.flip.scale.x]
+	cut.free()
+	return res
+
+
 # ------------------------------------------------------------------ gait
 
 func test_gait_alternates_and_plants() -> String:

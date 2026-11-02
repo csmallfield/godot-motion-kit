@@ -21,6 +21,21 @@
 ## angle between them (to edge-on for 90 degrees, halfway for 45), so an
 ## 8-direction turn is a small flick rather than a full flip.
 ##
+## Which way a view faces, and whether it mirrors (add_view's `side`):
+##   MIRROR  drawn facing right, mirrored for the left (the default)
+##   RIGHT   drawn facing right, used only when facing right
+##   LEFT    drawn facing left, used only when facing left (a separate
+##           drawing, or MotionSvgData.mirrored() of the right one: the
+##           partial mirror that keeps a sword in the same hand)
+##   EITHER  never mirrored, used on both sides (front and back views of a
+##           character with a fixed sword hand)
+##
+##   cut.add_view(&"front", front_rig, NAN, MotionCutout.EITHER)
+##   cut.add_view(&"side", side_rig, NAN, MotionCutout.RIGHT)
+##   cut.add_view(&"side_left", MotionCutoutRig.build(side_data.mirrored(), ...), 0.0, MotionCutout.LEFT)
+##
+## A turn between a RIGHT and a LEFT view narrows edge-on, like a mirror flip.
+##
 ## Many views means many part meshes: build them with one actor material per
 ## character (MotionFlat3D.actor), not the shared cutout() material, whose
 ## per-instance uniforms each hold a block of a global buffer (the
@@ -37,6 +52,8 @@ extends Node3D
 ## Emitted when the shown view changes (at the edge-on moment of a turn).
 signal view_changed(view: StringName, mirrored: bool)
 
+enum { MIRROR, RIGHT, LEFT, EITHER }
+
 ## Default facing angles (degrees) for the usual view names.
 const ANGLES := {&"front": 90.0, &"front_34": 45.0, &"side": 0.0, &"back_34": -45.0, &"back": -90.0}
 
@@ -44,6 +61,10 @@ const ANGLES := {&"front": 90.0, &"front_34": 45.0, &"side": 0.0, &"back_34": -4
 var views := {}
 ## Name -> facing angle in degrees (0 sideways, +90 toward the camera).
 var angles := {}
+## Name -> MIRROR, RIGHT, LEFT or EITHER.
+var sides := {}
+## True while the character faces left (whatever the view does about it).
+var left := false
 ## Views left out of the choice (switch 8 directions down to 4 at runtime).
 var disabled := {}
 ## The view showing now, and whether it is mirrored.
@@ -74,10 +95,12 @@ func _init() -> void:
 
 
 ## Add a view (the first one added shows first) at a facing angle in
-## degrees; NAN takes the default for its name (ANGLES).
-func add_view(name: StringName, r: MotionCutoutRig, angle_deg := NAN) -> void:
+## degrees (NAN takes the default for its name, ANGLES) and a `side`
+## (MIRROR, RIGHT, LEFT or EITHER: see above).
+func add_view(name: StringName, r: MotionCutoutRig, angle_deg := NAN, side := MIRROR) -> void:
 	views[name] = r
 	angles[name] = angle_deg if not is_nan(angle_deg) else float(ANGLES.get(name, 0.0))
+	sides[name] = side
 	flip.add_child(r)
 	r.visible = false
 	if view == &"":
@@ -107,9 +130,12 @@ func ground_to_card(offset: Vector3) -> Vector3:
 func face(dir: Vector2) -> void:
 	if dir.length_squared() < 1e-6:
 		return
+	if absf(dir.x) > 1e-3:
+		left = dir.x < 0.0
 	var usable := {}
 	for n in angles:
-		if not disabled.has(n):
+		var sd: int = sides.get(n, MIRROR)
+		if not disabled.has(n) and not (sd == RIGHT and left) and not (sd == LEFT and not left):
 			usable[n] = angles[n]
 	if usable.is_empty():
 		usable = angles
@@ -117,7 +143,7 @@ func face(dir: Vector2) -> void:
 	if not views.has(v):
 		v = views.keys()[0]
 	_want_view = v
-	_want_mirror = dir.x < -1e-3 if absf(dir.x) > 1e-3 else _want_mirror
+	_want_mirror = left and int(sides.get(v, MIRROR)) == MIRROR
 	if not paper_turn:
 		_show(_want_view, _want_mirror)
 
@@ -168,6 +194,8 @@ func step(dt: float) -> void:
 		# on the same side narrows to edge-on and opens again
 		var crossing := _want_mirror != mirrored
 		var narrow := narrow_for(float(angles.get(view, 0.0)), float(angles.get(_want_view, 0.0)))
+		if _facing(view, mirrored) * _facing(_want_view, _want_mirror) < 0:
+			narrow = 0.0                # right-facing to left-facing drawings: a full turn
 		turn.target = want_sign if crossing else want_sign * narrow
 		turn.step(dt)
 		if absf(turn.value) < narrow + 0.15 or (crossing and signf(turn.value) == want_sign):
@@ -176,6 +204,18 @@ func step(dt: float) -> void:
 		turn.target = want_sign
 		turn.step(dt)
 	flip.scale = Vector3(turn.value, 1, 1)
+
+
+## +1 for a view showing a right-facing character, -1 left, 0 either.
+func _facing(name: StringName, flipped: bool) -> int:
+	match int(sides.get(name, MIRROR)):
+		RIGHT:
+			return 1
+		LEFT:
+			return -1
+		EITHER:
+			return 0
+	return -1 if flipped else 1
 
 
 ## How narrow the card gets on a same-side turn between views `from` and
