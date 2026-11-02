@@ -470,3 +470,94 @@ func test_cutout_ground_to_card() -> String:
 	if not is_equal_approx(b.y, -sin(deg_to_rad(50.0))):
 		return "toward the camera should go down the card: %s" % b
 	return "" if is_equal_approx(c.y, cos(deg_to_rad(50.0))) else "height: %s" % c
+
+
+# ------------------------------------------------------------------ chain, squash, ribbon
+
+func _seg_lengths(c: MotionChain) -> Array:
+	var out := []
+	for i in range(1, c.points.size()):
+		out.append(c.points[i].distance_to(c.points[i - 1]))
+	return out
+
+
+func test_chain_hangs_and_keeps_length() -> String:
+	var c := MotionChain.new(8, 0.05, Transform3D.IDENTITY, Vector3(1, 0, 0))
+	for i in 240:
+		c.step(DT, Transform3D.IDENTITY)
+	var tip := c.points[7]
+	if tip.y > -0.3 or absf(tip.x) > 0.05:
+		return "should hang straight down after settling: %s" % tip
+	for l in _seg_lengths(c):
+		if absf(l - 0.05) > 0.003:
+			return "segment length drifted: %s" % l
+	return ""
+
+
+func test_chain_trails_with_drag_and_freezes() -> String:
+	var c := MotionChain.new(8, 0.05)
+	c.drag = 4.0
+	c.medium_velocity = Vector3(-4.0, 0, 0)       # the body runs +x: air comes from the front
+	for i in 120:
+		c.step(DT, Transform3D.IDENTITY)
+	if c.points[7].x > -0.1:
+		return "should trail behind (-x): %s" % c.points[7]
+	var snap := c.points.duplicate()
+	c.step(0.0, Transform3D(Basis(), Vector3(1, 0, 0)))
+	if c.points != snap:
+		return "a zero step moved the chain"
+	var r := c.render_points(0.5)
+	return "" if r[3].is_equal_approx(snap[3]) else "render points off after a frozen step"
+
+
+func test_chain_shape_memory_follows_root_turn() -> String:
+	var c := MotionChain.new(6, 0.05, Transform3D.IDENTITY, Vector3(1, 0, 0))
+	c.gravity = Vector3.ZERO
+	c.stiffness = 0.8
+	var turned := Transform3D(Basis(Vector3.BACK, PI * 0.5), Vector3.ZERO)   # rest dir now +y
+	for i in 120:
+		c.step(DT, turned)
+	return "" if c.points[5].y > 0.2 else "shape memory should swing the chain round: %s" % c.points[5]
+
+
+func test_chain_mirror_and_floor() -> String:
+	var c := MotionChain.new(5, 0.1, Transform3D.IDENTITY, Vector3(1, -1, 0))
+	var x_before := c.points[4].x
+	c.mirror_x()
+	if not is_equal_approx(c.points[4].x, -x_before) or c.rest_dirs[1].x >= 0.0:
+		return "mirror_x"
+	c.floor_y = -0.15
+	for i in 120:
+		c.step(DT, Transform3D.IDENTITY)
+	for p in c.points:
+		if p.y < -0.15 - 1e-4:
+			return "point under the floor: %s" % p
+	return ""
+
+
+func test_squash_preserves_area_and_settles() -> String:
+	var s2 := MotionSquash.scale_for(0.3, 2)
+	var s3 := MotionSquash.scale_for(-0.2, 3)
+	if absf(s2.x * s2.y - 1.0) > 1e-6 or absf(s3.x * s3.x * s3.y - 1.0) > 1e-6:
+		return "area / volume not kept"
+	var sq := MotionSquash.new()
+	sq.impulse(4.0)
+	var peak := 0.0
+	for i in 120:
+		peak = maxf(peak, sq.step(DT).y)
+	if peak <= 1.01:
+		return "impulse did not stretch"
+	if absf(sq.step(DT).y - 1.0) > 1e-3:
+		return "did not settle"
+	if absf(MotionSquash.land(0.0, -0.2) + 0.2) > 1e-6 or absf(MotionSquash.land(200.0, -0.2)) > 1e-3:
+		return "land curve ends"
+	return ""
+
+
+func test_ribbon_builds_strip_with_outline() -> String:
+	var r := MotionRibbon3D.new()
+	r.update(PackedVector3Array([Vector3.ZERO, Vector3(0, -0.1, 0), Vector3(0.05, -0.2, 0)]))
+	var im := r.mesh as ImmediateMesh
+	var verts: int = (im.surface_get_arrays(0)[Mesh.ARRAY_VERTEX] as PackedVector3Array).size()
+	r.free()
+	return "" if verts == 2 * 2 * 6 else "expected 24 vertices (outline + strip), got %d" % verts

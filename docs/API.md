@@ -40,10 +40,10 @@ name it, and that piece's `KIT_NOTES.md` has the measurements behind the cost no
 | [Fields and patterns](#fields-and-patterns) | [MotionGlyphField](#motionglyphfield), [MotionWarpField](#motionwarpfield), [MotionTiling](#motiontiling), [MotionPatternPlane](#motionpatternplane), [MotionPlaneScan](#motionplanescan) |
 | [Print](#print) | [MotionPlate](#motionplate), [MotionPaper](#motionpaper) |
 | [2.5D extrusion and cities](#25d-extrusion-and-cities) | [MotionExtrudeCamera](#motionextrudecamera), [MotionSolid](#motionsolid), [MotionExtrude](#motionextrude), [MotionCityPlan](#motioncityplan), [MotionGreebler](#motiongreebler), [MotionVoxelize](#motionvoxelize), [MotionBlockPlan](#motionblockplan), [MotionFaceLights](#motionfacelights) |
-| [3D](#3d) | [MotionStage3D](#motionstage3d), [MotionLens3D](#motionlens3d), [MotionSvgMesh](#motionsvgmesh), [MotionPanel3D](#motionpanel3d), [MotionCutoutRig](#motioncutoutrig), [MotionCutout](#motioncutout), [MotionFlat3D](#motionflat3d), [MotionEdges3D](#motionedges3d), [MotionDecalAtlas](#motiondecalatlas), [MotionPattern3D](#motionpattern3d), [MotionSkyDome3D](#motionskydome3d), [MotionTrack3D](#motiontrack3d) |
+| [3D](#3d) | [MotionStage3D](#motionstage3d), [MotionLens3D](#motionlens3d), [MotionSvgMesh](#motionsvgmesh), [MotionPanel3D](#motionpanel3d), [MotionCutoutRig](#motioncutoutrig), [MotionCutout](#motioncutout), [MotionRibbon3D](#motionribbon3d), [MotionFlat3D](#motionflat3d), [MotionEdges3D](#motionedges3d), [MotionDecalAtlas](#motiondecalatlas), [MotionPattern3D](#motionpattern3d), [MotionSkyDome3D](#motionskydome3d), [MotionTrack3D](#motiontrack3d) |
 | [Diagrams and flow](#diagrams-and-flow) | [MotionMetroMap](#motionmetromap), [MotionFlow](#motionflow), [MotionLiquidFill](#motionliquidfill), [MotionCable](#motioncable), [MotionCableSet](#motioncableset) |
 | [Shader includes](#shader-includes) | `motion_noise`, `motion_sun`, `motion_pattern`, `motion_flat_3d` |
-| [Game layer](#game-layer) | MotionSpring, MotionSpring2D, MotionSpring3D, MotionAimSpring, MotionReactive, MotionTransition, MotionClock, MotionTrauma, MotionIK, MotionGait |
+| [Game layer](#game-layer) | MotionSpring, MotionSpring2D, MotionSpring3D, MotionAimSpring, MotionReactive, MotionTransition, MotionClock, MotionTrauma, MotionIK, MotionGait, MotionChain, MotionSquash |
 | [Deprecated aliases](#deprecated-aliases) | Old names that still work |
 
 ## Core
@@ -1229,6 +1229,7 @@ Megastructure (`demo/ftf/ftf_canyon/`) are the examples.
 | `motion_lens_3d.gd` | `MotionLens3D` (RefCounted): a camera pose that blends perspective into orthographic without a pop, and matches a `MotionExtrudeCamera` exactly |
 | `motion_svg_mesh.gd` | `MotionSvgMesh` (static): extruded SVG logos |
 | `motion_panel_3d.gd` + `.gdshader` | `MotionPanel3D`: kit 2D on a 3D quad |
+| `motion_ribbon_3d.gd` | `MotionRibbon3D` (MeshInstance3D): an outlined ribbon through moving points (chains) |
 | `motion_cutout_rig.gd`, `motion_cutout.gd` | `MotionCutoutRig` (Node3D): a cutout character from one SVG, parts on pivots, IK; `MotionCutout` (Node3D): front / back / side views with a paper turn |
 | `motion_flat_3d.gd` | `MotionFlat3D` (RefCounted): the MotionExtrude look in real 3D: face-tone materials, depth fog, frame-pure group motion, builders |
 | `motion_edges_3d.gd` | `MotionEdges3D` (RefCounted): screen-space crease and silhouette outlines |
@@ -1362,6 +1363,16 @@ the left, and front and back mirror with the horizontal facing too.
 | `step(dt)`, `paper_turn`, `turn` | Advance the turn (a `MotionSpring` on the width); off = instant swaps |
 | `lean(pitch_deg, lean_deg = 20)` | Tilt the cards back toward the camera and stretch them by 1 / cos(pitch − lean), so the art keeps its drawn proportions. Upright cards occlude correctly against props behind them; fully facing cards can dip into them |
 | `card`, `flip`, signal `view_changed(view, mirrored)` | The lean holder, the flip holder; reparent held props (a sword) on `view_changed` |
+
+### MotionRibbon3D
+
+`MeshInstance3D`, `three/motion_ribbon_3d.gd`. A flat ribbon through a moving polyline (a
+MotionChain's points) in the node's XY plane, facing +Z like cutout cards: `width_from` →
+`width_to` taper, `color`, `pointed` end, and an ink `outline` drawn as a wider strip
+`outline_depth` behind, so a moving scarf matches outlined cutout parts without rebuilding
+edge geometry. `update(points)` rebuilds it (ImmediateMesh, vertex colour: use
+`MotionFlat3D.cutout()`). **Cost.** About 40 µs per short ribbon per frame in GDScript on a
+2-core VM: fine for a few per character, not for crowds.
 
 ### MotionPanel3D
 
@@ -1814,6 +1825,44 @@ rig.solve_limb(&"leg_l_upper", &"leg_l_lower", &"foot_l", rest_foot_y + cut.grou
 card-plane offset on the same screen point (x mirrored with the view, ground depth and
 height up the card), so world feet drive any view's IK. Feet stay on the body's ground
 height; slopes and stairs need a ground probe per foot (not yet).
+
+### MotionChain
+
+`RefCounted`, `live/motion_chain.gd`. A verlet rope or chain with a pinned root: scarves,
+capes, tails, hair, dangling props. `MotionCable` is analytic sag and can't react to its
+root turning; this is simulated. Fixed-step and time-corrected (a slowed clock keeps the
+motion consistent); 2D (keep z at 0) or 3D.
+
+```gdscript
+var scarf := MotionChain.new(9, 0.034, root_xf, Vector3.DOWN)
+scarf.drag = 3.2
+# _physics_process, on the entity's clock (0 freezes it during hit-stop):
+scarf.medium_velocity = wind - body_velocity    # the air as the body sees it
+scarf.step(delta * clock.rate(), root_xf)
+# _process:
+ribbon.update(scarf.render_points(Engine.get_physics_interpolation_fraction()))
+```
+
+| Member | Notes |
+| --- | --- |
+| `_init(count, segment, root, dir)`, `teleport(root)` | Points hanging from the root along `dir` (root frame); put it at rest |
+| `step(dt, root)`, `render_points(frac)`, `points`, `lengths`, `length()` | Fixed step (dt 0 freezes); positions between the last two steps |
+| `gravity`, `damping` (per 1/60 s), `drag`, `medium_velocity`, `frame_accel` | Forces: air drag pulls toward the medium's velocity (−body velocity makes it trail); a moving frame's acceleration is felt as −`frame_accel` |
+| `stiffness`, `stiffness_falloff`, `rest_dirs` | Shape memory toward each segment's rest direction in the root's frame, fading along the chain: a cape swings round when the root turns |
+| `iterations`, `inextensible` | Constraint passes; a final root-to-tip pass removes leftover stretch |
+| `floor_y`, `colliders` | Keep points above a floor and out of spheres ({center, radius}) |
+| `mirror_x()` | Mirror across the root's x (a cutout flipping sides) without a whip |
+
+Draw it with `MotionRibbon3D` in 3D, or in 2D with a `MotionCanvas` polyline or a
+`MotionMarks` ribbon through `render_points`.
+
+### MotionSquash
+
+`RefCounted`, `live/motion_squash.gd`. Squash and stretch as a spring you kick: `impulse(v)`,
+`bias` (a held amount: stretch with speed), `step(dt) -> Vector2(across, along)`,
+area-preserving (`dims` 2, flat cutouts) or volume-preserving (3). Static
+`scale_for(amount, dims)` and the event-pure `land(f, amount, damping, stiffness)`
+(frames since a landing, from a MotionClock). Apply it to a pivot at the feet.
 
 ### MotionTrauma
 
