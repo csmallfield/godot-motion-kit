@@ -43,7 +43,7 @@ name it, and that piece's `KIT_NOTES.md` has the measurements behind the cost no
 | [3D](#3d) | [MotionStage3D](#motionstage3d), [MotionLens3D](#motionlens3d), [MotionSvgMesh](#motionsvgmesh), [MotionPanel3D](#motionpanel3d), [MotionCutoutRig](#motioncutoutrig), [MotionCutout](#motioncutout), [MotionRibbon3D](#motionribbon3d), [MotionFlat3D](#motionflat3d), [MotionEdges3D](#motionedges3d), [MotionDecalAtlas](#motiondecalatlas), [MotionPattern3D](#motionpattern3d), [MotionSkyDome3D](#motionskydome3d), [MotionTrack3D](#motiontrack3d) |
 | [Diagrams and flow](#diagrams-and-flow) | [MotionMetroMap](#motionmetromap), [MotionFlow](#motionflow), [MotionLiquidFill](#motionliquidfill), [MotionCable](#motioncable), [MotionCableSet](#motioncableset) |
 | [Shader includes](#shader-includes) | `motion_noise`, `motion_sun`, `motion_pattern`, `motion_flat_3d` |
-| [Game layer](#game-layer) | MotionSpring, MotionSpring2D, MotionSpring3D, MotionAimSpring, MotionReactive, MotionTransition, MotionClock, MotionTrauma, MotionIK, MotionGait, MotionChain, MotionSquash |
+| [Game layer](#game-layer) | MotionSpring, MotionSpring2D, MotionSpring3D, MotionAimSpring, MotionReactive, MotionTransition, MotionClock, MotionTrauma, MotionIK, MotionGait, MotionChain, MotionSquash, MotionPoseCurve |
 | [Deprecated aliases](#deprecated-aliases) | Old names that still work |
 
 ## Core
@@ -1825,6 +1825,33 @@ rig.solve_limb(&"leg_l_upper", &"leg_l_lower", &"foot_l", rest_foot_y + cut.grou
 card-plane offset on the same screen point (x mirrored with the view, ground depth and
 height up the card), so world feet drive any view's IK. Feet stay on the body's ground
 height; slopes and stairs need a ground probe per foot (not yet).
+
+### MotionPoseCurve
+
+`Resource`, `live/motion_pose_curve.gd`. Authored key poses as data: named channels of keys
+(frames at `fps`) with an easing per channel or per segment, named markers, and free-form
+move data. Sample a channel at "frames since the move started" (a MotionClock) and layer
+procedural motion on top, so an attack is four to six keys in a `.tres`, tweakable without
+code.
+
+```gdscript
+var move := preload("res://moves/swing_1.tres") as MotionPoseCurve
+var f := clock.frames_since(&"swing")
+var arc := move.sample_deg(&"arc", f, view)            # "arc.front" overrides "arc" in the front view
+var live := move.between(f, &"active_from", &"active_to")
+var power: float = move.data.get("power", 1.0)
+```
+
+| Member | Notes |
+| --- | --- |
+| `length`, `fps`, `channels`, `markers`, `data` | Channels: `{name: {keys: [frames], values: [float, Vector2 or Vector3], ease: name, [x1, y1, x2, y2] or [one per segment]}}`; easing names `linear`, `ease_out`, `ease_in_out`, `ease_in_back`, `ease_out_back`, `ease_in_quad`. A channel `x.view` replaces `x` when sampled for that view |
+| `sample(name, f, view, fallback)`, `sample_deg(...)`, `has_channel(name, view)` | Holds the first and last keys outside the range |
+| `marker(name, fallback)`, `between(f, from, to)`, `is_done(f)`, `duration()` | Named frames: hit windows, combo buffer and cancel points |
+| `blend(other, w, name, f_self, f_other, view)` | Mix two moves' channel (blending into the next swing) |
+| `changed_channels()`, static `easing(spec)` | Call after editing channels from code |
+
+An inspector preview (scrubbing a move on a character in the editor) would make authoring
+faster; it isn't built yet.
 
 ### MotionChain
 

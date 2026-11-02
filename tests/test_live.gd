@@ -561,3 +561,52 @@ func test_ribbon_builds_strip_with_outline() -> String:
 	var verts: int = (im.surface_get_arrays(0)[Mesh.ARRAY_VERTEX] as PackedVector3Array).size()
 	r.free()
 	return "" if verts == 2 * 2 * 6 else "expected 24 vertices (outline + strip), got %d" % verts
+
+
+# ------------------------------------------------------------------ pose curves
+
+func _curve() -> MotionPoseCurve:
+	var c := MotionPoseCurve.new()
+	c.length = 18.0
+	c.channels = {
+		"arc": {keys = [0.0, 3.0, 6.0, 18.0], values = [40.0, 135.0, -45.0, -58.0], ease = "ease_out"},
+		"arc.front": {keys = [0.0, 6.0], values = [100.0, -80.0], ease = "linear"},
+		"lunge": {keys = [0.0, 6.0], values = [Vector2.ZERO, Vector2(0.1, 0.0)], ease = ["ease_in_out"]},
+		"twist": {keys = [0.0, 4.0, 8.0], values = [0.0, 10.0, 0.0], ease = ["linear", [0.25, 0.1, 0.25, 1.0]]},
+	}
+	c.markers = {"active_from": 3, "active_to": 7, "cancel": 9}
+	return c
+
+
+func test_pose_curve_samples_keys_and_eases() -> String:
+	var c := _curve()
+	if c.sample(&"arc", -5.0) != 40.0 or c.sample(&"arc", 3.0) != 135.0 or c.sample(&"arc", 99.0) != -58.0:
+		return "keys / holds wrong"
+	var mid: float = c.sample(&"arc", 1.5)
+	var want := lerpf(40.0, 135.0, MK.ease_out.call(0.5))
+	if absf(mid - want) > 1e-6:
+		return "ease_out segment: %s vs %s" % [mid, want]
+	if not is_equal_approx(float(c.sample(&"arc", 3.0, &"front")), 100.0 - 180.0 * 0.5):
+		return "view override not used"
+	if c.sample(&"arc", 3.0, &"side") != 135.0:
+		return "a view without an override should use the base channel"
+	var l: Vector2 = c.sample(&"lunge", 3.0)
+	if not l.is_equal_approx(Vector2(0.05, 0.0)):
+		return "vector channel: %s" % l
+	var tw: float = c.sample(&"twist", 6.0)
+	if absf(tw - lerpf(10.0, 0.0, MK.bezier(0.25, 0.1, 0.25, 1.0).call(0.5))) > 1e-6:
+		return "per-segment bezier ease"
+	return "" if c.sample(&"missing", 1.0, &"", 7.0) == 7.0 else "fallback"
+
+
+func test_pose_curve_markers_and_blend() -> String:
+	var c := _curve()
+	if not c.between(5.0, &"active_from", &"active_to") or c.between(8.0, &"active_from", &"active_to"):
+		return "between"
+	if c.marker(&"nope", -2.0) != -2.0 or c.marker(&"cancel") != 9.0:
+		return "marker"
+	var d := _curve()
+	d.channels["arc"] = {keys = [0.0], values = [0.0]}
+	d.changed_channels()
+	var b: float = c.blend(d, 0.25, &"arc", 3.0, 0.0)
+	return "" if is_equal_approx(b, 135.0 * 0.75) else "blend: %s" % b

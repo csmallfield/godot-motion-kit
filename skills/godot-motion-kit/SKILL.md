@@ -280,7 +280,8 @@ shake with directional kicks), `MotionFlat3D.cutout()` / `instanced` materials w
 `MotionIK`, `MotionAimSpring` for look-at; `MotionGait` (+ `MotionGaitSettings`) plants feet
 in world space, steps on arcs, and gives body dip and lean, mapped onto a view with
 `MotionCutout.ground_to_card`; `MotionChain` (verlet scarves, capes, dangling props, shape
-memory, drag) drawn with `MotionRibbon3D`; `MotionSquash` for squash and stretch.
+memory, drag) drawn with `MotionRibbon3D`; `MotionSquash` for squash and stretch; `MotionPoseCurve` (authored moves as channels,
+markers and data in a `.tres`, sampled at frames since the move started).
 
 **Naming.** Partial drawing is `reveal` (0..1, the drawn end) and `reveal_from` (its
 start); random seeds are `seed`; alpha is `opacity` (`set_opacity(id, a)` per greeble
