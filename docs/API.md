@@ -40,10 +40,10 @@ name it, and that piece's `KIT_NOTES.md` has the measurements behind the cost no
 | [Fields and patterns](#fields-and-patterns) | [MotionGlyphField](#motionglyphfield), [MotionWarpField](#motionwarpfield), [MotionTiling](#motiontiling), [MotionPatternPlane](#motionpatternplane), [MotionPlaneScan](#motionplanescan) |
 | [Print](#print) | [MotionPlate](#motionplate), [MotionPaper](#motionpaper) |
 | [2.5D extrusion and cities](#25d-extrusion-and-cities) | [MotionExtrudeCamera](#motionextrudecamera), [MotionSolid](#motionsolid), [MotionExtrude](#motionextrude), [MotionCityPlan](#motioncityplan), [MotionGreebler](#motiongreebler), [MotionVoxelize](#motionvoxelize), [MotionBlockPlan](#motionblockplan), [MotionFaceLights](#motionfacelights) |
-| [3D](#3d) | [MotionStage3D](#motionstage3d), [MotionLens3D](#motionlens3d), [MotionSvgMesh](#motionsvgmesh), [MotionPanel3D](#motionpanel3d), [MotionFlat3D](#motionflat3d), [MotionEdges3D](#motionedges3d), [MotionDecalAtlas](#motiondecalatlas), [MotionPattern3D](#motionpattern3d), [MotionSkyDome3D](#motionskydome3d), [MotionTrack3D](#motiontrack3d) |
+| [3D](#3d) | [MotionStage3D](#motionstage3d), [MotionLens3D](#motionlens3d), [MotionSvgMesh](#motionsvgmesh), [MotionPanel3D](#motionpanel3d), [MotionCutoutRig](#motioncutoutrig), [MotionCutout](#motioncutout), [MotionFlat3D](#motionflat3d), [MotionEdges3D](#motionedges3d), [MotionDecalAtlas](#motiondecalatlas), [MotionPattern3D](#motionpattern3d), [MotionSkyDome3D](#motionskydome3d), [MotionTrack3D](#motiontrack3d) |
 | [Diagrams and flow](#diagrams-and-flow) | [MotionMetroMap](#motionmetromap), [MotionFlow](#motionflow), [MotionLiquidFill](#motionliquidfill), [MotionCable](#motioncable), [MotionCableSet](#motioncableset) |
 | [Shader includes](#shader-includes) | `motion_noise`, `motion_sun`, `motion_pattern`, `motion_flat_3d` |
-| [Game layer](#game-layer) | MotionSpring, MotionSpring2D, MotionSpring3D, MotionReactive, MotionTransition, MotionClock, MotionTrauma |
+| [Game layer](#game-layer) | MotionSpring, MotionSpring2D, MotionSpring3D, MotionAimSpring, MotionReactive, MotionTransition, MotionClock, MotionTrauma, MotionIK |
 | [Deprecated aliases](#deprecated-aliases) | Old names that still work |
 
 ## Core
@@ -1229,6 +1229,7 @@ Megastructure (`demo/ftf/ftf_canyon/`) are the examples.
 | `motion_lens_3d.gd` | `MotionLens3D` (RefCounted): a camera pose that blends perspective into orthographic without a pop, and matches a `MotionExtrudeCamera` exactly |
 | `motion_svg_mesh.gd` | `MotionSvgMesh` (static): extruded SVG logos |
 | `motion_panel_3d.gd` + `.gdshader` | `MotionPanel3D`: kit 2D on a 3D quad |
+| `motion_cutout_rig.gd`, `motion_cutout.gd` | `MotionCutoutRig` (Node3D): a cutout character from one SVG, parts on pivots, IK; `MotionCutout` (Node3D): front / back / side views with a paper turn |
 | `motion_flat_3d.gd` | `MotionFlat3D` (RefCounted): the MotionExtrude look in real 3D: face-tone materials, depth fog, frame-pure group motion, builders |
 | `motion_edges_3d.gd` | `MotionEdges3D` (RefCounted): screen-space crease and silhouette outlines |
 | `motion_decal_atlas.gd` | `MotionDecalAtlas` (Node): 2D kit drawings rendered once into an atlas for decals |
@@ -1309,6 +1310,57 @@ Static, `three/motion_svg_mesh.gd`.
 | `append(st, data, width, opts, xform)` | The same into an open SurfaceTool (merge logos into larger meshes) |
 | Vertex data | COLOR = part colour (sides darker), UV = viewBox position 0..1, UV2 = (UV.x, part index) |
 | Holes | A contour inside an odd number of the part's other contours (majority of its vertices inside) is a hole; caps cut each hole open with a hairline slit so Godot's ear-clipper sees simple polygons; side walls follow the true contours. Triangles are not consistently wound: use a material with culling off (`unlit()` is) |
+
+### MotionCutoutRig
+
+`Node3D`, `three/motion_cutout_rig.gd`. A cutout character from one SVG: every rig part a
+flat card on its own pivot node, nested as the SVG's groups nest, stacked in document
+order, with outlines. Built for Cutout Isle.
+
+Authoring convention (no sidecar file):
+
+- A rig part is a `<g id="name">` holding a pivot marker, an element whose id starts with
+  `pivot` (`<circle id="pivot-knee" cx=".." cy=".." r="2" fill="none"/>`); its centre is the
+  pivot and it is never drawn.
+- Parts nest as their groups nest (`<g id="thigh"> … <g id="shin">`). Document order is draw
+  order; inside a group, children may come before the group's own shapes (an arm behind the
+  torso it belongs to).
+- Elements with class `flat` get no outline (eyes, blush, highlights). Shapes outside every
+  rig part belong to the root, whose pivot is `origin`.
+- Every view of one character uses the same part names, so pose code works on any view.
+
+| Member | Notes |
+| --- | --- |
+| static `build(data, width, material, outline_material, opts) -> MotionCutoutRig` | `opts`: `origin` (SVG point at the node origin, default bottom centre), `layer` (0.004 m between stacked elements), `tolerance`, `pivot_prefix`, `flat_class`, `overrides` ({part: {pivot, parent}}). Use `MotionFlat3D.cutout()` and an outline material whose depth bias is below `layer` (e.g. `flat.edges(ink, 2.6, 0.001)`) |
+| `parts`, `meshes`, `outlines`, `rest`, `parent_of`, `pivot_svg`, `k`, `origin_svg` | Part name → pivot node, its MeshInstance3D and outline, rest transform, parent name (`&""` = the rig), pivot in SVG units; metres per SVG unit |
+| `part(name)`, `has_part(name)`, `rest_pivot(name)`, `svg_to_local(p)` | Lookups in rig-local metres (card plane: x right, y up, facing +Z) |
+| `reset_pose()`, `pose(name, rot, offset, scale)` | Pose relative to rest: rotation (radians, counter-clockwise in the card plane), offset in the parent's plane, scale |
+| `rig_transform(name)` | A part's transform in rig space, without the scene tree |
+| `solve_limb(upper, lower, tip, target, bend) -> bool` | Two-bone IK: rotates `upper` and `lower` so the tip's pivot reaches `target` (rig-local x, y) |
+| `set_flash(color, amount)`, `set_tint(color)` | Per-instance reactions on every part |
+
+**Cost.** One MeshInstance3D and one outline per part with shapes (about 30 draw calls for
+a 17-part character). Script cost per call on a 2-core cloud VM: `reset_pose` 7.6 µs,
+`solve_limb` 9.8 µs, `pose` 1.1 µs, `rig_transform` 2.7 µs. For crowds, a single mesh with
+the part index in UV2.y (MotionSvgMesh writes it) and part transforms in a uniform array
+would make a character one draw call.
+
+### MotionCutout
+
+`Node3D`, `three/motion_cutout.gd`. A cutout character seen from a fixed game camera: up
+to three views of one rig (front, back, side), one shown at a time, picked from the
+facing direction with hysteresis, and a paper turn between them (the card's width springs
+through zero and the view swaps while edge-on). Side art faces right; mirroring covers
+the left, and front and back mirror with the horizontal facing too.
+
+| Member | Notes |
+| --- | --- |
+| `add_view(name, rig)`, `views`, `view`, `mirrored`, `rig` | Views by name (`&"front"`, `&"back"`, `&"side"`); the one showing and its rig |
+| `face(dir)` | World x, z (+z toward the camera); zero keeps the facing |
+| static `choose(dir, current, hysteresis, has_side, has_back)` | The view rule: side in the left and right sectors, front toward the camera, back away; the current view keeps an extra `hysteresis` degrees |
+| `step(dt)`, `paper_turn`, `turn` | Advance the turn (a `MotionSpring` on the width); off = instant swaps |
+| `lean(pitch_deg, lean_deg = 20)` | Tilt the cards back toward the camera and stretch them by 1 / cos(pitch − lean), so the art keeps its drawn proportions. Upright cards occlude correctly against props behind them; fully facing cards can dip into them |
+| `card`, `flip`, signal `view_changed(view, mirrored)` | The lean holder, the flip holder; reparent held props (a sword) on `view_changed` |
 
 ### MotionPanel3D
 
@@ -1672,6 +1724,10 @@ a fixed order: authored pose, procedural offsets, reactions, camera.
 - `MotionSpring2D`, `MotionSpring3D`: the same spring on a `Vector2` / `Vector3` (`value`,
   `velocity`, `target`, `step`, `snap`, `impulse`, `is_settled`). Camera follow, tilt
   wobbles, look-at targets.
+- `MotionAimSpring`: an angle (radians) that turns toward `target` on a spring, the short
+  way round, kept within `limit_min` / `limit_max` (it stops at a limit rather than
+  bouncing through). `step(dt)`, `snap(a)`, `impulse(v)`. Heads, eyes and torsos looking
+  at something with lag.
 - `MotionReactive`: put it under a Control, including Controls inside Containers. It
   handles `hover_scale`, `focus_scale`, `press_scale`, `hover_offset`, `hover_tint`,
   `damping` and `stiffness`. Position is only touched when `hover_offset` is set, and any
@@ -1712,6 +1768,19 @@ velocity_step = delta * clock.rate()           # fixed-step code in _physics_pro
 every system on the entity (pose, reactions, movement, simulation) to take its time from
 the entity's clock. Freezing attacker and victim reads better than freezing the world;
 keep the camera on real time so its kick plays through the freeze.
+
+### MotionIK
+
+Static, `live/motion_ik.gd`. Analytic two-bone IK (law of cosines); Godot 4.5 has no
+`TwoBoneIK3D`, and cutout rigs are plain nodes, so these are pure functions.
+
+| Function | Notes |
+| --- | --- |
+| `two_bone_2d(root, target, l1, l2, bend = 1) -> {mid, end, reached}` | `bend` +1 puts the middle joint counter-clockwise of the root→target line (y up), −1 clockwise. Out of reach the chain straightens toward the target; closer than \|l1 − l2\| it folds as far as it can |
+| `two_bone_3d(root, target, pole, l1, l2) -> {mid, end, reached}` | The middle joint bends toward `pole` |
+
+`MotionCutoutRig.solve_limb` applies the 2D solve to a rig. A `SkeletonModifier3D`
+wrapper for skinned characters is a thin addition on top of `two_bone_3d`.
 
 ### MotionTrauma
 

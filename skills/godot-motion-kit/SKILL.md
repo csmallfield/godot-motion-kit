@@ -274,7 +274,10 @@ hover / focus / press; `MotionSpring` (and `MotionSpring2D` / `3D`, `impulse()`)
 input-driven values. Live game systems: `MotionClock` (events, "frames since", per-entity
 hit-stop with `freeze()`; feed `frames_since` to any `MK` curve), `MotionTrauma` (trauma
 shake with directional kicks), `MotionFlat3D.cutout()` / `instanced` materials with
-`set_flash` for per-actor reactions, `MotionSvgMesh` `flat` cards for cutout characters.
+`set_flash` for per-actor reactions; cutout characters from SVG with `MotionCutoutRig`
+(groups with pivot markers become nested part nodes; `pose`, `solve_limb` two-bone IK) and
+`MotionCutout` (front / back / side views with a paper turn, `lean` toward the camera);
+`MotionIK`, `MotionAimSpring` for look-at.
 
 **Naming.** Partial drawing is `reveal` (0..1, the drawn end) and `reveal_from` (its
 start); random seeds are `seed`; alpha is `opacity` (`set_opacity(id, a)` per greeble
