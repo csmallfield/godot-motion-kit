@@ -3,3 +3,7 @@
 /tests export-ignore
 /tools export-ignore
 /docs export-ignore
+
+# Godot and the other machines write LF; keep this checkout the same so
+# imports and saves do not show up as line-ending changes on Windows.
+* text=auto eol=lf
